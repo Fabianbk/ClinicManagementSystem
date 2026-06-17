@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -60,4 +61,11 @@ public class Patient {
 
     @Column(name = "email", length = 100)
     private String email;
+
+    @OneToOne(cascade = CascadeType.ALL,mappedBy = "patient")
+    private PatientAccount patientAccount;
+
+    @OneToMany(cascade=CascadeType.ALL)
+    @JoinColumn(name = "patient_id")
+    private List<ContactPerson> contactPersons;
 }
