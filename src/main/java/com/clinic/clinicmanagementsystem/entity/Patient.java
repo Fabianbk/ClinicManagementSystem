@@ -66,6 +66,14 @@ public class Patient {
     private PatientAccount patientAccount;
 
     @OneToMany(cascade=CascadeType.ALL)
-    @JoinColumn(name = "patient_id")
     private List<ContactPerson> contactPersons;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "patient")
+    private List<Appointment> appointments;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    private Principle principle;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    private HealthProfile healthProfile;
 }

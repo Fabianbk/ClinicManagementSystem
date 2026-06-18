@@ -20,6 +20,6 @@ public class PatientAccount {
     @Column(length = 255, nullable = false)
     private String password;
     @OneToOne
-    @JoinColumn(name = "patient_id")
+    @JoinColumn(name = "patient_id", nullable = false, unique = true)
     private Patient patient;
 }

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -28,4 +30,10 @@ public class Doctor {
 
     @Column(name = "physician_license_no", nullable = false, length = 255)
     private String physicianLicenseNo;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "doctor")
+    private List<WorkingSchedule> workingSchedules;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "doctor")
+    private List<RecordTreatment> recordTreatments;
 }
