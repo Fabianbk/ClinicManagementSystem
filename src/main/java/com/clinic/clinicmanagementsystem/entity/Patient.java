@@ -66,6 +66,7 @@ public class Patient {
     private PatientAccount patientAccount;
 
     @OneToMany(cascade=CascadeType.ALL)
+    @JoinColumn(name = "patient_id")
     private List<ContactPerson> contactPersons;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "patient")
