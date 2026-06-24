@@ -72,9 +72,9 @@ public class Patient {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "patient")
     private List<Appointment> appointments;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private Principle principle;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private HealthProfile healthProfile;
 }
