@@ -65,7 +65,7 @@ public class Patient {
     @OneToOne(cascade = CascadeType.ALL,mappedBy = "patient")
     private PatientAccount patientAccount;
 
-    @OneToMany(cascade=CascadeType.ALL)
+    @OneToMany(cascade=CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "patient_id")
     private List<ContactPerson> contactPersons;
 

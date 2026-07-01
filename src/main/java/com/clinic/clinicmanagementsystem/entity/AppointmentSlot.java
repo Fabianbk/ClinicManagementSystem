@@ -1,5 +1,6 @@
 package com.clinic.clinicmanagementsystem.entity;
 
+import com.clinic.clinicmanagementsystem.enums.AppointmentSlotStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,8 +26,9 @@ public class AppointmentSlot {
     @Column(name = "end_time", nullable = false)
     private Date endTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
-    private String status;
+    private AppointmentSlotStatus status;
 
     @ManyToOne
     @JoinColumn(name = "schedule_id", nullable = false)

@@ -1,8 +1,7 @@
 package com.clinic.clinicmanagementsystem.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.clinic.clinicmanagementsystem.enums.AppointmentSlotStatus;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +24,6 @@ public class AppointmentSlotRequestDTO {
     @NotNull(message = "End time is required")
     private Date endTime;
 
-    @NotBlank(message = "Status is required")
-    @Size(max = 50)
-    private String status;
+    @NotNull(message = "Status is required")
+    private AppointmentSlotStatus status;
 }

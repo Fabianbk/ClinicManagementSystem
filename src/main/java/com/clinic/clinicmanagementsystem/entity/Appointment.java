@@ -1,5 +1,6 @@
 package com.clinic.clinicmanagementsystem.entity;
 
+import com.clinic.clinicmanagementsystem.enums.AppointmentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,8 +20,9 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int appointmentId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
-    private String status;
+    private AppointmentStatus status;
 
     @OneToOne
     @JoinColumn(name = "slot_id", nullable = false, unique = true)

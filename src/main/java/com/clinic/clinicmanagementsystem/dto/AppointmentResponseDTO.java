@@ -1,5 +1,6 @@
 package com.clinic.clinicmanagementsystem.dto;
 
+import com.clinic.clinicmanagementsystem.enums.AppointmentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,7 @@ import java.util.Date;
 @Builder
 public class AppointmentResponseDTO {
     private int appointmentId;
-    private String status;
+    private AppointmentStatus status;
 
     private int patientId;
     private String patientFullname;
