@@ -32,6 +32,12 @@ public class AppointmentSlot {
     @JoinColumn(name = "schedule_id", nullable = false)
     private WorkingSchedule workingSchedule;
 
-    @OneToOne(mappedBy = "appointmentSlot", cascade = CascadeType.ALL)
+    // cascade intentionally does NOT include REMOVE: once a slot has a real
+    // booked Appointment, deleting the slot should never silently delete the
+    // appointment (and everything hanging off it) along with it. The FK on
+    // Appointment.appointmentSlot (nullable = false) will reject the delete
+    // instead — this is the actual choke point that stops the Doctor/
+    // WorkingSchedule cascade chain from reaching Appointment/RecordTreatment.
+    @OneToOne(mappedBy = "appointmentSlot", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Appointment appointment;
 }

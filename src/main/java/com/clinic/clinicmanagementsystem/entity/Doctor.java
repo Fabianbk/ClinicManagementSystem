@@ -31,9 +31,16 @@ public class Doctor {
     @Column(name = "physician_license_no", nullable = false, length = 255)
     private String physicianLicenseNo;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "doctor")
+    // cascade intentionally does NOT include REMOVE: WorkingSchedule rows are
+    // real historical records (a doctor's past availability), not owned
+    // sub-objects. Deleting a Doctor should never silently wipe these out —
+    // if any exist, the FK constraint will reject the delete instead
+    // (GlobalExceptionHandler turns that into a 409).
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "doctor")
     private List<WorkingSchedule> workingSchedules;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "doctor")
+    // Same reasoning — RecordTreatment rows are medical history, not owned
+    // sub-objects of Doctor.
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "doctor")
     private List<RecordTreatment> recordTreatments;
 }

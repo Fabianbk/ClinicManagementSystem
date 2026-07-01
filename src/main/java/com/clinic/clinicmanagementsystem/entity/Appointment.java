@@ -30,6 +30,11 @@ public class Appointment {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "appointment")
+    // cascade intentionally does NOT include REMOVE: a RecordTreatment is the
+    // actual clinical record of what happened during the visit. Deleting an
+    // Appointment that already has treatment notes attached will now fail on
+    // the FK constraint (RecordTreatment.appointment is nullable = false)
+    // instead of silently destroying the medical record.
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "appointment")
     private RecordTreatment recordTreatment;
 }

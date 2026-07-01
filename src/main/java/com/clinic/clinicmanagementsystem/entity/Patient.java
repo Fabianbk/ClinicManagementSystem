@@ -69,7 +69,11 @@ public class Patient {
     @JoinColumn(name = "patient_id")
     private List<ContactPerson> contactPersons;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "patient")
+    // cascade intentionally does NOT include REMOVE: Appointment rows are
+    // real visit history, not owned sub-objects of Patient. Deleting a
+    // Patient who has appointments will now fail on the FK constraint
+    // instead of silently cascading away their whole medical history.
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "patient")
     private List<Appointment> appointments;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)

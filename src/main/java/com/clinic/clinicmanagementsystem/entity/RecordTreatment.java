@@ -85,7 +85,7 @@ public class RecordTreatment {
     private Doctor doctor;
 
     @OneToOne
-    @JoinColumn(name = "appointment_id", nullable = false)
+    @JoinColumn(name = "appointment_id", nullable = false,unique = true)
     private Appointment appointment;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "recordTreatment")

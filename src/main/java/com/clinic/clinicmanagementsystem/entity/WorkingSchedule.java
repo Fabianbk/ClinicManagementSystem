@@ -33,6 +33,6 @@ public class WorkingSchedule {
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "workingSchedule")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "workingSchedule", orphanRemoval = true)
     private List<AppointmentSlot> appointmentSlots;
 }

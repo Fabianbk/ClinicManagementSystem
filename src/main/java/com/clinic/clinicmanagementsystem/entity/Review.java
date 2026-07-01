@@ -29,6 +29,6 @@ public class Review {
     private Date reviewDate;
 
     @OneToOne
-    @JoinColumn(name = "patient_id", nullable = false)
+    @JoinColumn(name = "patient_id", nullable = false,unique = true)
     private Patient patient;
 }

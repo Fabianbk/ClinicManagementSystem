@@ -46,6 +46,6 @@ public class Medicine {
     @Column(name = "note", length = 255)
     private String note;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "medicine")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "medicine")
     private List<RecordTreatmentMedicine> recordTreatmentMedicines;
 }
