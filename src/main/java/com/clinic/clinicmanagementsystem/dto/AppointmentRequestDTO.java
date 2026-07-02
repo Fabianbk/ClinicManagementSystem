@@ -19,6 +19,4 @@ public class AppointmentRequestDTO {
     @NotNull(message = "Slot ID is required")
     private Integer slotId;
 
-    @NotNull(message = "Status is required")
-    private AppointmentStatus status;
 }
