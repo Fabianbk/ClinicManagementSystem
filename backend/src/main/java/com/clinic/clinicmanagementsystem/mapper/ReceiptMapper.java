@@ -11,6 +11,7 @@ public interface ReceiptMapper {
 
     @Mapping(target = "receiptId", ignore = true)
     @Mapping(target = "recordTreatment", ignore = true)
+    @Mapping(target = "totalPrice", ignore = true) // computed server-side in ReceiptService
     Receipt toEntity(ReceiptRequestDTO dto);
 
     @Mapping(target = "recordTreatmentId", source = "recordTreatment.recordTreatmentId")

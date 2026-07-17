@@ -5,11 +5,8 @@ import com.clinic.clinicmanagementsystem.dto.RecordTreatmentResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.RecordTreatment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
-/**
- * recordTreatmentMedicines / receipt are mapped automatically via the
- * 'uses' mappers below since the field names match on both sides.
- */
 @Mapper(
         componentModel = "spring",
         uses = {RecordTreatmentMedicineMapper.class, ReceiptMapper.class}
@@ -29,4 +26,12 @@ public interface RecordTreatmentMapper {
     @Mapping(target = "patientId", source = "appointment.patient.patientId")
     @Mapping(target = "patientFullname", source = "appointment.patient.fullname")
     RecordTreatmentResponseDTO toResponseDTO(RecordTreatment entity);
+
+    /** Edit Record Treatment — clinical fields only; doctor/appointment/medicines/receipt never change here. */
+    @Mapping(target = "recordTreatmentId", ignore = true)
+    @Mapping(target = "doctor", ignore = true)
+    @Mapping(target = "appointment", ignore = true)
+    @Mapping(target = "recordTreatmentMedicines", ignore = true)
+    @Mapping(target = "receipt", ignore = true)
+    void updateEntityFromDto(RecordTreatmentRequestDTO dto, @MappingTarget RecordTreatment entity);
 }
