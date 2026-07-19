@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class MedicineController {
     private final MedicineService medicineService;
 
     @PostMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<MedicineResponseDTO>> create(
             @Valid @RequestBody MedicineRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -29,11 +31,13 @@ public class MedicineController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<MedicineResponseDTO>> getById(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(medicineService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PageResponse<MedicineResponseDTO>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -42,6 +46,7 @@ public class MedicineController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<MedicineResponseDTO>> update(
             @PathVariable int id, @Valid @RequestBody MedicineRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(

@@ -9,6 +9,7 @@ import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
 import com.clinic.clinicmanagementsystem.mapper.ReviewMapper;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
 import com.clinic.clinicmanagementsystem.repository.ReviewRepository;
+import com.clinic.clinicmanagementsystem.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,13 +24,11 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final PatientRepository patientRepository;
     private final ReviewMapper reviewMapper;
+    private final CurrentUser currentUser;
 
-    /**
-     * Review Clinic One review per patient — Review.patient is a
-     * unique OneToOne, so a second attempt is rejected here with a clean 400
-     * (via a dedicated Edit flow) rather than a raw DB constraint error.
-     */
     public ReviewResponseDTO create(ReviewRequestDTO dto) {
+        currentUser.requireSelfOrDoctor(dto.getPatientId());
+
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
 
@@ -50,9 +49,10 @@ public class ReviewService {
         return reviewMapper.toResponseDTO(findReviewOrThrow(reviewId));
     }
 
-    /** A patient has at most one review, so this returns that single review directly. */
     @Transactional(readOnly = true)
     public ReviewResponseDTO getByPatientId(int patientId) {
+        currentUser.requireSelfOrDoctor(patientId);
+
         return reviewRepository.findFirstByPatient_PatientId(patientId)
                 .map(reviewMapper::toResponseDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Review for patient", patientId));
@@ -63,9 +63,16 @@ public class ReviewService {
         return reviewRepository.findAll(pageable).map(reviewMapper::toResponseDTO);
     }
 
-    /** Edit Review Clinic */
+    /**
+     * Ownership is checked against the review's OWN stored patient, not the
+     * patientId in the request body — dto.patientId is required by
+     * validation but the mapper ignores it on update, so it must never be
+     * trusted for authorization either.
+     */
     public ReviewResponseDTO update(int reviewId, ReviewRequestDTO dto) {
         Review existing = findReviewOrThrow(reviewId);
+        currentUser.requireSelfOrDoctor(existing.getPatient().getPatientId());
+
         reviewMapper.updateEntityFromDto(dto, existing);
         return reviewMapper.toResponseDTO(reviewRepository.save(existing));
     }

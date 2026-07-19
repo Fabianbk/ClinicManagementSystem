@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.clinic.clinicmanagementsystem.security.CurrentUser;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class RecordTreatmentService {
     private final AppointmentRepository appointmentRepository;
     private final DoctorRepository doctorRepository;
     private final RecordTreatmentMapper recordTreatmentMapper;
+    private final CurrentUser currentUser;
 
     /**
      * Add Record Treatment. Appointment.recordTreatment is a
@@ -71,6 +73,8 @@ public class RecordTreatmentService {
     /** View Record Treatment — a patient's own history. */
     @Transactional(readOnly = true)
     public Page<RecordTreatmentResponseDTO> getByPatientId(int patientId, Pageable pageable) {
+        currentUser.requireSelfOrDoctor(patientId);
+
         return recordTreatmentRepository.findByAppointment_Patient_PatientId(patientId, pageable)
                 .map(recordTreatmentMapper::toResponseDTO);
     }

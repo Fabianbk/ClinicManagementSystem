@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class RecordTreatmentController {
     private final RecordTreatmentService recordTreatmentService;
 
     @PostMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<RecordTreatmentResponseDTO>> create(
             @Valid @RequestBody RecordTreatmentRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -29,11 +31,13 @@ public class RecordTreatmentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<RecordTreatmentResponseDTO>> getById(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(recordTreatmentService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PageResponse<RecordTreatmentResponseDTO>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -43,6 +47,7 @@ public class RecordTreatmentController {
     }
 
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
     public ResponseEntity<ApiResponse<PageResponse<RecordTreatmentResponseDTO>>> getByPatientId(
             @PathVariable int patientId,
             @RequestParam(defaultValue = "0") int page,
@@ -53,6 +58,7 @@ public class RecordTreatmentController {
     }
 
     @GetMapping("/appointment/{appointmentId}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<RecordTreatmentResponseDTO>> getByAppointmentId(
             @PathVariable int appointmentId) {
         return ResponseEntity.ok(
@@ -60,6 +66,7 @@ public class RecordTreatmentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<RecordTreatmentResponseDTO>> update(
             @PathVariable int id, @Valid @RequestBody RecordTreatmentRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(

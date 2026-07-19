@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
+    @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<ApiResponse<ReviewResponseDTO>> create(
             @Valid @RequestBody ReviewRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -28,16 +30,19 @@ public class ReviewController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<ReviewResponseDTO>> getById(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(reviewService.getById(id)));
     }
 
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
     public ResponseEntity<ApiResponse<ReviewResponseDTO>> getByPatientId(@PathVariable int patientId) {
         return ResponseEntity.ok(ApiResponse.success(reviewService.getByPatientId(patientId)));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PageResponse<ReviewResponseDTO>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -46,6 +51,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<ApiResponse<ReviewResponseDTO>> update(
             @PathVariable int id, @Valid @RequestBody ReviewRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(

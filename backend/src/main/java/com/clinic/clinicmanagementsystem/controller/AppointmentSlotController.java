@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class AppointmentSlotController {
     private final AppointmentSlotService appointmentSlotService;
 
     @PostMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<AppointmentSlotResponseDTO>> create(
             @Valid @RequestBody AppointmentSlotRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -29,12 +31,14 @@ public class AppointmentSlotController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<AppointmentSlotResponseDTO>> getById(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(appointmentSlotService.getById(id)));
     }
 
     /** All slots for a schedule (any status) — for doctor/admin views. */
     @GetMapping("/schedule/{scheduleId}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<List<AppointmentSlotResponseDTO>>> getByScheduleId(
             @PathVariable int scheduleId) {
         return ResponseEntity.ok(
@@ -43,6 +47,7 @@ public class AppointmentSlotController {
 
     /** Available slots only — the list shown to patients when booking. */
     @GetMapping("/schedule/{scheduleId}/available")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<List<AppointmentSlotResponseDTO>>> getAvailableByScheduleId(
             @PathVariable int scheduleId) {
         return ResponseEntity.ok(
@@ -51,6 +56,7 @@ public class AppointmentSlotController {
 
     /** Block or unblock a slot. Cannot be used to manually set BOOKED. */
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<AppointmentSlotResponseDTO>> updateStatus(
             @PathVariable int id, @RequestParam AppointmentSlotStatus status) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -58,6 +64,7 @@ public class AppointmentSlotController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<Void> delete(@PathVariable int id) {
         appointmentSlotService.delete(id);
         return ResponseEntity.noContent().build();

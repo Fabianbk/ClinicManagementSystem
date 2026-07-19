@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class RecordTreatmentMedicineController {
     private final RecordTreatmentMedicineService recordTreatmentMedicineService;
 
     @PostMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<RecordTreatmentMedicineResponseDTO>> add(
             @Valid @RequestBody RecordTreatmentMedicineRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -28,6 +30,7 @@ public class RecordTreatmentMedicineController {
     }
 
     @GetMapping("/record-treatment/{recordTreatmentId}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<List<RecordTreatmentMedicineResponseDTO>>> getByRecordTreatmentId(
             @PathVariable int recordTreatmentId) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -35,6 +38,7 @@ public class RecordTreatmentMedicineController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<Void> remove(@PathVariable int id) {
         recordTreatmentMedicineService.remove(id);
         return ResponseEntity.noContent().build();

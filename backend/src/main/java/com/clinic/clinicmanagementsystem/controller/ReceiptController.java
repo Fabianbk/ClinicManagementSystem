@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,6 +19,7 @@ public class ReceiptController {
     private final ReceiptService receiptService;
 
     @PostMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<ReceiptResponseDTO>> issue(
             @Valid @RequestBody ReceiptRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -25,11 +27,13 @@ public class ReceiptController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<ReceiptResponseDTO>> getById(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(receiptService.getById(id)));
     }
 
     @GetMapping("/record-treatment/{recordTreatmentId}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<ReceiptResponseDTO>> getByRecordTreatmentId(
             @PathVariable int recordTreatmentId) {
         return ResponseEntity.ok(

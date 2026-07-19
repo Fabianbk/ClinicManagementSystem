@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,7 @@ public class PatientController {
     private final PatientService patientService;
 
     @PostMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PatientResponseDTO>> createPatient(
             @Valid @RequestBody PatientRequestDTO dto) {
         PatientResponseDTO created = patientService.create(dto);
@@ -43,11 +45,13 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PatientResponseDTO>> getPatient(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(patientService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PageResponse<PatientResponseDTO>>> getAllPatients(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -56,6 +60,7 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PatientResponseDTO>> updateBasicInfo(
             @PathVariable int id, @Valid @RequestBody PatientRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -63,18 +68,21 @@ public class PatientController {
     }
 
     @PutMapping("/{id}/principle")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PrincipleResponseDTO>> updatePrinciple(
             @PathVariable int id, @Valid @RequestBody PrincipleRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(patientService.updatePrinciple(id, dto)));
     }
 
     @PutMapping("/{id}/health-profile")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<HealthProfileResponseDTO>> updateHealthProfile(
             @PathVariable int id, @Valid @RequestBody HealthProfileRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(patientService.updateHealthProfile(id, dto)));
     }
 
     @PostMapping("/{id}/contact-persons")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<ContactPersonResponseDTO>> addContactPerson(
             @PathVariable int id, @Valid @RequestBody ContactPersonRequestDTO dto) {
         ContactPersonResponseDTO created = patientService.addContactPerson(id, dto);
@@ -82,6 +90,7 @@ public class PatientController {
     }
 
     @DeleteMapping("/{id}/contact-persons/{contactId}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<Void> removeContactPerson(
             @PathVariable int id, @PathVariable int contactId) {
         patientService.removeContactPerson(id, contactId);
@@ -89,6 +98,7 @@ public class PatientController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<Void> deletePatient(@PathVariable int id) {
         patientService.delete(id);
         return ResponseEntity.noContent().build();

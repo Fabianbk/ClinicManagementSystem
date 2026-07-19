@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -39,11 +40,13 @@ public class DoctorController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<DoctorResponseDTO>> getDoctor(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(doctorService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PageResponse<DoctorResponseDTO>>> getAllDoctors(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -52,6 +55,7 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<DoctorResponseDTO>> updateProfile(
             @PathVariable int id, @Valid @RequestBody DoctorUpdateRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -59,6 +63,7 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}/password")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @PathVariable int id, @Valid @RequestBody DoctorChangePasswordRequestDTO dto) {
         doctorService.changePassword(id, dto);
@@ -66,6 +71,7 @@ public class DoctorController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<Void> deleteDoctor(@PathVariable int id) {
         doctorService.delete(id);
         return ResponseEntity.noContent().build();
