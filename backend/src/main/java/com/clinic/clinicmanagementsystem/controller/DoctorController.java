@@ -32,6 +32,7 @@ public class DoctorController {
     private final DoctorService doctorService;
 
     @PostMapping
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<DoctorResponseDTO>> createDoctor(
             @Valid @RequestBody DoctorRequestDTO dto) {
         DoctorResponseDTO created = doctorService.create(dto);

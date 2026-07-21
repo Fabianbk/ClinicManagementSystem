@@ -14,11 +14,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Stateless JWT security. The filter chain here only decides "is a request
- * authenticated at all"; per-role restrictions (DOCTOR vs PATIENT) live on
- * individual controller methods via @PreAuthorize — see each controller.
- */
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
@@ -36,6 +31,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/doctors").permitAll() // bootstrap: first doctor
+                        .requestMatchers(HttpMethod.GET, "/api/working-schedules/**").permitAll() // View Doctor Schedule (public, SRS 3.1.1)
+                        .requestMatchers(HttpMethod.GET, "/api/appointment-slots/**").permitAll() // public slot viewing
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
