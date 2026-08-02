@@ -39,8 +39,8 @@ public class RecordTreatmentMedicineController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<Void> remove(@PathVariable int id) {
+    public ResponseEntity<ApiResponse<Void>> remove(@PathVariable int id) {
         recordTreatmentMedicineService.remove(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "Medicine record removed successfully"));
     }
 }

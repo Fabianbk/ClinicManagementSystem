@@ -91,16 +91,16 @@ public class PatientController {
 
     @DeleteMapping("/{id}/contact-persons/{contactId}")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<Void> removeContactPerson(
+    public ResponseEntity<ApiResponse<Void>> removeContactPerson(
             @PathVariable int id, @PathVariable int contactId) {
         patientService.removeContactPerson(id, contactId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "Contact person removed successfully"));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<Void> deletePatient(@PathVariable int id) {
+    public ResponseEntity<ApiResponse<Void>> deletePatient(@PathVariable int id) {
         patientService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "Patient deleted successfully"));
     }
 }

@@ -65,8 +65,8 @@ public class AppointmentSlotController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable int id) {
         appointmentSlotService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "Appointment slot deleted successfully"));
     }
 }

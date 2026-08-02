@@ -73,8 +73,8 @@ public class DoctorController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<Void> deleteDoctor(@PathVariable int id) {
+    public ResponseEntity<ApiResponse<Void>> deleteDoctor(@PathVariable int id) {
         doctorService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "Doctor deleted successfully"));
     }
 }
