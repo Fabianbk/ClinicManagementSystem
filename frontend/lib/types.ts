@@ -348,3 +348,15 @@ export interface ReviewResponseDTO {
   patientId: number;
   patientFullname: string;
 }
+
+// ---------- Notify Appointment ----------
+
+export interface NotifyAppointmentResponseDTO {
+  appointmentId: number;
+  status: AppointmentStatus;
+  slotStartTime: string;
+  slotEndTime: string;
+  doctorId: number;
+  doctorFullname: string;
+  message: string;
+}
