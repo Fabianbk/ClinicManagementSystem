@@ -20,6 +20,11 @@ export const getAppointmentsByPatientId = (patientId: number, page = 0, size = 2
     params: { page, size },
   });
 
+export const getAppointmentsByDoctorId = (doctorId: number, page = 0, size = 20) =>
+  apiGet<PageResponse<AppointmentResponseDTO>>(`/api/appointments/doctor/${doctorId}`, {
+    params: { page, size },
+  });
+
 export const cancelAppointment = (id: number) =>
   apiPatch<AppointmentResponseDTO>(`/api/appointments/${id}/cancel`);
 
