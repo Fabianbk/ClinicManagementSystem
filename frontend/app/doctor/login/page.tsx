@@ -13,15 +13,22 @@ export default async function DoctorLoginPage({
   }
 
   return (
-    <main className="login-page">
-      <div className="login-card">
-        <div className="login-card__rail login-card__rail--doctor" aria-hidden="true">
+    <main className="min-h-screen flex items-center justify-center p-5 bg-clinic-bg">
+      <div className="flex flex-col sm:flex-row w-full max-w-md bg-white rounded-card border border-clinic-line overflow-hidden shadow-2xl">
+        <div
+          className="bg-clinic-primary text-white flex items-center justify-center font-display font-semibold text-xs tracking-widest sm:[writing-mode:vertical-rl] py-3 sm:py-0 sm:w-10 shrink-0"
+          aria-hidden="true"
+        >
           <span>DOCTOR</span>
         </div>
-        <div className="login-card__body">
-          <p className="login-card__eyebrow">พิมพ์วิมาน · คลินิกการแพทย์แผนไทย</p>
-          <h1 className="login-card__heading">Doctor sign-in</h1>
-          <p className="login-card__subtext">
+        <div className="flex-1 p-6 sm:p-8 flex flex-col gap-1">
+          <p className="text-xs font-semibold tracking-wider text-clinic-accent-deep uppercase">
+            พิมพ์วิมาน · คลินิกการแพทย์แผนไทย
+          </p>
+          <h1 className="text-2xl font-display font-bold text-clinic-primary-deep mt-1">
+            Doctor sign-in
+          </h1>
+          <p className="text-clinic-ink-soft text-sm mb-5 leading-relaxed">
             Manage patient records, schedules, and treatments.
           </p>
 
@@ -32,8 +39,11 @@ export default async function DoctorLoginPage({
             nextPath={searchParams.next}
           />
 
-          <p className="login-card__switch">
-            Here to book a visit? <a href="/patient/login">Go to patient sign-in</a>
+          <p className="mt-5 text-xs text-clinic-ink-soft text-center">
+            Here to book a visit?{" "}
+            <a href="/patient/login" className="font-semibold text-clinic-accent-deep hover:underline">
+              Go to patient sign-in
+            </a>
           </p>
         </div>
       </div>

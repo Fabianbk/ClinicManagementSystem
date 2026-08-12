@@ -4,24 +4,22 @@ import { DoctorSidebar } from "@/components/doctor/DoctorSidebar";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
 export default async function DoctorLayout({ children }: { children: React.ReactNode }) {
-  // Middleware already guards /doctor/*, but the layout re-checks so every
-  // doctor page has a trustworthy session to read from without repeating
-  // this itself — same defense-in-depth spirit as the backend's
-  // @PreAuthorize + CurrentUser double-check.
   const session = await getSession();
   if (!session || session.role !== "DOCTOR") {
     redirect("/doctor/login");
   }
 
   return (
-    <div className="doctor-shell">
+    <div className="flex flex-col md:flex-row min-h-screen bg-clinic-bg">
       <DoctorSidebar />
-      <div className="doctor-shell__content">
-        <header className="doctor-topbar">
-          <span className="doctor-topbar__user">{session.username}</span>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="flex items-center justify-end gap-4 px-8 py-3.5 border-b border-clinic-line bg-white shadow-xs">
+          <span className="text-sm font-medium text-clinic-ink-soft">
+            นายแพทย์ {session.username}
+          </span>
           <LogoutButton redirectTo="/doctor/login" />
         </header>
-        <main className="doctor-main">{children}</main>
+        <main className="flex-1 p-6 md:p-8 max-w-6xl w-full mx-auto">{children}</main>
       </div>
     </div>
   );

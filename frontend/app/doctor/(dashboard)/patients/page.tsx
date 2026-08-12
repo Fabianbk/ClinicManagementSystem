@@ -23,44 +23,58 @@ export default async function DoctorPatientsPage({
   }
 
   return (
-    <>
-      <div className="page-header">
-        <h1>รายชื่อผู้ป่วย</h1>
-        <Link href="/doctor/patients/new" className="btn btn--primary">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold text-clinic-primary-deep">
+          รายชื่อผู้ป่วย
+        </h1>
+        <Link
+          href="/doctor/patients/new"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-sm"
+        >
           + เพิ่มผู้ป่วยใหม่
         </Link>
       </div>
 
-      {errorMessage && <p className="error">{errorMessage}</p>}
+      {errorMessage && (
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium">
+          {errorMessage}
+        </div>
+      )}
 
       {result && result.content.length === 0 && (
-        <div className="empty-state">ไม่พบข้อมูลผู้ป่วยในระบบ</div>
+        <div className="border border-dashed border-clinic-line rounded-card p-12 text-center text-clinic-ink-soft bg-white/50">
+          ไม่พบข้อมูลผู้ป่วยในระบบ
+        </div>
       )}
 
       {result && result.content.length > 0 && (
         <>
-          <div className="data-table__wrapper">
-            <table className="data-table">
+          <div className="bg-white border border-clinic-line rounded-card overflow-hidden shadow-sm">
+            <table className="w-full border-collapse text-left">
               <thead>
-                <tr>
-                  <th>รหัส</th>
-                  <th>ชื่อ-สกุล</th>
-                  <th>เพศ</th>
-                  <th>เบอร์โทร</th>
-                  <th>กรุ๊ปเลือด</th>
-                  <th aria-label="Actions" />
+                <tr className="bg-clinic-bg border-b border-clinic-line">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">รหัส</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">ชื่อ-สกุล</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">เพศ</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">เบอร์โทร</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">กรุ๊ปเลือด</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft" aria-label="Actions" />
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-clinic-line text-sm text-clinic-ink">
                 {result.content.map((patient) => (
-                  <tr key={patient.patientId}>
-                    <td>{patient.patientId}</td>
-                    <td>{patient.fullname}</td>
-                    <td>{patient.gender}</td>
-                    <td>{patient.mobileNumber}</td>
-                    <td>{patient.bloodGroup}</td>
-                    <td>
-                      <Link href={`/doctor/patients/${patient.patientId}`} className="data-table__view">
+                  <tr key={patient.patientId} className="hover:bg-clinic-bg/50 transition-colors">
+                    <td className="px-4 py-3.5 font-mono text-xs">{patient.patientId}</td>
+                    <td className="px-4 py-3.5 font-medium">{patient.fullname}</td>
+                    <td className="px-4 py-3.5">{patient.gender}</td>
+                    <td className="px-4 py-3.5">{patient.mobileNumber}</td>
+                    <td className="px-4 py-3.5">{patient.bloodGroup}</td>
+                    <td className="px-4 py-3.5 text-right">
+                      <Link
+                        href={`/doctor/patients/${patient.patientId}`}
+                        className="text-clinic-primary-deep font-semibold text-xs hover:underline"
+                      >
                         ดูข้อมูล
                       </Link>
                     </td>
@@ -77,6 +91,6 @@ export default async function DoctorPatientsPage({
           />
         </>
       )}
-    </>
+    </div>
   );
 }

@@ -43,15 +43,17 @@ export function LoginForm({ role, loginPath, defaultRedirect, nextPath }: LoginF
     }
   }
 
+  const isDoctor = role === "DOCTOR";
+
   return (
-    <form className="login-form" onSubmit={handleSubmit} noValidate>
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
       {error && (
-        <p className="login-form__error" role="alert">
+        <p className="p-3 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium" role="alert">
           {error}
         </p>
       )}
 
-      <label className="login-form__field">
+      <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
         <span>Username</span>
         <input
           name="username"
@@ -60,10 +62,11 @@ export function LoginForm({ role, loginPath, defaultRedirect, nextPath }: LoginF
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={isPending}
+          className="w-full text-clinic-ink px-3.5 py-2.5 border border-clinic-line rounded-control bg-clinic-bg focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all font-normal normal-case text-base sm:text-sm"
         />
       </label>
 
-      <label className="login-form__field">
+      <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
         <span>Password</span>
         <input
           type="password"
@@ -73,13 +76,18 @@ export function LoginForm({ role, loginPath, defaultRedirect, nextPath }: LoginF
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={isPending}
+          className="w-full text-clinic-ink px-3.5 py-2.5 border border-clinic-line rounded-control bg-clinic-bg focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all font-normal normal-case text-base sm:text-sm"
         />
       </label>
 
       <button
         type="submit"
-        className={`login-form__submit login-form__submit--${role.toLowerCase()}`}
         disabled={isPending}
+        className={`w-full mt-2 py-3 px-4 rounded-control font-semibold text-sm text-white transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 cursor-pointer ${
+          isDoctor
+            ? "bg-clinic-primary hover:bg-clinic-primary-deep focus:ring-clinic-primary-deep"
+            : "bg-clinic-accent-deep hover:bg-[#6E4C15] focus:ring-clinic-accent-deep"
+        }`}
       >
         {isPending ? "Signing in…" : "Sign in"}
       </button>
