@@ -16,7 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "ตารางเวร", href: "/doctor/schedule", built: true },
   { label: "การนัดหมาย", href: "/doctor/appointments", built: true },
   { label: "การรักษา", href: "/doctor/treatments", built: false },
-  { label: "คลังยา", href: "/doctor/medicine", built: false },
+  { label: "คลังยา", href: "/doctor/medicine", built: true },
 ];
 
 export function DoctorNavbar({ username }: { username?: string }) {
