@@ -71,12 +71,20 @@ export default async function DoctorPatientsPage({
                     <td className="px-4 py-3.5">{patient.mobileNumber}</td>
                     <td className="px-4 py-3.5">{patient.bloodGroup}</td>
                     <td className="px-4 py-3.5 text-right">
-                      <Link
-                        href={`/doctor/patients/${patient.patientId}`}
-                        className="text-clinic-primary-deep font-semibold text-xs hover:underline"
-                      >
-                        ดูข้อมูล
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          href={`/doctor/patients/${patient.patientId}`}
+                          className="text-clinic-primary-deep font-semibold text-xs hover:underline"
+                        >
+                          ดูข้อมูล
+                        </Link>
+                        <Link
+                          href={`/doctor/patients/${patient.patientId}/edit`}
+                          className="text-clinic-accent-deep font-semibold text-xs hover:underline"
+                        >
+                          แก้ไข
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

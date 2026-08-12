@@ -88,6 +88,34 @@ public class PatientService {
         }
 
         patientMapper.updateBasicInfo(dto, existing);
+
+        if (dto.getHealthProfile() != null) {
+            if (existing.getHealthProfile() == null) {
+                existing.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
+            } else {
+                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), existing.getHealthProfile());
+            }
+        }
+
+        if (dto.getPrinciple() != null) {
+            if (existing.getPrinciple() == null) {
+                existing.setPrinciple(principleMapper.toEntity(dto.getPrinciple()));
+            } else {
+                principleMapper.updateEntityFromDto(dto.getPrinciple(), existing.getPrinciple());
+            }
+        }
+
+        if (dto.getContactPersons() != null) {
+            if (existing.getContactPersons() == null) {
+                existing.setContactPersons(new ArrayList<>());
+            } else {
+                existing.getContactPersons().clear();
+            }
+            for (ContactPersonRequestDTO contactDto : dto.getContactPersons()) {
+                existing.getContactPersons().add(contactPersonMapper.toEntity(contactDto));
+            }
+        }
+
         return patientMapper.toResponseDTO(patientRepository.save(existing));
     }
 
