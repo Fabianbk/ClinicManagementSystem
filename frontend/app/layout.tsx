@@ -1,9 +1,10 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { sarabun, taviraj } from '@/lib/fonts';
 
 export const metadata: Metadata = {
-  title: 'Clinic Management System',
-  description: 'Thai Traditional Medicine Clinic',
+  title: 'พิมพ์วิมาน คลินิกการแพทย์แผนไทย',
+  description: 'Thai Traditional Medicine Clinic — Clinic Management System',
 };
 
 export default function RootLayout({
@@ -12,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${sarabun.variable} ${taviraj.variable}`}>
       <body>{children}</body>
     </html>
   );
