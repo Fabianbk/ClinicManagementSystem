@@ -88,7 +88,7 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getByDoctorId(int doctorId, Pageable pageable) {
-        return appointmentRepository.findByAppointmentSlot_WorkingSchedule_Doctor_DoctorId(doctorId, pageable)
+        return appointmentRepository.findByDoctorId(doctorId, pageable)
                 .map(appointmentMapper::toResponseDTO);
     }
 

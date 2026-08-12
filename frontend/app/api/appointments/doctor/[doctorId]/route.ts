@@ -15,6 +15,7 @@ export async function GET(
     const data = await getAppointmentsByDoctorId(doctorId, page, size);
     return NextResponse.json(data);
   } catch (err) {
+    console.error("Error in GET /api/appointments/doctor/[doctorId]:", err);
     if (err instanceof ApiError) {
       return NextResponse.json({ message: err.message }, { status: err.status });
     }

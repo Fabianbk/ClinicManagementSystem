@@ -27,7 +27,10 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
     try {
       setLoading(true);
       const res = await fetch(`/api/appointments/doctor/${doctorId}?page=0&size=100`);
-      if (!res.ok) throw new Error("ไม่สามารถโหลดรายการนัดหมายได้");
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || "ไม่สามารถโหลดรายการนัดหมายได้");
+      }
       const data: PageResponse<AppointmentResponseDTO> = await res.json();
       setAppointments(data.content ?? []);
     } catch (err: any) {
@@ -371,16 +374,25 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
 }
 
 // Helpers
+const THAI_WEEKDAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+const THAI_MONTHS = [
+  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+];
+
 function formatDateThai(dateStr?: string): string {
   if (!dateStr) return "-";
   try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("th-TH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      weekday: "short",
-    });
+    const cleanDate = dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`;
+    const d = new Date(cleanDate);
+    if (isNaN(d.getTime())) return dateStr;
+
+    const weekday = THAI_WEEKDAYS[d.getDay()];
+    const day = d.getDate();
+    const month = THAI_MONTHS[d.getMonth()];
+    const year = d.getFullYear() + 543;
+
+    return `${weekday} ${day} ${month} ${year}`;
   } catch (e) {
     return dateStr;
   }

@@ -670,17 +670,25 @@ export function ScheduleManagerClient({
 }
 
 // Helpers
+const THAI_WEEKDAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+const THAI_MONTHS = [
+  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+];
+
 function formatDateThai(dateStr?: string): string {
   if (!dateStr) return "-";
   try {
-    const cleanDate = dateStr.split("T")[0];
-    const d = new Date(cleanDate + "T00:00:00");
-    return d.toLocaleDateString("th-TH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      weekday: "short",
-    });
+    const cleanDate = dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`;
+    const d = new Date(cleanDate);
+    if (isNaN(d.getTime())) return dateStr;
+
+    const weekday = THAI_WEEKDAYS[d.getDay()];
+    const day = d.getDate();
+    const month = THAI_MONTHS[d.getMonth()];
+    const year = d.getFullYear() + 543;
+
+    return `${weekday} ${day} ${month} ${year}`;
   } catch (e) {
     return dateStr;
   }
