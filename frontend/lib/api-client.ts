@@ -39,7 +39,16 @@ function buildUrl(path: string, params?: RequestOptions["params"]): string {
   if (!base) {
     throw new Error("API_BASE_URL is not set");
   }
-  const url = new URL(path.startsWith("/") ? path.slice(1) : path, `${base}/`);
+  const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+
+  // If cleanBase ends with /api and cleanPath starts with /api, strip duplicate /api prefix
+  const finalPath =
+    cleanBase.endsWith("/api") && cleanPath.startsWith("/api")
+      ? cleanPath.slice(4)
+      : cleanPath;
+
+  const url = new URL(`${cleanBase}${finalPath}`);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined) {
