@@ -20,6 +20,7 @@ import com.clinic.clinicmanagementsystem.mapper.PrincipleMapper;
 import com.clinic.clinicmanagementsystem.repository.ContactPersonRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientAccountRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
+import com.clinic.clinicmanagementsystem.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,7 @@ public class PatientService {
     private final ContactPersonRepository contactPersonRepository;
     private final PatientAccountRepository patientAccountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CurrentUser currentUser;
 
     private final PatientMapper patientMapper;
     private final PrincipleMapper principleMapper;
@@ -83,6 +85,7 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public PatientResponseDTO getById(int patientId) {
+        currentUser.requireSelfOrDoctor(patientId);
         return patientMapper.toResponseDTO(findPatientOrThrow(patientId));
     }
 

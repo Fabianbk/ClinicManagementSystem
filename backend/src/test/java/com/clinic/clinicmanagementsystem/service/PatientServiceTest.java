@@ -12,10 +12,10 @@ import com.clinic.clinicmanagementsystem.mapper.PrincipleMapper;
 import com.clinic.clinicmanagementsystem.repository.ContactPersonRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientAccountRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
+import com.clinic.clinicmanagementsystem.security.CurrentUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,11 +23,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +44,9 @@ class PatientServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private CurrentUser currentUser;
 
     @Mock
     private PatientMapper patientMapper;
@@ -143,5 +146,21 @@ class PatientServiceTest {
 
         verify(patientRepository, never()).save(any());
         verify(patientAccountRepository, never()).save(any());
+    }
+
+    @Test
+    void getById_shouldCheckPermissionAndReturnPatient() {
+        when(patientRepository.findById(101)).thenReturn(Optional.of(patientEntity));
+        PatientResponseDTO responseDTO = PatientResponseDTO.builder()
+                .patientId(101)
+                .fullname("Somchai Jaidee")
+                .build();
+        when(patientMapper.toResponseDTO(patientEntity)).thenReturn(responseDTO);
+
+        PatientResponseDTO result = patientService.getById(101);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getPatientId()).isEqualTo(101);
+        verify(currentUser).requireSelfOrDoctor(101);
     }
 }

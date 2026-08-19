@@ -9,7 +9,7 @@ export default async function PatientLoginPage({
 }) {
   const session = await getSession();
   if (session?.role === "PATIENT") {
-    redirect(searchParams.next || "/patient/appointments");
+    redirect(searchParams.next || "/patient/dashboard");
   }
 
   return (
@@ -35,7 +35,7 @@ export default async function PatientLoginPage({
           <LoginForm
             role="PATIENT"
             loginPath="/api/auth/patient/login"
-            defaultRedirect="/patient/appointments"
+            defaultRedirect="/patient/dashboard"
             nextPath={searchParams.next}
           />
 
