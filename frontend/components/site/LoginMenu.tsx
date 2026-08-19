@@ -1,20 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
 export function LoginMenu() {
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
 
   return (
-    <div
-      className="relative"
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setOpen(false);
-        }
-      }}
-    >
+    <div ref={menuRef} className="relative">
       <button
         type="button"
         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-clinic-primary-deep focus:ring-offset-2 cursor-pointer"
@@ -26,10 +35,14 @@ export function LoginMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-clinic-line rounded-control shadow-xl p-2 flex flex-col gap-1 z-30" role="menu">
+        <div
+          className="absolute right-0 top-full mt-2 w-64 bg-white border border-clinic-line rounded-control shadow-xl p-2 flex flex-col gap-1 z-30"
+          role="menu"
+        >
           <Link
             href="/doctor/login"
             role="menuitem"
+            onClick={() => setOpen(false)}
             className="block p-2.5 rounded-md hover:bg-clinic-bg transition-colors group"
           >
             <span className="font-semibold text-sm block text-clinic-primary-deep group-hover:text-clinic-primary">
@@ -42,6 +55,7 @@ export function LoginMenu() {
           <Link
             href="/patient/login"
             role="menuitem"
+            onClick={() => setOpen(false)}
             className="block p-2.5 rounded-md hover:bg-clinic-bg transition-colors group"
           >
             <span className="font-semibold text-sm block text-clinic-accent-deep group-hover:text-clinic-accent">
@@ -55,4 +69,4 @@ export function LoginMenu() {
       )}
     </div>
   );
-}
+}
