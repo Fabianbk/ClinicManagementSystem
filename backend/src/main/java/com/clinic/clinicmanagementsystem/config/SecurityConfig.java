@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/doctors").permitAll() // bootstrap: first doctor
+                        .requestMatchers(HttpMethod.GET, "/api/doctors/**").permitAll() // public doctor list viewing
                         .requestMatchers(HttpMethod.GET, "/api/working-schedules/**").permitAll() // View Doctor Schedule (public, SRS 3.1.1)
                         .requestMatchers(HttpMethod.GET, "/api/appointment-slots/**").permitAll() // public slot viewing
                         .anyRequest().authenticated()

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getWorkingSchedules } from "@/lib/resources/working-schedules";
+import { getDoctors } from "@/lib/resources/doctors";
 import { PatientBookAppointmentClient } from "@/components/patient/PatientBookAppointmentClient";
 
 export default async function PatientBookPage() {
@@ -9,7 +10,10 @@ export default async function PatientBookPage() {
     redirect("/patient/login");
   }
 
-  const schedulesData = await getWorkingSchedules(0, 50).catch(() => ({ content: [] }));
+  const [schedulesData, doctorsData] = await Promise.all([
+    getWorkingSchedules(0, 100).catch(() => ({ content: [] })),
+    getDoctors(0, 100).catch(() => ({ content: [] })),
+  ]);
 
   // Filter only schedules today or in the future
   const now = new Date();
@@ -24,6 +28,8 @@ export default async function PatientBookPage() {
     <PatientBookAppointmentClient
       patientId={session.id}
       initialSchedules={futureSchedules}
+      initialDoctors={doctorsData.content || []}
     />
   );
 }
+
