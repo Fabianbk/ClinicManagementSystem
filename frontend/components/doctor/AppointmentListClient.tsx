@@ -334,31 +334,41 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4 text-right space-x-2">
+                      <td className="px-5 py-4 text-right space-x-1.5 whitespace-nowrap">
                         {isScheduled ? (
                           <>
+                            <Link
+                              href={`/doctor/treatments/new?appointmentId=${app.appointmentId}&patientId=${app.patientId}`}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-2xs"
+                            >
+                              📝 บันทึกการรักษา
+                            </Link>
                             <button
                               disabled={updatingId === app.appointmentId}
                               onClick={() => handleComplete(app.appointmentId)}
-                              className="px-3 py-1.5 rounded-control text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-control text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+                              title="เปลี่ยนสถานะเป็นเสร็จสิ้น"
                             >
                               ✓ เสร็จสิ้น
                             </button>
                             <button
                               disabled={updatingId === app.appointmentId}
                               onClick={() => handleNoShow(app.appointmentId)}
-                              className="px-3 py-1.5 rounded-control text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors border border-amber-300 disabled:opacity-50 cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-control text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-colors disabled:opacity-50 cursor-pointer"
+                              title="ไม่มาตามนัด"
                             >
-                              ✕ ไม่มาตามนัด
+                              ✕
                             </button>
                           </>
                         ) : (
-                          <Link
-                            href={`/doctor/patients/${app.patientId}`}
-                            className="px-3 py-1.5 rounded-control text-xs font-semibold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white transition-colors border border-clinic-line"
-                          >
-                            📄 ดูประวัติ
-                          </Link>
+                          <div className="space-x-1.5">
+                            <Link
+                              href={`/doctor/patients/${app.patientId}`}
+                              className="px-3 py-1.5 rounded-control text-xs font-semibold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white transition-colors border border-clinic-line"
+                            >
+                              👤 ประวัติผู้ป่วย
+                            </Link>
+                          </div>
                         )}
                       </td>
                     </tr>

@@ -218,7 +218,8 @@ export interface AppointmentResponseDTO {
 // ---------- Record Treatment ----------
 
 export interface RecordTreatmentRequestDTO {
-  appointmentId: number;
+  appointmentId?: number;
+  patientId?: number;
   doctorId: number;
   recordDate: string;
   symptoms?: string;

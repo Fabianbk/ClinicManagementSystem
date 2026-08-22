@@ -15,7 +15,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "ผู้ป่วย", href: "/doctor/patients", built: true },
   { label: "ตารางเวร", href: "/doctor/schedule", built: true },
   { label: "การนัดหมาย", href: "/doctor/appointments", built: true },
-  { label: "การรักษา", href: "/doctor/treatments", built: false },
+  { label: "การรักษา", href: "/doctor/treatments", built: true },
   { label: "คลังยา", href: "/doctor/medicine", built: true },
 ];
 

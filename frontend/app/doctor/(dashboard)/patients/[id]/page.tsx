@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPatient } from "@/lib/resources/patients";
+import { getRecordTreatmentsByPatientId } from "@/lib/resources/record-treatments";
 import { ApiError } from "@/lib/api-client";
-import type { PatientResponseDTO } from "@/lib/types";
+import type { PatientResponseDTO, RecordTreatmentResponseDTO } from "@/lib/types";
 
 export default async function PatientDetailPage({
   params,
@@ -15,10 +16,16 @@ export default async function PatientDetailPage({
   }
 
   let patient: PatientResponseDTO | null = null;
+  let treatments: RecordTreatmentResponseDTO[] = [];
   let errorMessage: string | null = null;
 
   try {
-    patient = await getPatient(patientId);
+    const [patientData, treatmentsData] = await Promise.all([
+      getPatient(patientId),
+      getRecordTreatmentsByPatientId(patientId, 0, 50).catch(() => ({ content: [] })),
+    ]);
+    patient = patientData;
+    treatments = treatmentsData.content || [];
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -63,16 +70,23 @@ export default async function PatientDetailPage({
           ← ย้อนกลับ
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <Link
+            href={`/doctor/treatments/new?patientId=${patient.patientId}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-sm"
+          >
+            <span>📝 บันทึกการรักษาใหม่</span>
+          </Link>
+
           <Link
             href={`/doctor/patients/${patient.patientId}/edit`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-control text-xs font-semibold text-clinic-ink bg-white hover:bg-slate-50 border border-clinic-line transition-all shadow-xs"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
-            แก้ไขข้อมูลผู้ป่วย
+            แก้ไขข้อมูล
           </Link>
         </div>
       </div>
@@ -256,6 +270,98 @@ export default async function PatientDetailPage({
             <p className="text-xs text-clinic-ink-soft italic">ไม่มีข้อมูลผู้ติดต่อฉุกเฉิน</p>
           )}
         </div>
+      </div>
+
+      {/* Treatment History Section */}
+      <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-clinic-line pb-3">
+          <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
+            <span>🌿 ประวัติการตรวจรักษาทั้งหมด ({treatments.length} ครั้ง)</span>
+          </h2>
+          <Link
+            href={`/doctor/treatments/new?patientId=${patient.patientId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-bold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white transition-all border border-clinic-line shadow-2xs"
+          >
+            + บันทึกการรักษาใหม่
+          </Link>
+        </div>
+
+        {treatments.length > 0 ? (
+          <div className="space-y-4">
+            {treatments.map((t) => {
+              const meds = t.recordTreatmentMedicines || [];
+              return (
+                <div
+                  key={t.recordTreatmentId}
+                  className="p-4 bg-clinic-bg/40 border border-clinic-line rounded-control space-y-3 hover:border-clinic-primary/40 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-clinic-line/60 pb-2.5">
+                    <div>
+                      <span className="font-bold text-sm text-clinic-primary-deep">
+                        การรักษา #{t.recordTreatmentId}
+                      </span>
+                      <span className="text-xs text-clinic-ink-soft ml-2">
+                        {t.recordDate
+                          ? new Date(t.recordDate).toLocaleDateString("th-TH", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })
+                          : "-"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-clinic-ink-soft">
+                        แพทย์: <strong>{t.doctorFullname}</strong>
+                      </span>
+                      <Link
+                        href={`/doctor/treatments/${t.recordTreatmentId}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-clinic-primary bg-white hover:bg-clinic-primary hover:text-white border border-clinic-line transition-all shadow-2xs"
+                      >
+                        👁️ ดูรายละเอียด
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="font-semibold text-clinic-ink-soft">อาการ:</span>{" "}
+                      <span className="text-clinic-ink">{t.symptoms || "-"}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-clinic-ink-soft">การวินิจฉัยแผนไทย:</span>{" "}
+                      <span className="text-clinic-primary font-semibold">{t.ttmDiagnosis || "-"}</span>
+                    </div>
+                    {t.treatmentProgram && (
+                      <div>
+                        <span className="font-semibold text-clinic-ink-soft">หัตถการ:</span>{" "}
+                        <span className="text-clinic-ink">{t.treatmentProgram}</span>
+                      </div>
+                    )}
+                    {meds.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-clinic-ink-soft">ยาที่ได้รับ:</span>{" "}
+                        <span className="text-clinic-ink font-medium">
+                          {meds.map((m) => `${m.medicineName} (${m.quantity})`).join(", ")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-clinic-ink-soft space-y-2">
+            <p className="text-xs">ยังไม่มีประวัติการบันทึกการรักษาสำหรับผู้ป่วยรายนี้</p>
+            <Link
+              href={`/doctor/treatments/new?patientId=${patient.patientId}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-clinic-primary text-white text-xs font-semibold rounded-control hover:bg-clinic-primary-deep transition-colors"
+            >
+              + บันทึกการตรวจรักษาครั้งแรก
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

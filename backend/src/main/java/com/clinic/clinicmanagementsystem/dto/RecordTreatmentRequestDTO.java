@@ -15,8 +15,9 @@ import java.util.Date;
 @Builder
 public class RecordTreatmentRequestDTO {
 
-    @NotNull(message = "Appointment ID is required")
     private Integer appointmentId;
+
+    private Integer patientId;
 
     @NotNull(message = "Doctor ID is required")
     private Integer doctorId;
