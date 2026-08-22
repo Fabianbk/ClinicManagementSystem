@@ -69,7 +69,7 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
     public ResponseEntity<ApiResponse<AppointmentResponseDTO>> cancel(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(
                 appointmentService.cancel(id), "Appointment cancelled successfully"));
