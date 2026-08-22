@@ -282,7 +282,7 @@ export function RecordTreatmentFormClient({
           setFormMode("FIRST_VISIT");
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       isMounted = false;
@@ -476,11 +476,14 @@ export function RecordTreatmentFormClient({
     }
 
     try {
+      const recordDateObj = visitDate ? new Date(`${visitDate}T${visitTime || "00:00"}:00`) : new Date();
+      const validRecordDateIso = isNaN(recordDateObj.getTime()) ? new Date().toISOString() : recordDateObj.toISOString();
+
       const treatmentDTO: RecordTreatmentRequestDTO = {
         appointmentId: selectedAppointmentId === "WALK_IN" ? undefined : selectedAppointmentId,
         patientId: selectedPatientId,
-        doctorId: doctorId,
-        recordDate: visitDate ? `${visitDate}T${visitTime}:00` : new Date().toISOString(),
+        doctorId: Number(doctorId) || 1,
+        recordDate: validRecordDateIso,
         symptoms: presentHistory.trim()
           ? `${symptoms.trim()}\n[ประวัติปัจจุบัน]: ${presentHistory.trim()}`
           : symptoms.trim(),
@@ -493,7 +496,7 @@ export function RecordTreatmentFormClient({
         bmi: bmiValue ? Number(bmiValue) : undefined,
         causeOfSymptoms: composedCauseOfSymptoms || undefined,
         summaryOfSickness: summaryOfSickness.trim() || undefined,
-        diagnosisElements: composedDiagnosisElements || undefined,
+        diagnosisElements: diagnosisElements.trim() || undefined,
         ttmDiagnosis: ttmDiagnosis.trim() || undefined,
         modernDiagnosis: composedModernDiagnosisWithReflexes || undefined,
         treatmentPlan: treatmentPlan.trim() || undefined,
@@ -504,6 +507,26 @@ export function RecordTreatmentFormClient({
         followup: followup.trim() || undefined,
         painScoreBefore: painScoreBefore,
         painScoreAfter: painScoreAfter,
+        principle: {
+          principleDhatu: principalDhatu,
+          secondaryDhatu: secondaryDhatu,
+          elementaryPrinciples: `ปฏิสนธิ/ตอนเกิด: ${dhatuBirth}, ปฏิสนธิลักษณะ: ${dhatuTrait}`,
+          seasonalPrinciples: `เมื่อเริ่มเจ็บป่วย: ${utuIllness}, เมื่อมาพบแพทย์: ${utuVisit}`,
+          agePrinciples: agePrinciple,
+          timePrinciples: `เมื่ออาการกำเริบ: ${kalaAggravate}, เมื่อมาพบแพทย์: ${kalaVisit}`,
+          geographicPrinciples: `ภูมิลำเนา: ${prathetBirth}, ปัจจุบัน: ${prathetPresent}`,
+        },
+        healthProfile: {
+          presentHistory: presentHistory.trim() || undefined,
+          underlyingDisease: hasUnderlyingDisease ? underlyingDiseaseDetails : "ปฏิเสธโรคประจำตัว",
+          drugAllergy: hasDrugAllergy ? drugAllergyDetails : "ปฏิเสธการแพ้ยา",
+          foodAllergy: hasFoodAllergy ? foodAllergyDetails : "ปฏิเสธการแพ้อาหาร",
+          hereditaryDisease: hasFamilyDisease ? familyDiseaseDetails : "ครอบครัวปฏิเสธโรคทางพันธุกรรม",
+          alcoholConsumption: drinksAlcohol ? "ดื่มแอลกอฮอล์" : "ปฏิเสธการดื่มแอลกอฮอล์",
+          smokingHistory: smokes ? "สูบบุหรี่" : "ปฏิเสธการสูบบุหรี่",
+          menstruation: menstruationHistory.trim() || undefined,
+          personalHistory: (drinksAlcohol || smokes) ? "มีประวัติดื่มแอลกอฮอล์หรือสูบบุหรี่" : "ปฏิเสธการดื่มแอลกอฮอล์ และปฏิเสธการสูบบุหรี่",
+        },
       };
 
       // 1. Create Treatment Record
@@ -586,22 +609,20 @@ export function RecordTreatmentFormClient({
           <button
             type="button"
             onClick={() => setFormMode("FIRST_VISIT")}
-            className={`px-3 py-1.5 rounded-control text-xs font-bold transition-all cursor-pointer ${
-              formMode === "FIRST_VISIT"
+            className={`px-3 py-1.5 rounded-control text-xs font-bold transition-all cursor-pointer ${formMode === "FIRST_VISIT"
                 ? "bg-clinic-primary text-white shadow-2xs"
                 : "text-clinic-ink-soft hover:text-clinic-ink"
-            }`}
+              }`}
           >
             🌿 ตรวจรักษาครั้งแรก (Full Intake)
           </button>
           <button
             type="button"
             onClick={() => setFormMode("CONTINUED_VISIT")}
-            className={`px-3 py-1.5 rounded-control text-xs font-bold transition-all cursor-pointer ${
-              formMode === "CONTINUED_VISIT"
+            className={`px-3 py-1.5 rounded-control text-xs font-bold transition-all cursor-pointer ${formMode === "CONTINUED_VISIT"
                 ? "bg-clinic-primary text-white shadow-2xs"
                 : "text-clinic-ink-soft hover:text-clinic-ink"
-            }`}
+              }`}
           >
             📋 แบบบันทึกการรักษาต่อเนื่อง (Page 6)
           </button>
@@ -791,11 +812,10 @@ export function RecordTreatmentFormClient({
               ].map((item) => (
                 <label
                   key={item}
-                  className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
-                    principalDhatu === item
+                  className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${principalDhatu === item
                       ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
                       : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -824,11 +844,10 @@ export function RecordTreatmentFormClient({
               ].map((item) => (
                 <label
                   key={item}
-                  className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
-                    secondaryDhatu === item
+                  className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${secondaryDhatu === item
                       ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
                       : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -1201,11 +1220,10 @@ export function RecordTreatmentFormClient({
                   key={p.score}
                   type="button"
                   onClick={() => setPainScoreBefore(p.score)}
-                  className={`p-2.5 rounded-control border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${
-                    isSelected
+                  className={`p-2.5 rounded-control border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${isSelected
                       ? "bg-clinic-primary text-white border-clinic-primary shadow-xs font-bold scale-[1.02]"
                       : "bg-clinic-bg/40 border-clinic-line hover:border-clinic-primary/50 text-clinic-ink"
-                  }`}
+                    }`}
                 >
                   <span className="text-2xl">{p.emoji}</span>
                   <span className="text-xs font-mono font-bold">{p.score}</span>
@@ -1827,11 +1845,10 @@ export function RecordTreatmentFormClient({
                   key={p.score}
                   type="button"
                   onClick={() => setPainScoreAfter(p.score)}
-                  className={`p-2.5 rounded-control border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${
-                    isSelected
+                  className={`p-2.5 rounded-control border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${isSelected
                       ? "bg-emerald-600 text-white border-emerald-600 shadow-xs font-bold scale-[1.02]"
                       : "bg-clinic-bg/40 border-clinic-line hover:border-emerald-500/50 text-clinic-ink"
-                  }`}
+                    }`}
                 >
                   <span className="text-2xl">{p.emoji}</span>
                   <span className="text-xs font-mono font-bold">{p.score}</span>

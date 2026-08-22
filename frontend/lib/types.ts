@@ -241,6 +241,8 @@ export interface RecordTreatmentRequestDTO {
   followup?: string;
   painScoreBefore?: number;
   painScoreAfter?: number;
+  principle?: PrincipleRequestDTO;
+  healthProfile?: HealthProfileRequestDTO;
 }
 
 export interface RecordTreatmentMedicineRequestDTO {

@@ -10,6 +10,8 @@ import com.clinic.clinicmanagementsystem.exception.BadRequestException;
 import com.clinic.clinicmanagementsystem.exception.DuplicateResourceException;
 import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
 import com.clinic.clinicmanagementsystem.mapper.RecordTreatmentMapper;
+import com.clinic.clinicmanagementsystem.mapper.PrincipleMapper;
+import com.clinic.clinicmanagementsystem.mapper.HealthProfileMapper;
 import com.clinic.clinicmanagementsystem.repository.AppointmentRepository;
 import com.clinic.clinicmanagementsystem.repository.DoctorRepository;
 import com.clinic.clinicmanagementsystem.repository.RecordTreatmentRepository;
@@ -41,11 +43,14 @@ public class RecordTreatmentService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final RecordTreatmentMapper recordTreatmentMapper;
+    private final PrincipleMapper principleMapper;
+    private final HealthProfileMapper healthProfileMapper;
     private final CurrentUser currentUser;
 
     /**
      * Add Record Treatment. Supports both existing appointment and
      * auto-creating an appointment for walk-in patients.
+     * Also syncs Principle and HealthProfile to the patient record.
      */
     public RecordTreatmentResponseDTO create(RecordTreatmentRequestDTO dto) {
         Doctor doctor = doctorRepository.findById(dto.getDoctorId())
@@ -114,6 +119,27 @@ public class RecordTreatmentService {
         appointment.setStatus(AppointmentStatus.COMPLETED);
         appointmentRepository.save(appointment);
 
+        // Update Patient's Principle assessment if provided
+        Patient patient = appointment.getPatient();
+        if (dto.getPrinciple() != null) {
+            if (patient.getPrinciple() == null) {
+                patient.setPrinciple(principleMapper.toEntity(dto.getPrinciple()));
+            } else {
+                principleMapper.updateEntityFromDto(dto.getPrinciple(), patient.getPrinciple());
+            }
+            patientRepository.save(patient);
+        }
+
+        // Update Patient's Health Profile if provided
+        if (dto.getHealthProfile() != null) {
+            if (patient.getHealthProfile() == null) {
+                patient.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
+            } else {
+                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), patient.getHealthProfile());
+            }
+            patientRepository.save(patient);
+        }
+
         RecordTreatment recordTreatment = recordTreatmentMapper.toEntity(dto);
         recordTreatment.setAppointment(appointment);
         recordTreatment.setDoctor(doctor);
@@ -155,6 +181,26 @@ public class RecordTreatmentService {
     public RecordTreatmentResponseDTO update(int recordTreatmentId, RecordTreatmentRequestDTO dto) {
         RecordTreatment existing = findRecordTreatmentOrThrow(recordTreatmentId);
         recordTreatmentMapper.updateEntityFromDto(dto, existing);
+
+        Patient patient = existing.getAppointment().getPatient();
+        if (dto.getPrinciple() != null && patient != null) {
+            if (patient.getPrinciple() == null) {
+                patient.setPrinciple(principleMapper.toEntity(dto.getPrinciple()));
+            } else {
+                principleMapper.updateEntityFromDto(dto.getPrinciple(), patient.getPrinciple());
+            }
+            patientRepository.save(patient);
+        }
+
+        if (dto.getHealthProfile() != null && patient != null) {
+            if (patient.getHealthProfile() == null) {
+                patient.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
+            } else {
+                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), patient.getHealthProfile());
+            }
+            patientRepository.save(patient);
+        }
+
         return recordTreatmentMapper.toResponseDTO(recordTreatmentRepository.save(existing));
     }
 

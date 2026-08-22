@@ -323,11 +323,10 @@ export function RecordTreatmentEditClient({
                   key={p.score}
                   type="button"
                   onClick={() => setPainScoreBefore(p.score)}
-                  className={`p-1.5 rounded-control text-center text-xs border cursor-pointer ${
-                    painScoreBefore === p.score
+                  className={`p-1.5 rounded-control text-center text-xs border cursor-pointer ${painScoreBefore === p.score
                       ? "bg-clinic-primary text-white font-bold"
                       : "bg-clinic-bg/40 text-clinic-ink"
-                  }`}
+                    }`}
                 >
                   <span>{p.emoji} {p.score}</span>
                 </button>
@@ -345,11 +344,10 @@ export function RecordTreatmentEditClient({
                   key={p.score}
                   type="button"
                   onClick={() => setPainScoreAfter(p.score)}
-                  className={`p-1.5 rounded-control text-center text-xs border cursor-pointer ${
-                    painScoreAfter === p.score
+                  className={`p-1.5 rounded-control text-center text-xs border cursor-pointer ${painScoreAfter === p.score
                       ? "bg-emerald-600 text-white font-bold"
                       : "bg-clinic-bg/40 text-clinic-ink"
-                  }`}
+                    }`}
                 >
                   <span>{p.emoji} {p.score}</span>
                 </button>

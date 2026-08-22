@@ -25,47 +25,50 @@ public class RecordTreatmentRequestDTO {
     @NotNull(message = "Record date is required")
     private Date recordDate;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String symptoms;
 
     private Double temp;
     private Integer pulse;
     private Integer respirationRate;
 
-    @Size(max = 20)
+    @Size(max = 255)
     private String bp;
 
     private Integer height;
     private Double weight;
     private Double bmi;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String causeOfSymptoms;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String summaryOfSickness;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String diagnosisElements;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String ttmDiagnosis;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String modernDiagnosis;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String treatmentPlan;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String treatmentProgram;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String suggestions;
 
-    @Size(max = 255)
+    @Size(max = 65535)
     private String followup;
 
     private Integer painScoreBefore;
     private Integer painScoreAfter;
+
+    private PrincipleRequestDTO principle;
+    private HealthProfileRequestDTO healthProfile;
 }

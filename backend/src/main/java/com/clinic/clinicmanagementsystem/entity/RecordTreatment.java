@@ -23,7 +23,7 @@ public class RecordTreatment {
     @Column(name = "record_date", nullable = false)
     private Date recordDate;
 
-    @Column(name = "symptoms", length = 1000)
+    @Column(name = "symptoms", columnDefinition = "TEXT")
     private String symptoms;
 
     @Column(name = "temp")
@@ -35,7 +35,7 @@ public class RecordTreatment {
     @Column(name = "respiration_rate")
     private Integer respirationRate;
 
-    @Column(name = "bp", length = 20)
+    @Column(name = "bp", length = 255)
     private String bp;
 
     @Column(name = "height")
@@ -47,31 +47,31 @@ public class RecordTreatment {
     @Column(name = "bmi")
     private Double bmi;
 
-    @Column(name = "cause_of_symptoms", length = 1000)
+    @Column(name = "cause_of_symptoms", columnDefinition = "TEXT")
     private String causeOfSymptoms;
 
-    @Column(name = "summary_of_sickness", length = 1000)
+    @Column(name = "summary_of_sickness", columnDefinition = "TEXT")
     private String summaryOfSickness;
 
-    @Column(name = "diagnosis_elements", length = 1000)
+    @Column(name = "diagnosis_elements", columnDefinition = "TEXT")
     private String diagnosisElements;
 
-    @Column(name = "ttm_diagnosis", length = 1000)
+    @Column(name = "ttm_diagnosis", columnDefinition = "TEXT")
     private String ttmDiagnosis;
 
-    @Column(name = "modern_diagnosis", length = 1000)
+    @Column(name = "modern_diagnosis", columnDefinition = "TEXT")
     private String modernDiagnosis;
 
-    @Column(name = "treatment_plan", length = 1000)
+    @Column(name = "treatment_plan", columnDefinition = "TEXT")
     private String treatmentPlan;
 
-    @Column(name = "treatment_program", length = 1000)
+    @Column(name = "treatment_program", columnDefinition = "TEXT")
     private String treatmentProgram;
 
-    @Column(name = "suggestions", length = 1000)
+    @Column(name = "suggestions", columnDefinition = "TEXT")
     private String suggestions;
 
-    @Column(name = "followup", length = 255)
+    @Column(name = "followup", columnDefinition = "TEXT")
     private String followup;
 
     @Column(name = "pain_score_before")
@@ -85,7 +85,7 @@ public class RecordTreatment {
     private Doctor doctor;
 
     @OneToOne
-    @JoinColumn(name = "appointment_id", nullable = false,unique = true)
+    @JoinColumn(name = "appointment_id", nullable = false, unique = true)
     private Appointment appointment;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "recordTreatment")
