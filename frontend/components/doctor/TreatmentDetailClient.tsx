@@ -66,20 +66,20 @@ export function TreatmentDetailClient({
         {/* Document Header */}
         <div className="text-center border-b border-clinic-line pb-5 space-y-1">
           <h1 className="font-display font-bold text-xl text-clinic-primary-deep">
-            แบบบันทึกข้อมูลผู้รับบริการและใบสั่งการรักษา
+            แบบบันทึกข้อมูลผู้รับบริการและใบสั่งการรักษา (Client Intake & Treatment Record)
           </h1>
           <p className="text-sm font-semibold text-clinic-ink">
-            พิมพ์วิมานคลินิกการแพทย์แผนไทย (Pimvimaan Thai Traditional Clinic)
+            พิมพ์วิมานคลินิกการแพทย์แผนไทย (Pimvimaan Thai Traditional Clinic) · 081 - 9358026
           </p>
           <p className="text-xs text-clinic-ink-soft">
             เวชระเบียนเลขที่: <strong>#{treatment.recordTreatmentId}</strong> · นัดหมายเลขที่: #{treatment.appointmentId} · วันที่ตรวจ: {formatDateThaiFull(treatment.recordDate)}
           </p>
         </div>
 
-        {/* Section 1: ข้อมูลผู้ป่วย */}
+        {/* Section 1: ข้อมูลผู้รับบริการ (Part 1 Personal Info) */}
         <div className="space-y-3">
           <h2 className="font-display font-bold text-sm text-clinic-primary-deep bg-clinic-bg/60 px-3 py-1.5 rounded-control border-l-4 border-clinic-primary">
-            ส่วนที่ ๑: ข้อมูลผู้รับบริการ (Personal Information)
+            ส่วนที่ ๑: ข้อมูลทั่วไป (Personal Information)
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div>
@@ -87,7 +87,7 @@ export function TreatmentDetailClient({
               <strong className="text-clinic-ink">{treatment.patientFullname}</strong>
             </div>
             <div>
-              <span className="text-clinic-ink-soft">HN ผู้ป่วย:</span>{" "}
+              <span className="text-clinic-ink-soft">เลขที่บัตร (OPD):</span>{" "}
               <strong className="text-clinic-ink font-mono">#{treatment.patientId}</strong>
             </div>
             <div>
@@ -106,17 +106,71 @@ export function TreatmentDetailClient({
               <span className="text-clinic-ink-soft">เบอร์โทรศัพท์:</span>{" "}
               <strong className="text-clinic-ink">{patient?.mobileNumber || "-"}</strong>
             </div>
+            <div>
+              <span className="text-clinic-ink-soft">สถานภาพ:</span>{" "}
+              <span className="text-clinic-ink">{patient?.marital || "โสด"}</span>
+            </div>
+            <div>
+              <span className="text-clinic-ink-soft">อาชีพ:</span>{" "}
+              <span className="text-clinic-ink">{patient?.occupation || "-"}</span>
+            </div>
             <div className="col-span-2">
-              <span className="text-clinic-ink-soft">ที่อยู่:</span>{" "}
+              <span className="text-clinic-ink-soft">ที่อยู่ปัจจุบัน:</span>{" "}
               <span className="text-clinic-ink">{patient?.address || "-"}</span>
             </div>
           </div>
         </div>
 
-        {/* Section 2: ตรวจร่างกายและสัญญาณชีพ */}
+        {/* Section 2: ประวัติการเจ็บป่วย & ธาตุเจ้าเรือน (Part 2 Medical Info) */}
         <div className="space-y-3">
           <h2 className="font-display font-bold text-sm text-clinic-primary-deep bg-clinic-bg/60 px-3 py-1.5 rounded-control border-l-4 border-clinic-primary">
-            ส่วนที่ ๒: การตรวจร่างกายและสัญญาณชีพ (Physical Examination)
+            ส่วนที่ ๒: ประวัติการเจ็บป่วย & ธาตุเจ้าเรือน (General and Medical Information)
+          </h2>
+          <div className="space-y-2.5 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
+              <div>
+                <span className="text-clinic-ink-soft font-semibold">ธาตุเจ้าเรือนหลัก:</span>{" "}
+                <strong className="text-clinic-primary">{patient?.principle?.principleDhatu || "ปถวี ดิน"}</strong>
+              </div>
+              <div>
+                <span className="text-clinic-ink-soft font-semibold">ธาตุเจ้าเรือนรอง:</span>{" "}
+                <strong className="text-clinic-primary">{patient?.principle?.secondaryDhatu || "วาโย ลม"}</strong>
+              </div>
+            </div>
+
+            <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line space-y-1.5">
+              <div>
+                <span className="font-bold text-clinic-ink">อาการสำคัญ (Symptoms / Chief Complaint):</span>
+                <p className="text-clinic-ink mt-0.5 whitespace-pre-line leading-relaxed">{treatment.symptoms || "-"}</p>
+              </div>
+            </div>
+
+            {/* Health profile badges */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
+                <span className="text-[10px] text-clinic-ink-soft block">โรคประจำตัว:</span>
+                <span className="font-semibold text-clinic-ink">{patient?.healthProfile?.underlyingDisease || "ปฏิเสธ"}</span>
+              </div>
+              <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
+                <span className="text-[10px] text-clinic-ink-soft block">การแพ้ยา:</span>
+                <span className="font-semibold text-rose-700">{patient?.healthProfile?.drugAllergy || "ปฏิเสธ"}</span>
+              </div>
+              <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
+                <span className="text-[10px] text-clinic-ink-soft block">การแพ้อาหาร:</span>
+                <span className="font-semibold text-amber-700">{patient?.healthProfile?.foodAllergy || "ปฏิเสธ"}</span>
+              </div>
+              <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
+                <span className="text-[10px] text-clinic-ink-soft block">แอลกอฮอล์/บุหรี่:</span>
+                <span className="font-semibold text-clinic-ink">ปฏิเสธ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: ตรวจร่างกาย & สัญญาณชีพ (Part 3 Physical Exam) */}
+        <div className="space-y-3">
+          <h2 className="font-display font-bold text-sm text-clinic-primary-deep bg-clinic-bg/60 px-3 py-1.5 rounded-control border-l-4 border-clinic-primary">
+            ส่วนที่ ๓: การตรวจร่างกายและสัญญาณชีพ (Physical Examination)
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs text-center">
             <div className="bg-clinic-bg/40 p-2.5 rounded-control border border-clinic-line">
@@ -160,92 +214,99 @@ export function TreatmentDetailClient({
               <strong className="text-emerald-700 font-mono text-sm">{treatment.painScoreAfter ?? "-"} / 10</strong>
             </div>
             {treatment.painScoreBefore !== null && treatment.painScoreAfter !== null && (
-              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">
+              <span className="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">
                 ผลการรักษา: ความปวดลดลง {Math.max(0, treatment.painScoreBefore - treatment.painScoreAfter)} ระดับ
               </span>
             )}
           </div>
+
+          {treatment.modernDiagnosis && (
+            <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line text-xs">
+              <span className="font-bold text-clinic-ink-soft">การวินิจฉัยแผนปัจจุบัน & รีเฟล็กซ์:</span>
+              <p className="text-clinic-ink mt-0.5 whitespace-pre-line">{treatment.modernDiagnosis}</p>
+            </div>
+          )}
         </div>
 
-        {/* Section 3: อาการสำคัญ & การวินิจฉัย */}
+        {/* Section 4: การวินิจฉัยแพทย์แผนไทย (Part 4 TTM Diagnosis) */}
         <div className="space-y-3">
           <h2 className="font-display font-bold text-sm text-clinic-primary-deep bg-clinic-bg/60 px-3 py-1.5 rounded-control border-l-4 border-clinic-primary">
-            ส่วนที่ ๓: อาการสำคัญและการวินิจฉัยโรค (Medical Diagnosis)
+            ส่วนที่ ๔: การวินิจฉัยทางการแพทย์แผนไทย (Thai Traditional Medical Diagnosis)
           </h2>
           <div className="space-y-2 text-xs">
-            <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line space-y-1">
-              <span className="font-bold text-clinic-ink">อาการสำคัญ (Chief Complaint):</span>
-              <p className="text-clinic-ink leading-relaxed">{treatment.symptoms || "-"}</p>
-            </div>
+            {treatment.ttmDiagnosis && (
+              <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
+                <span className="font-bold text-clinic-primary-deep">การวินิจฉัยโรคทางการแพทย์แผนไทย / รหัสโรค:</span>
+                <p className="text-clinic-ink font-bold text-sm mt-0.5 text-clinic-primary-deep">{treatment.ttmDiagnosis}</p>
+              </div>
+            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {treatment.ttmDiagnosis && (
-                <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
-                  <span className="font-bold text-clinic-primary-deep">การวินิจฉัยโรคทางการแพทย์แผนไทย:</span>
-                  <p className="text-clinic-ink font-semibold mt-0.5">{treatment.ttmDiagnosis}</p>
-                </div>
-              )}
-
-              {treatment.modernDiagnosis && (
-                <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
-                  <span className="font-bold text-clinic-ink-soft">การวินิจฉัยทางการแพทย์แผนปัจจุบัน:</span>
-                  <p className="text-clinic-ink mt-0.5">{treatment.modernDiagnosis}</p>
-                </div>
-              )}
-            </div>
+            {treatment.causeOfSymptoms && (
+              <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
+                <span className="font-bold text-clinic-ink">มูลเหตุการเกิดโรค (Cause of symptoms):</span>
+                <p className="text-clinic-ink mt-0.5">{treatment.causeOfSymptoms}</p>
+              </div>
+            )}
 
             {treatment.diagnosisElements && (
-              <div className="text-xs text-clinic-ink-soft">
-                <span>สมุฏฐานธาตุพิการ: </span>
-                <span className="text-clinic-ink">{treatment.diagnosisElements}</span>
+              <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
+                <span className="font-bold text-clinic-ink">ผลการวิเคราะห์สมุฏฐาน 5 ด้าน & สมุฏฐานธาตุพิการ:</span>
+                <p className="text-clinic-ink mt-0.5 leading-relaxed">{treatment.diagnosisElements}</p>
+              </div>
+            )}
+
+            {treatment.summaryOfSickness && (
+              <div className="p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
+                <span className="font-bold text-clinic-ink">สรุปความเจ็บป่วย (Summary of sickness):</span>
+                <p className="text-clinic-ink mt-0.5">{treatment.summaryOfSickness}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Section 4: แผนการรักษาและหัตถการ */}
+        {/* Section 5: การรักษาและคำแนะนำ (Part 5 Treatment Program) */}
         <div className="space-y-3">
           <h2 className="font-display font-bold text-sm text-clinic-primary-deep bg-clinic-bg/60 px-3 py-1.5 rounded-control border-l-4 border-clinic-primary">
-            ส่วนที่ ๔: การรักษาและคำแนะนำ (Treatment Program & Suggestions)
+            ส่วนที่ ๕: การรักษาและคำแนะนำ (Treatment Program & Suggestions)
           </h2>
           <div className="space-y-2 text-xs">
             {treatment.treatmentPlan && (
               <div>
-                <span className="text-clinic-ink-soft font-semibold">แผนการรักษา:</span>{" "}
+                <span className="text-clinic-ink-soft font-semibold">๑. แผนการรักษา:</span>{" "}
                 <span className="text-clinic-ink">{treatment.treatmentPlan}</span>
               </div>
             )}
 
             {treatment.treatmentProgram && (
               <div>
-                <span className="text-clinic-ink-soft font-semibold">วิธีการรักษา/หัตถการ:</span>{" "}
+                <span className="text-clinic-ink-soft font-semibold">๒. วิธีการรักษา/หัตถการ:</span>{" "}
                 <span className="text-clinic-primary font-semibold">{treatment.treatmentProgram}</span>
               </div>
             )}
 
             {treatment.suggestions && (
               <div>
-                <span className="text-clinic-ink-soft font-semibold">คำแนะนำสำหรับผู้ป่วย:</span>{" "}
+                <span className="text-clinic-ink-soft font-semibold">๓. คำแนะนำสำหรับผู้ป่วย:</span>{" "}
                 <span className="text-clinic-ink">{treatment.suggestions}</span>
               </div>
             )}
 
             {treatment.followup && (
               <div>
-                <span className="text-clinic-ink-soft font-semibold">นัดหมายติดตามผล:</span>{" "}
+                <span className="text-clinic-ink-soft font-semibold">๔. นัดหมายติดตามผล:</span>{" "}
                 <span className="text-clinic-ink font-bold text-emerald-800">{treatment.followup}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Section 5: รายการยาและใบสั่งการรักษา / ใบเสร็จ */}
+        {/* Section 6: ใบสั่งการรักษา & รายการยาและค่ารักษา (Part 6 Prescription & Billing) */}
         <div className="space-y-3">
           <h2 className="font-display font-bold text-sm text-clinic-primary-deep bg-clinic-bg/60 px-3 py-1.5 rounded-control border-l-4 border-clinic-primary flex items-center justify-between">
-            <span>ส่วนที่ ๕: รายการยาสมุนไพรและค่ารักษาพยาบาล (Prescription & Billing)</span>
+            <span>ส่วนที่ ๖: ใบสั่งการรักษาและค่ารักษาพยาบาล (Prescription & Billing)</span>
             {receipt && (
               <span className="text-xs font-semibold text-emerald-800">
-                สถานะ: {receipt.paymentStatus === "PAID" ? "ชำระเงินแล้ว" : "รอดำเนินการ"}
+                สถานะ: {receipt.paymentStatus === "PAID" ? "ชำระเงินเรียบร้อยแล้ว" : "รอดำเนินการ"}
               </span>
             )}
           </h2>
@@ -255,8 +316,8 @@ export function TreatmentDetailClient({
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-clinic-bg text-clinic-ink-soft uppercase text-[10px] tracking-wider border-b border-clinic-line">
                   <tr>
-                    <th className="px-4 py-2">ลำดับ</th>
-                    <th className="px-4 py-2">รายการยาสมุนไพร</th>
+                    <th className="px-4 py-2 text-center w-12">ลำดับ</th>
+                    <th className="px-4 py-2">รายการยาสมุนไพร / หัตถการ</th>
                     <th className="px-4 py-2 text-center">จำนวน</th>
                     <th className="px-4 py-2 text-right">ราคา/หน่วย</th>
                     <th className="px-4 py-2 text-right">รวม (บาท)</th>
@@ -293,7 +354,7 @@ export function TreatmentDetailClient({
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-xs text-clinic-ink-soft block">รวมค่ารักษาและยาทั้งสิ้น</span>
+                <span className="text-xs text-clinic-ink-soft block">รวมค่ารักษาทั้งสิ้น</span>
                 <span className="font-mono text-xl font-bold text-clinic-primary-deep">
                   ฿{receipt.totalPrice.toLocaleString()} บาท
                 </span>
@@ -309,12 +370,12 @@ export function TreatmentDetailClient({
             <p>081 - 9358026</p>
           </div>
 
-          <div className="text-center space-y-1 min-w-[200px]">
-            <div className="border-b border-clinic-ink/30 pb-1 font-semibold text-clinic-ink">
+          <div className="text-center space-y-1 min-w-[220px]">
+            <div className="border-b border-clinic-ink/40 pb-1 font-semibold text-clinic-ink">
               พท.ภ. {treatment.doctorFullname}
             </div>
             <p className="text-[11px] text-clinic-ink-soft">
-              แพทย์แผนไทยผู้ตรวจรักษา
+              แพทย์แผนไทยผู้ตรวจรักษา (เลขที่ใบประกอบวิชาชีพ พท.ว.)
             </p>
           </div>
         </div>
