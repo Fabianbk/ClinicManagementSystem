@@ -17,33 +17,33 @@ public class HealthProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int healthId;
 
-    @Column(name = "present_history", length = 1000)
+    @Column(name = "present_history", columnDefinition = "TEXT")
     private String presentHistory;
 
-    @Column(name = "underlying_disease", length = 1000)
+    @Column(name = "underlying_disease", columnDefinition = "TEXT")
     private String underlyingDisease;
 
-    @Column(name = "hereditary_disease", length = 1000)
+    @Column(name = "hereditary_disease", columnDefinition = "TEXT")
     private String hereditaryDisease;
 
-    @Column(name = "drug_allergy", length = 1000)
+    @Column(name = "drug_allergy", columnDefinition = "TEXT")
     private String drugAllergy;
 
-    @Column(name = "food_allergy", length = 1000)
+    @Column(name = "food_allergy", columnDefinition = "TEXT")
     private String foodAllergy;
 
-    @Column(name = "accident_history", length = 1000)
+    @Column(name = "accident_history", columnDefinition = "TEXT")
     private String accidentHistory;
 
-    @Column(name = "personal_history", length = 1000)
+    @Column(name = "personal_history", columnDefinition = "TEXT")
     private String personalHistory;
 
-    @Column(name = "alcohol_consumption", length = 255)
+    @Column(name = "alcohol_consumption", columnDefinition = "TEXT")
     private String alcoholConsumption;
 
-    @Column(name = "smoking_history", length = 255)
+    @Column(name = "smoking_history", columnDefinition = "TEXT")
     private String smokingHistory;
 
-    @Column(name = "menstruation", length = 255)
+    @Column(name = "menstruation", columnDefinition = "TEXT")
     private String menstruation;
 }

@@ -57,8 +57,19 @@ public class AppointmentController {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }
 
+    @GetMapping("/doctor/{doctorId}")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<ApiResponse<PageResponse<AppointmentResponseDTO>>> getByDoctorId(
+            @PathVariable int doctorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<AppointmentResponseDTO> result =
+                appointmentService.getByDoctorId(doctorId, PageRequest.of(page, size));
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
+    }
+
     @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
     public ResponseEntity<ApiResponse<AppointmentResponseDTO>> cancel(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(
                 appointmentService.cancel(id), "Appointment cancelled successfully"));

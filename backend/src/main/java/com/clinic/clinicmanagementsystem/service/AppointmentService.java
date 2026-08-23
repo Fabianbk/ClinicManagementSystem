@@ -86,6 +86,12 @@ public class AppointmentService {
                 .map(appointmentMapper::toResponseDTO);
     }
 
+    @Transactional(readOnly = true)
+    public Page<AppointmentResponseDTO> getByDoctorId(int doctorId, Pageable pageable) {
+        return appointmentRepository.findByDoctorId(doctorId, pageable)
+                .map(appointmentMapper::toResponseDTO);
+    }
+
     public AppointmentResponseDTO cancel(int appointmentId) {
         Appointment appointment = findAppointmentOrThrow(appointmentId);
         currentUser.requireSelfOrDoctor(appointment.getPatient().getPatientId());

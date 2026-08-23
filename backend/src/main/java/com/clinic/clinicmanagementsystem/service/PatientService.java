@@ -10,6 +10,7 @@ import com.clinic.clinicmanagementsystem.dto.PrincipleRequestDTO;
 import com.clinic.clinicmanagementsystem.dto.PrincipleResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.ContactPerson;
 import com.clinic.clinicmanagementsystem.entity.Patient;
+import com.clinic.clinicmanagementsystem.entity.PatientAccount;
 import com.clinic.clinicmanagementsystem.exception.DuplicateResourceException;
 import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
 import com.clinic.clinicmanagementsystem.mapper.ContactPersonMapper;
@@ -17,13 +18,17 @@ import com.clinic.clinicmanagementsystem.mapper.HealthProfileMapper;
 import com.clinic.clinicmanagementsystem.mapper.PatientMapper;
 import com.clinic.clinicmanagementsystem.mapper.PrincipleMapper;
 import com.clinic.clinicmanagementsystem.repository.ContactPersonRepository;
+import com.clinic.clinicmanagementsystem.repository.PatientAccountRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
+import com.clinic.clinicmanagementsystem.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 @Service
@@ -33,6 +38,9 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
     private final ContactPersonRepository contactPersonRepository;
+    private final PatientAccountRepository patientAccountRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final CurrentUser currentUser;
 
     private final PatientMapper patientMapper;
     private final PrincipleMapper principleMapper;
@@ -44,6 +52,8 @@ public class PatientService {
      * healthProfile were submitted in the same request. PatientMapper#toEntity
      * builds the whole object graph as brand-new objects; cascade = ALL on
      * Patient persists all of it together in this one save() call.
+     * Also auto-registers a PatientAccount using mobile number as username and
+     * formatted birthday (ddMMyyyy) as password.
      */
     public PatientResponseDTO create(PatientRequestDTO dto) {
         if (patientRepository.existsByIdNumber(dto.getIdNumber())) {
@@ -51,13 +61,31 @@ public class PatientService {
                     "A patient with ID number " + dto.getIdNumber() + " already exists");
         }
 
+        String username = dto.getMobileNumber() != null ? dto.getMobileNumber().trim() : "";
+        if (patientAccountRepository.existsById(username)) {
+            throw new DuplicateResourceException(
+                    "Username '" + username + "' is already taken");
+        }
+
         Patient patient = patientMapper.toEntity(dto);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy");
+        String birthdayPassword = sdf.format(dto.getDateOfBirth());
+
+        PatientAccount account = new PatientAccount();
+        account.setUsername(username);
+        account.setPassword(passwordEncoder.encode(birthdayPassword));
+        account.setPatient(patient);
+        patient.setPatientAccount(account);
+
         Patient saved = patientRepository.save(patient);
+
         return patientMapper.toResponseDTO(saved);
     }
 
     @Transactional(readOnly = true)
     public PatientResponseDTO getById(int patientId) {
+        currentUser.requireSelfOrDoctor(patientId);
         return patientMapper.toResponseDTO(findPatientOrThrow(patientId));
     }
 
@@ -88,6 +116,34 @@ public class PatientService {
         }
 
         patientMapper.updateBasicInfo(dto, existing);
+
+        if (dto.getHealthProfile() != null) {
+            if (existing.getHealthProfile() == null) {
+                existing.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
+            } else {
+                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), existing.getHealthProfile());
+            }
+        }
+
+        if (dto.getPrinciple() != null) {
+            if (existing.getPrinciple() == null) {
+                existing.setPrinciple(principleMapper.toEntity(dto.getPrinciple()));
+            } else {
+                principleMapper.updateEntityFromDto(dto.getPrinciple(), existing.getPrinciple());
+            }
+        }
+
+        if (dto.getContactPersons() != null) {
+            if (existing.getContactPersons() == null) {
+                existing.setContactPersons(new ArrayList<>());
+            } else {
+                existing.getContactPersons().clear();
+            }
+            for (ContactPersonRequestDTO contactDto : dto.getContactPersons()) {
+                existing.getContactPersons().add(contactPersonMapper.toEntity(contactDto));
+            }
+        }
+
         return patientMapper.toResponseDTO(patientRepository.save(existing));
     }
 

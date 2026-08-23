@@ -36,9 +36,9 @@ public class AppointmentSlotController {
         return ResponseEntity.ok(ApiResponse.success(appointmentSlotService.getById(id)));
     }
 
-    /** All slots for a schedule (any status) — for doctor/admin views. */
+    /** All slots for a schedule (any status) — for doctor/admin and patient slot view. */
     @GetMapping("/schedule/{scheduleId}")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<List<AppointmentSlotResponseDTO>>> getByScheduleId(
             @PathVariable int scheduleId) {
         return ResponseEntity.ok(

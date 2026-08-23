@@ -41,16 +41,16 @@ public class DoctorController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<DoctorResponseDTO>> getDoctor(@PathVariable int id) {
         return ResponseEntity.ok(ApiResponse.success(doctorService.getById(id)));
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<PageResponse<DoctorResponseDTO>>> getAllDoctors(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "100") int size) {
         Page<DoctorResponseDTO> result = doctorService.getAll(PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }

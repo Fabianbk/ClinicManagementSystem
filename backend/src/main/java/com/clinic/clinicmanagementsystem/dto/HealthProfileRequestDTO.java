@@ -12,33 +12,33 @@ import lombok.NoArgsConstructor;
 @Builder
 public class HealthProfileRequestDTO {
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String presentHistory;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String underlyingDisease;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String hereditaryDisease;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String drugAllergy;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String foodAllergy;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String accidentHistory;
 
-    @Size(max = 1000)
+    @Size(max = 65535)
     private String personalHistory;
 
-    @Size(max = 255)
+    @Size(max = 65535)
     private String alcoholConsumption;
 
-    @Size(max = 255)
+    @Size(max = 65535)
     private String smokingHistory;
 
-    @Size(max = 255)
+    @Size(max = 65535)
     private String menstruation;
 }
