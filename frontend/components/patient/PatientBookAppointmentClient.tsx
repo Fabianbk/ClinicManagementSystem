@@ -8,6 +8,24 @@ import type {
   AppointmentSlotResponseDTO,
   DoctorResponseDTO,
 } from "@/lib/types";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  CalendarPlus,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  User,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
+  Sparkles,
+} from "lucide-react";
 
 interface PatientBookAppointmentClientProps {
   patientId: number;
@@ -51,7 +69,6 @@ function formatTimeString(isoOrTime: string): string {
       hour12: false,
     });
   }
-  // Might be "09:00:00" or "09:00"
   const parts = isoOrTime.split(":");
   if (parts.length >= 2) {
     return `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}`;
@@ -74,12 +91,10 @@ export function PatientBookAppointmentClient({
 }: PatientBookAppointmentClientProps) {
   const router = useRouter();
 
-  // State
   const [schedules] = useState<WorkingScheduleResponseDTO[]>(initialSchedules);
   const [doctors] = useState<DoctorResponseDTO[]>(initialDoctors);
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | "ALL">("ALL");
 
-  // Determine initial date from available schedules or current date
   const initialDate = useMemo(() => {
     if (initialSchedules.length > 0) {
       return new Date(initialSchedules[0].date);
@@ -112,48 +127,36 @@ export function PatientBookAppointmentClient({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Filter schedules by selected doctor
   const filteredSchedules = useMemo(() => {
-    if (selectedDoctorId === "ALL") {
-      return schedules;
-    }
+    if (selectedDoctorId === "ALL") return schedules;
     return schedules.filter((s) => s.doctorId === selectedDoctorId);
   }, [schedules, selectedDoctorId]);
 
-  // Map of date string -> schedules on that day
   const schedulesByDate = useMemo(() => {
     const map = new Map<string, WorkingScheduleResponseDTO[]>();
-    for (const schedule of filteredSchedules) {
-      const dateKey = toLocalDateString(schedule.date);
-      if (!map.has(dateKey)) {
-        map.set(dateKey, []);
+    for (const s of filteredSchedules) {
+      const dStr = toLocalDateString(s.date);
+      if (!map.has(dStr)) {
+        map.set(dStr, []);
       }
-      map.get(dateKey)!.push(schedule);
+      map.get(dStr)!.push(s);
     }
     return map;
   }, [filteredSchedules]);
 
-  // When doctor changes, if selected date has no schedule for that doctor, auto-pick nearest
   useEffect(() => {
-    const currentSchedulesOnDate = schedulesByDate.get(selectedDateStr) || [];
-    if (currentSchedulesOnDate.length > 0) {
-      // Pick first schedule on this date
-      setSelectedScheduleId(currentSchedulesOnDate[0].scheduleId);
-    } else if (filteredSchedules.length > 0) {
-      // Pick first available schedule in the future
-      const firstAvailable = filteredSchedules[0];
-      const newDateStr = toLocalDateString(firstAvailable.date);
-      setSelectedDateStr(newDateStr);
-      setSelectedScheduleId(firstAvailable.scheduleId);
-      setCurrentMonthDate(new Date(new Date(firstAvailable.date).getFullYear(), new Date(firstAvailable.date).getMonth(), 1));
+    const daySchedules = schedulesByDate.get(selectedDateStr) || [];
+    if (daySchedules.length > 0) {
+      if (!selectedScheduleId || !daySchedules.some((s) => s.scheduleId === selectedScheduleId)) {
+        setSelectedScheduleId(daySchedules[0].scheduleId);
+      }
     } else {
       setSelectedScheduleId(null);
       setSlots([]);
       setSelectedSlotId(null);
     }
-  }, [selectedDoctorId, filteredSchedules, schedulesByDate, selectedDateStr]);
+  }, [selectedDoctorId, filteredSchedules, schedulesByDate, selectedDateStr, selectedScheduleId]);
 
-  // When selectedScheduleId changes, fetch all slots for this schedule
   useEffect(() => {
     if (!selectedScheduleId) {
       setSlots([]);
@@ -171,7 +174,6 @@ export function PatientBookAppointmentClient({
       .then((data) => {
         if (!isMounted) return;
         const rawSlots: AppointmentSlotResponseDTO[] = data?.data || data || [];
-        // Sort chronologically
         rawSlots.sort(
           (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         );
@@ -189,7 +191,6 @@ export function PatientBookAppointmentClient({
     };
   }, [selectedScheduleId]);
 
-  // Handle month navigation
   const handlePrevMonth = () => {
     setCurrentMonthDate(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
@@ -202,18 +203,15 @@ export function PatientBookAppointmentClient({
     );
   };
 
-  // Calendar calculations
   const year = currentMonthDate.getFullYear();
   const month = currentMonthDate.getMonth();
   const yearBE = year + 543;
   const monthName = THAI_MONTHS_FULL[month];
 
-  const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 = Sunday
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
   const todayStr = toLocalDateString(new Date());
 
-  // Handle Day Click
   const handleSelectDay = (dayNumber: number) => {
     const clickedDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
       dayNumber
@@ -230,17 +228,14 @@ export function PatientBookAppointmentClient({
     }
   };
 
-  // Active selected schedule details
   const selectedSchedule = useMemo(() => {
     return schedules.find((s) => s.scheduleId === selectedScheduleId) || null;
   }, [schedules, selectedScheduleId]);
 
-  // Multiple schedules on selected date (if any)
   const schedulesOnSelectedDate = useMemo(() => {
     return schedulesByDate.get(selectedDateStr) || [];
   }, [schedulesByDate, selectedDateStr]);
 
-  // Format full Thai date for the right top banner
   const formattedSelectedDate = useMemo(() => {
     if (!selectedDateStr) return "";
     const [y, m, d] = selectedDateStr.split("-").map(Number);
@@ -252,7 +247,6 @@ export function PatientBookAppointmentClient({
     return `วัน${dayName}ที่ ${d} ${mName} ${yBE}`;
   }, [selectedDateStr]);
 
-  // Booking submit handler
   async function handleBook() {
     if (!selectedSlotId) {
       setErrorMessage("กรุณาเลือกช่วงเวลาที่ต้องการนัดหมาย");
@@ -293,343 +287,260 @@ export function PatientBookAppointmentClient({
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-16 font-sans text-slate-800">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">
-            จองคิวตรวจรักษา
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            เลือกแพทย์ วันที่ และเวลาที่คุณสะดวกเพื่อทำการนัดหมาย
-          </p>
-        </div>
-
-        <Link
-          href="/patient/appointments"
-          className="inline-flex items-center text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
-        >
-          ← กลับไปยังนัดหมายของฉัน
-        </Link>
-      </div>
+    <div className="space-y-6 pb-20 font-body text-clinic-ink">
+      <PageHeader
+        icon={<CalendarPlus className="w-5 h-5 text-clinic-primary" />}
+        title="จองคิวตรวจรักษาออนไลน์ (Book Appointment)"
+        subtitle="เลือกแพทย์แผนไทย วันที่สะดวก และเลือกช่วงเวลาตรวจที่ต้องการ"
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/patient/appointments">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              <span>กลับไปยังนัดหมายของฉัน</span>
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Messages */}
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium animate-in fade-in flex items-center gap-2">
-          <span>⚠️</span>
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-sm font-medium animate-in fade-in flex items-center gap-2">
-          <span>✅</span>
+        <div className="p-4 rounded-control bg-clinic-success-bg border border-clinic-success text-clinic-success text-xs font-medium flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {/* Main 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Doctor Dropdown & Calendar Card (col-span-5) */}
+        {/* Left Column: Doctor Selection & Calendar (col-span-5) */}
         <div className="lg:col-span-5 space-y-4">
           {/* Doctor Dropdown Card */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-3">
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              👨‍⚕️ เลือกแพทย์ผู้ตรวจ
-            </label>
-            <div className="relative">
-              <select
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <Label className="text-xs font-bold text-clinic-primary-deep flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-clinic-primary" />
+                <span>แพทย์แผนไทยผู้ตรวจรักษา</span>
+              </Label>
+              <Select
                 value={selectedDoctorId}
                 onChange={(e) => {
                   const val = e.target.value;
                   setSelectedDoctorId(val === "ALL" ? "ALL" : Number(val));
                 }}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
+                className="text-xs"
               >
-                <option value="ALL">✨ แพทย์ทุกคน (ทั้งหมด)</option>
+                <option value="ALL">✨ แพทย์แผนไทยทุกคน (ทั้งหมด)</option>
                 {doctors.map((doc) => (
                   <option key={doc.doctorId} value={doc.doctorId}>
-                    {doc.fullname} {doc.physicianLicenseNo ? `(ว.${doc.physicianLicenseNo})` : ""}
+                    พท. {doc.fullname} {doc.physicianLicenseNo ? `(ว.${doc.physicianLicenseNo})` : ""}
                   </option>
                 ))}
-              </select>
-            </div>
-          </div>
+              </Select>
+            </CardContent>
+          </Card>
 
           {/* Calendar Card */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
-            {/* Calendar Card Title */}
-            <div className="flex items-center gap-2 text-slate-900">
-              <span className="text-emerald-600">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </span>
-              <h2 className="text-base font-bold text-slate-900 font-display">
-                เลือกวันที่
-              </h2>
-            </div>
+          <Card>
+            <CardHeader className="pb-3 border-b border-clinic-line flex flex-row items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-clinic-primary" />
+                <span>เลือกวันที่</span>
+              </CardTitle>
 
-            {/* Month & Year Navigation Header */}
-            <div className="flex items-center justify-between px-1">
-              <button
-                type="button"
-                onClick={handlePrevMonth}
-                className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
-                title="เดือนก่อนหน้า"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handlePrevMonth}
+                  className="h-7 w-7"
+                  title="เดือนก่อนหน้า"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-
-              <div className="font-bold text-sm text-slate-900">
-                {monthName} {yearBE}
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="font-bold text-xs font-display text-clinic-primary-deep px-1">
+                  {monthName} {yearBE}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleNextMonth}
+                  className="h-7 w-7"
+                  title="เดือนถัดไป"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
+            </CardHeader>
 
-              <button
-                type="button"
-                onClick={handleNextMonth}
-                className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
-                title="เดือนถัดไป"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </div>
+            <CardContent className="pt-4 space-y-4">
+              {/* Calendar Grid */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-7 text-center">
+                  {THAI_DAYS_SHORT.map((dayName, idx) => (
+                    <div
+                      key={dayName}
+                      className={`text-[11px] font-semibold py-1 ${
+                        idx === 0
+                          ? "text-rose-600"
+                          : idx === 6
+                          ? "text-purple-600"
+                          : "text-clinic-ink-soft"
+                      }`}
+                    >
+                      {dayName}
+                    </div>
+                  ))}
+                </div>
 
-            {/* Calendar Table Grid */}
-            <div className="space-y-2">
-              {/* Weekday Headers */}
-              <div className="grid grid-cols-7 text-center">
-                {THAI_DAYS_SHORT.map((dayName, idx) => (
-                  <div
-                    key={dayName}
-                    className={`text-xs font-semibold py-1 ${
-                      idx === 0
-                        ? "text-red-500"
-                        : idx === 6
-                        ? "text-purple-600"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    {dayName}
-                  </div>
-                ))}
-              </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {/* Empty slots for start of month */}
+                  {Array.from({ length: firstDayOfWeek }).map((_, idx) => (
+                    <div key={`empty-${idx}`} className="h-9" />
+                  ))}
 
-              {/* Day Cells Grid */}
-              <div className="grid grid-cols-7 gap-y-1.5 gap-x-1 text-center">
-                {/* Empty cells before day 1 */}
-                {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                  <div key={`empty-${i}`} className="h-9 w-9 mx-auto" />
-                ))}
+                  {/* Days */}
+                  {Array.from({ length: daysInMonth }).map((_, idx) => {
+                    const dayNum = idx + 1;
+                    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+                      dayNum
+                    ).padStart(2, "0")}`;
 
-                {/* Days of Month */}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const dayNumber = i + 1;
-                  const dateKey = `${year}-${String(month + 1).padStart(
-                    2,
-                    "0"
-                  )}-${String(dayNumber).padStart(2, "0")}`;
+                    const hasSchedule = schedulesByDate.has(dateStr);
+                    const isSelected = dateStr === selectedDateStr;
+                    const isToday = dateStr === todayStr;
+                    const isPast = dateStr < todayStr;
 
-                  const isSelected = dateKey === selectedDateStr;
-                  const isToday = dateKey === todayStr;
-                  const daySchedules = schedulesByDate.get(dateKey) || [];
-                  const hasSchedule = daySchedules.length > 0;
-
-                  return (
-                    <div key={dateKey} className="flex items-center justify-center">
+                    return (
                       <button
+                        key={`day-${dayNum}`}
                         type="button"
-                        onClick={() => handleSelectDay(dayNumber)}
-                        disabled={!hasSchedule}
-                        className={`h-9 w-9 rounded-xl text-xs font-medium flex flex-col items-center justify-center transition-all relative ${
+                        onClick={() => handleSelectDay(dayNum)}
+                        disabled={isPast}
+                        className={`h-9 rounded-control font-mono text-xs flex flex-col items-center justify-center relative transition-all cursor-pointer select-none ${
                           isSelected
-                            ? "bg-emerald-500 text-white font-bold shadow-md shadow-emerald-500/30 scale-105 ring-2 ring-emerald-400/40"
+                            ? "bg-clinic-primary text-white font-bold shadow-xs scale-105"
+                            : isPast
+                            ? "text-clinic-ink-muted opacity-40 cursor-not-allowed"
                             : hasSchedule
-                            ? "text-slate-800 font-semibold hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer bg-slate-50 border border-emerald-200/60"
-                            : "text-slate-300 cursor-not-allowed"
+                            ? "text-clinic-ink hover:bg-clinic-terracotta-soft font-semibold"
+                            : "text-clinic-ink-soft hover:bg-clinic-bg"
                         }`}
                       >
-                        <span>{dayNumber}</span>
-                        {/* Dot indicator for schedule/today */}
+                        <span>{dayNum}</span>
                         {hasSchedule && !isSelected && (
-                          <span className="w-1 h-1 rounded-full bg-emerald-500 mt-0.5" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-clinic-terracotta absolute bottom-1" />
                         )}
-                        {isToday && !isSelected && !hasSchedule && (
-                          <span className="w-1 h-1 rounded-full bg-slate-400 mt-0.5" />
+                        {isToday && !isSelected && (
+                          <span className="w-1 h-1 rounded-full bg-clinic-primary absolute top-1" />
                         )}
                       </button>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Calendar Legend */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-start gap-5 text-xs text-slate-500">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span>วันนี้ / เลือก</span>
+              {/* Legend */}
+              <div className="pt-3 border-t border-clinic-line flex items-center justify-start gap-4 text-[11px] text-clinic-ink-soft">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-clinic-primary" />
+                  <span>วันที่เลือก</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-clinic-terracotta" />
+                  <span>มีตารางตรวจ</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full border-2 border-emerald-500 bg-emerald-50" />
-                <span>ว่าง</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                <span>เต็ม</span>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column: Shift Banner & Slots Timetable (col-span-7) */}
-        <div className="lg:col-span-7 space-y-5">
-          {/* Top Shift Banner (Mint/Green Card) */}
-          <div className="bg-[#EBFBF3] border border-[#B7EBCE] rounded-2xl p-4 sm:p-5 flex items-start sm:items-center gap-3.5 shadow-xs">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-              <svg
-                className="w-6 h-6 text-emerald-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+        <div className="lg:col-span-7 space-y-4">
+          {/* Shift Banner */}
+          <div className="bg-clinic-primary-soft/80 border border-clinic-primary/20 rounded-card p-4 flex items-center gap-3.5 shadow-2xs">
+            <div className="w-10 h-10 rounded-control bg-clinic-primary text-white flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5" />
             </div>
 
             <div className="space-y-0.5">
-              <h2 className="text-base font-bold text-slate-900 font-display">
+              <h2 className="text-sm font-bold text-clinic-primary-deep font-display">
                 {formattedSelectedDate || "กรุณาเลือกวันที่ตรวจ"}
               </h2>
               {selectedSchedule ? (
-                <div className="text-xs text-slate-600 space-y-0.5">
+                <div className="text-xs text-clinic-ink-soft space-y-0.5">
                   <p>
                     แพทย์ผู้ตรวจ:{" "}
-                    <span className="font-semibold text-slate-800">
-                      {selectedSchedule.doctorFullname}
-                    </span>
+                    <strong className="text-clinic-ink">
+                      พท. {selectedSchedule.doctorFullname}
+                    </strong>
                   </p>
-                  <p className="text-slate-500">
+                  <p className="text-[11px]">
                     เวลาทำการตรวจ: {formatTimeString(selectedSchedule.shiftStart)} –{" "}
                     {formatTimeString(selectedSchedule.shiftEnd)} น.
                   </p>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">
-                  ไม่มีตารางเวรตรวจในวันที่เลือก กรุณาเลือกวันที่ที่มีจุดสีเขียวบนปฏิทิน
+                <p className="text-xs text-clinic-ink-soft">
+                  ไม่มีตารางตรวจในวันที่เลือก กรุณาเลือกวันที่มีจุดสีส้มอิฐบนปฏิทิน
                 </p>
               )}
             </div>
           </div>
 
-          {/* Multiple schedules switcher on the same day (if multiple doctors work on selected date) */}
+          {/* Multiple schedules switcher on same day */}
           {schedulesOnSelectedDate.length > 1 && (
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <span className="text-xs font-semibold text-slate-500 shrink-0">
+              <span className="text-xs font-semibold text-clinic-ink-soft shrink-0">
                 เลือกแพทย์ในวันนี้:
               </span>
               {schedulesOnSelectedDate.map((sch) => (
-                <button
+                <Button
                   key={sch.scheduleId}
                   type="button"
+                  variant={sch.scheduleId === selectedScheduleId ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setSelectedScheduleId(sch.scheduleId)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 cursor-pointer ${
-                    sch.scheduleId === selectedScheduleId
-                      ? "bg-emerald-600 text-white shadow-xs"
-                      : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
-                  }`}
+                  className="h-7 text-xs shrink-0"
                 >
-                  {sch.doctorFullname} ({formatTimeString(sch.shiftStart)} -{" "}
-                  {formatTimeString(sch.shiftEnd)})
-                </button>
+                  พท. {sch.doctorFullname}
+                </Button>
               ))}
             </div>
           )}
 
-          {/* Section: Select Desired Time */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2 text-slate-900">
-                <span className="text-emerald-600">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </span>
-                <h2 className="text-base font-bold text-slate-900 font-display">
-                  เลือกเวลาที่ต้องการ
-                </h2>
-              </div>
+          {/* Time Slot Selection Card */}
+          <Card>
+            <CardHeader className="pb-3 border-b border-clinic-line flex flex-row items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Clock className="w-4 h-4 text-clinic-primary" />
+                <span>เลือกช่วงเวลาที่ต้องการนัดหมาย</span>
+              </CardTitle>
 
               {selectedSchedule && (
-                <span className="text-xs text-slate-500">
-                  ว่างสำหรับจอง:{" "}
-                  <strong className="text-emerald-600">
-                    {slots.filter((s) => s.status === "AVAILABLE").length}
-                  </strong>{" "}
-                  / {slots.length} คิว
-                </span>
+                <Badge variant="terracotta" className="text-xs">
+                  ว่าง {slots.filter((s) => s.status === "AVAILABLE").length} / {slots.length} คิว
+                </Badge>
               )}
-            </div>
+            </CardHeader>
 
-            {/* Slots Grid */}
-            {isLoadingSlots ? (
-              <div className="py-16 text-center text-slate-400 text-sm animate-pulse space-y-2">
-                <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p>กำลังโหลดช่วงเวลานัดหมาย…</p>
-              </div>
-            ) : slots.length > 0 ? (
-              <div className="space-y-4">
-                {/* Continuous Slots Grid (next to each other) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <CardContent className="pt-4 space-y-5">
+              {/* Slots Grid */}
+              {isLoadingSlots ? (
+                <div className="py-12 text-center text-clinic-ink-soft text-xs space-y-2">
+                  <div className="w-6 h-6 border-2 border-clinic-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p>กำลังโหลดช่วงเวลานัดหมาย…</p>
+                </div>
+              ) : slots.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   {slots.map((slot) => {
                     const isAvailable = slot.status === "AVAILABLE";
                     const isSelected = slot.slotId === selectedSlotId;
@@ -642,132 +553,87 @@ export function PatientBookAppointmentClient({
                           key={slot.slotId}
                           type="button"
                           onClick={() => setSelectedSlotId(slot.slotId)}
-                          className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                          className={`p-3 rounded-control border text-left transition-all cursor-pointer flex flex-col justify-between ${
                             isSelected
-                              ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]"
-                              : "bg-white border-slate-200 border-l-4 border-l-emerald-500 text-slate-800 hover:border-emerald-400 hover:shadow-md"
+                              ? "bg-clinic-terracotta border-clinic-terracotta text-white shadow-md scale-[1.02]"
+                              : "bg-white border-clinic-line hover:border-clinic-terracotta hover:bg-clinic-terracotta-soft/20 text-clinic-ink shadow-2xs"
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <span
-                              className={`text-base font-bold tracking-tight ${
-                                isSelected ? "text-white" : "text-slate-900"
-                              }`}
-                            >
+                            <span className="font-mono font-bold text-sm">
                               {startTime}
                             </span>
                             <span
-                              className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                                 isSelected
                                   ? "bg-white/20 text-white"
-                                  : "bg-emerald-50 text-emerald-700"
+                                  : "bg-emerald-50 text-emerald-800 border border-emerald-200"
                               }`}
                             >
                               ว่าง
                             </span>
                           </div>
-                          <p
-                            className={`text-xs mt-1 ${
-                              isSelected ? "text-emerald-100" : "text-slate-500"
-                            }`}
-                          >
+                          <p className={`text-[11px] mt-1 ${isSelected ? "text-white/85" : "text-clinic-ink-soft"}`}>
                             ถึง {endTime} น.
                           </p>
                         </button>
                       );
                     }
 
-                    // Booked or Blocked Slot
                     return (
                       <div
                         key={slot.slotId}
-                        className="text-left p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/80 text-slate-400 opacity-60 cursor-not-allowed flex flex-col justify-between"
+                        className="p-3 rounded-control border border-clinic-line/60 bg-clinic-bg/40 text-clinic-ink-muted opacity-50 cursor-not-allowed flex flex-col justify-between"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-base font-bold line-through text-slate-400">
+                          <span className="font-mono text-sm line-through">
                             {startTime}
                           </span>
-                          <span className="text-[11px] font-medium bg-slate-200/70 text-slate-500 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded">
                             เต็ม
                           </span>
                         </div>
-                        <p className="text-xs mt-1 text-slate-400">
-                          ถึง {endTime} น.
-                        </p>
+                        <p className="text-[11px] mt-1">ถึง {endTime} น.</p>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            ) : selectedScheduleId ? (
-              <div className="py-12 text-center text-slate-500 space-y-1 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                <p className="font-semibold text-slate-700">
-                  ยังไม่มีการเปิดช่วงเวลาตรวจสำหรับตารางเวรนี้
-                </p>
-                <p className="text-xs text-slate-400">
-                  กรุณาเลือกวันตรวจอื่นจากปฏิทินทางด้านซ้าย
-                </p>
-              </div>
-            ) : (
-              <div className="py-12 text-center text-slate-500 space-y-1 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                <p className="font-semibold text-slate-700">
-                  ยังไม่ได้เลือกวันตรวจรักษา
-                </p>
-                <p className="text-xs text-slate-400">
-                  กรุณาคลิกเลือกวันที่ที่มีตารางตรวจ (จุดสีเขียว) บนปฏิทินทางด้านซ้าย
-                </p>
-              </div>
-            )}
+              ) : selectedScheduleId ? (
+                <div className="py-10 text-center text-clinic-ink-soft text-xs space-y-1 bg-clinic-bg/40 rounded-control border border-dashed border-clinic-line">
+                  <p className="font-semibold text-clinic-ink">
+                    ยังไม่มีการเปิดช่วงเวลาตรวจสำหรับตารางเวรนี้
+                  </p>
+                  <p className="text-[11px]">กรุณาเลือกวันตรวจอื่นจากปฏิทิน</p>
+                </div>
+              ) : (
+                <div className="py-10 text-center text-clinic-ink-soft text-xs space-y-1 bg-clinic-bg/40 rounded-control border border-dashed border-clinic-line">
+                  <p className="font-semibold text-clinic-ink">
+                    ยังไม่ได้เลือกวันตรวจรักษา
+                  </p>
+                  <p className="text-[11px]">กรุณาคลิกเลือกวันที่ที่มีตารางตรวจบนปฏิทิน</p>
+                </div>
+              )}
 
-            {/* Action Bottom Bar */}
-            <div className="pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <Link
-                href="/patient/appointments"
-                className="w-full sm:w-auto text-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
-              >
-                ยกเลิก
-              </Link>
+              {/* Bottom Action */}
+              <div className="pt-4 border-t border-clinic-line flex flex-col sm:flex-row items-center justify-between gap-3">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/patient/appointments">ยกเลิก</Link>
+                </Button>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                {selectedSlotId && (
-                  <div className="hidden sm:block text-right text-xs text-slate-500">
-                    <p className="font-bold text-slate-800">
-                      ช่วงเวลาที่เลือก:{" "}
-                      {(() => {
-                        const slot = slots.find((s) => s.slotId === selectedSlotId);
-                        if (!slot) return "";
-                        return `${formatTimeString(slot.startTime)} - ${formatTimeString(
-                          slot.endTime
-                        )} น.`;
-                      })()}
-                    </p>
-                  </div>
-                )}
-
-                <button
+                <Button
                   type="button"
+                  variant="terracotta"
+                  size="lg"
                   onClick={handleBook}
                   disabled={!selectedSlotId || isPending}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 transition-all shadow-md shadow-emerald-600/20 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full sm:w-auto font-semibold gap-1.5 shadow-sm"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span>{isPending ? "กำลังบันทึกการจอง…" : "ยืนยันการจองคิว"}</span>
-                </button>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isPending ? "กำลังบันทึกการจอง…" : "ยืนยันการจองคิวตรวจ"}</span>
+                </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

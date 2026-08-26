@@ -4,20 +4,23 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ContactPersonRequestDTO, PatientResponseDTO } from "@/lib/types";
-
-const PROVINCES = [
-  "กรุงเทพมหานคร",
-  "เชียงใหม่",
-  "นนทบุรี",
-  "ปทุมธานี",
-  "สมุทรปราการ",
-  "ชลบุรี",
-  "นครราชสีมา",
-  "ขอนแก่น",
-  "ภูเก็ต",
-  "สงขลา",
-  "อื่นๆ (Other)",
-];
+import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import {
+  Edit,
+  ArrowLeft,
+  User,
+  Heart,
+  MapPin,
+  Phone,
+  ShieldAlert,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 export default function EditPatientPage({
   params,
@@ -217,545 +220,386 @@ export default function EditPatientPage({
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => null);
-        const detailMsg = errBody?.errors && errBody.errors.length > 0
-          ? errBody.errors.join(", ")
-          : errBody?.message || "ไม่สามารถบันทึกแก้ไขข้อมูลผู้ป่วยได้";
-        setErrorMessage(detailMsg);
-        return;
+        throw new Error(errBody?.message || "ไม่สามารถบันทึกการแก้ไขข้อมูลได้");
       }
 
       startTransition(() => {
         router.push(`/doctor/patients/${patientId}`);
         router.refresh();
       });
-    } catch {
-      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+    } catch (err: any) {
+      setErrorMessage(err.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
     }
   }
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto py-12 text-center text-clinic-ink-soft space-y-3">
-        <div className="inline-block w-8 h-8 border-4 border-clinic-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium">กำลังโหลดข้อมูลผู้ป่วย…</p>
+      <div className="p-12 text-center text-clinic-ink-soft space-y-2">
+        <div className="w-8 h-8 border-2 border-clinic-primary border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs font-medium">กำลังโหลดข้อมูลผู้ป่วย...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16 font-body text-clinic-ink">
-      {/* Header Banner */}
-      <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-clinic-bg border border-clinic-line flex items-center justify-center text-clinic-primary shrink-0 shadow-xs">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-2xl font-display font-bold text-clinic-primary-deep flex items-center gap-2">
-              Edit Patient Details
-            </h1>
-            <p className="text-xs text-clinic-ink-soft mt-0.5">
-              แก้ไขข้อมูลเวชระเบียนผู้ป่วย (ID: {patientId})
-            </p>
-          </div>
-        </div>
-
-        <Link
-          href={`/doctor/patients/${patientId}`}
-          className="px-3.5 py-1.5 rounded-control text-xs font-semibold text-clinic-ink bg-clinic-bg border border-clinic-line hover:bg-white transition-colors"
-        >
-          Cancel
-        </Link>
-      </div>
+    <div className="space-y-6 pb-20 font-body text-clinic-ink">
+      <PageHeader
+        icon={<Edit className="w-5 h-5 text-clinic-primary" />}
+        title={`แก้ไขข้อมูลผู้ป่วย: ${fullname}`}
+        subtitle={`HN: P-${String(patientId).padStart(5, "0")} · ปรับปรุงข้อมูลทั่วไป ข้อมูลติดต่อ และประวัติการแพ้ยา`}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/doctor/patients/${patientId}`}>
+              <ArrowLeft className="w-4 h-4" />
+              <span>ยกเลิก / ย้อนกลับ</span>
+            </Link>
+          </Button>
+        }
+      />
 
       {errorMessage && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium animate-in fade-in">
-          {errorMessage}
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section 1: Basic Information */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Basic Information <span className="text-xs font-normal text-clinic-ink-soft">(ข้อมูลพื้นฐาน)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                Full Name (ชื่อ-นามสกุล) <span className="text-clinic-danger">*</span>
-              </label>
-              <input
-                type="text"
+        {/* 1. Basic Info */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <User className="w-4 h-4 text-clinic-primary" />
+              <span>1. ข้อมูลทั่วไป (Basic Information)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="fullname" required>
+                ชื่อ-นามสกุล (Full Name)
+              </Label>
+              <Input
+                id="fullname"
                 required
-                placeholder="Enter full name"
                 value={fullname}
                 onChange={(e) => setFullname(e.target.value)}
-                className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                  Gender (เพศ) <span className="text-clinic-danger">*</span>
-                </label>
-                <div className="flex items-center gap-6 pt-1">
-                  {["Male", "Female", "Other"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value={item}
-                        checked={gender === item}
-                        onChange={(e) => setGender(e.target.value)}
-                        className="accent-clinic-primary"
-                      />
-                      <span>{item === "Male" ? "Male" : item === "Female" ? "Female" : "Other"}</span>
-                    </label>
-                  ))}
-                </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="gender" required>
+                เพศ (Gender)
+              </Label>
+              <Select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+              >
+                <option value="Male">ชาย (Male)</option>
+                <option value="Female">หญิง (Female)</option>
+                <option value="Other">อื่นๆ (Other)</option>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="idNumber" required>
+                เลขบัตรประชาชน 13 หลัก
+              </Label>
+              <Input
+                id="idNumber"
+                required
+                maxLength={13}
+                value={idNumber}
+                onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, ""))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="dateOfBirth" required>
+                วันเดือนปีเกิด
+              </Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                required
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="calculatedAge">อายุคำนวณ (ปี)</Label>
+              <Input
+                id="calculatedAge"
+                readOnly
+                disabled
+                value={calculatedAge !== "" ? `${calculatedAge} ปี` : "-"}
+                className="bg-clinic-bg"
+              />
+            </div>
+
+            <div className="sm:col-span-3 space-y-1.5">
+              <Label htmlFor="occupation">อาชีพ (Occupation)</Label>
+              <Input
+                id="occupation"
+                value={occupation}
+                onChange={(e) => setOccupation(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 2. Status & Origin */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <User className="w-4 h-4 text-clinic-primary" />
+              <span>2. สถานภาพและสัญชาติ (Status & Background)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="marital">สถานภาพสมรส</Label>
+              <Select
+                id="marital"
+                value={marital}
+                onChange={(e) => setMarital(e.target.value)}
+              >
+                <option value="Single">โสด (Single)</option>
+                <option value="Married">สมรส (Married)</option>
+                <option value="Divorced">หย่าร้าง (Divorced)</option>
+                <option value="Widowed">หม้าย (Widowed)</option>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="nationality">สัญชาติ</Label>
+              <Input
+                id="nationality"
+                value={nationality}
+                onChange={(e) => setNationality(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="ethnic">เชื้อชาติ</Label>
+              <Input
+                id="ethnic"
+                value={ethnic}
+                onChange={(e) => setEthnic(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="religion">ศาสนา</Label>
+              <Input
+                id="religion"
+                value={religion}
+                onChange={(e) => setReligion(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3. Health & Allergy */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Heart className="w-4 h-4 text-clinic-terracotta" />
+              <span>3. ข้อมูลสุขภาพและการแพ้ยา (Health & Allergies)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="bloodType" required>
+                  กรุ๊ปเลือด (ABO)
+                </Label>
+                <Select
+                  id="bloodType"
+                  value={bloodType}
+                  onChange={(e) => setBloodType(e.target.value)}
+                >
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="O">O</option>
+                  <option value="AB">AB</option>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  ID/Passport No. (เลขบัตรประชาชน/พาสปอร์ต) <span className="text-clinic-danger">*</span>
-                </label>
-                <input
-                  type="text"
+              <div className="space-y-1.5">
+                <Label htmlFor="rhFactor">Rh Factor</Label>
+                <Select
+                  id="rhFactor"
+                  value={rhFactor}
+                  onChange={(e) => setRhFactor(e.target.value)}
+                >
+                  <option value="Rh+">Rh+ (Positive)</option>
+                  <option value="Rh-">Rh- (Negative)</option>
+                </Select>
+              </div>
+
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="allergyOption" required>
+                  ประวัติการแพ้ยา (Drug Allergy)
+                </Label>
+                <Select
+                  id="allergyOption"
+                  value={allergyOption}
+                  onChange={(e) => setAllergyOption(e.target.value as any)}
+                >
+                  <option value="No">ไม่มีประวัติแพ้ยา (No known allergy)</option>
+                  <option value="Yes">มีประวัติแพ้ยา (Has allergy)</option>
+                  <option value="Unknown">ไม่ทราบประวัติ (Unknown)</option>
+                </Select>
+              </div>
+            </div>
+
+            {allergyOption === "Yes" && (
+              <div className="p-3.5 bg-clinic-danger-bg border border-clinic-danger/40 rounded-control space-y-1.5">
+                <Label htmlFor="drugAllergyDetail" className="text-clinic-danger font-semibold">
+                  ระบุชื่อยาหรือกลุ่มยาที่แพ้ *
+                </Label>
+                <Input
+                  id="drugAllergyDetail"
                   required
-                  maxLength={13}
-                  placeholder="13-digit ID or Passport"
-                  value={idNumber}
-                  onChange={(e) => setIdNumber(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all font-mono"
+                  placeholder="เช่น Penicillin, Sulfa, แอสไพริน"
+                  value={drugAllergyDetail}
+                  onChange={(e) => setDrugAllergyDetail(e.target.value)}
+                  className="bg-white border-clinic-danger/50"
                 />
               </div>
-            </div>
+            )}
+          </CardContent>
+        </Card>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Date of Birth (วันเดือนปีเกิด) <span className="text-clinic-danger">*</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Age (อายุ)
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  placeholder="Yrs"
-                  value={calculatedAge !== "" ? `${calculatedAge} ปี` : ""}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg/60 text-sm text-clinic-ink-soft cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Occupation (อาชีพ)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Job title"
-                  value={occupation}
-                  onChange={(e) => setOccupation(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: Status & History */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Status & History <span className="text-xs font-normal text-clinic-ink-soft">(สถานภาพและประวัติ)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                Marital Status (สถานภาพสมรส)
-              </label>
-              <div className="flex flex-wrap items-center gap-3">
-                {["Single", "Married", "Divorced", "Widowed"].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setMarital(item)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                      marital === item
-                        ? "bg-clinic-primary text-white border-clinic-primary shadow-xs"
-                        : "bg-clinic-bg text-clinic-ink border-clinic-line hover:border-clinic-primary"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Nationality (สัญชาติ)
-                </label>
-                <input
-                  type="text"
-                  value={nationality}
-                  onChange={(e) => setNationality(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Ethnicity (เชื้อชาติ)
-                </label>
-                <input
-                  type="text"
-                  value={ethnic}
-                  onChange={(e) => setEthnic(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Religion (ศาสนา)
-                </label>
-                <input
-                  type="text"
-                  value={religion}
-                  onChange={(e) => setReligion(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 3: Health Information */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Health Information <span className="text-xs font-normal text-clinic-ink-soft">(ข้อมูลสุขภาพ)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                Blood Group (กรุ๊ปเลือด)
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                {["A", "B", "AB", "O"].map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setBloodType(type)}
-                    className={`w-10 h-9 rounded-control text-xs font-bold border transition-all cursor-pointer ${
-                      bloodType === type
-                        ? "bg-clinic-primary text-white border-clinic-primary shadow-xs"
-                        : "bg-clinic-bg text-clinic-ink border-clinic-line hover:border-clinic-primary"
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-
-                <div className="h-6 w-px bg-clinic-line mx-1" />
-
-                {["Rh+", "Rh-"].map((rh) => (
-                  <button
-                    key={rh}
-                    type="button"
-                    onClick={() => setRhFactor(rh)}
-                    className={`px-3 h-9 rounded-control text-xs font-bold border transition-all cursor-pointer ${
-                      rhFactor === rh
-                        ? "bg-clinic-primary/10 text-clinic-primary-deep border-clinic-primary shadow-xs"
-                        : "bg-clinic-bg text-clinic-ink border-clinic-line hover:border-clinic-primary"
-                    }`}
-                  >
-                    {rh}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                Drug Allergy (แพ้ยา)
-              </label>
-              <div className="flex flex-wrap items-center gap-6">
-                <label className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                  <input
-                    type="radio"
-                    name="allergy"
-                    checked={allergyOption === "Unknown"}
-                    onChange={() => setAllergyOption("Unknown")}
-                    className="accent-clinic-primary"
-                  />
-                  <span>Unknown (ไม่ทราบ)</span>
-                </label>
-
-                <label className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                  <input
-                    type="radio"
-                    name="allergy"
-                    checked={allergyOption === "No"}
-                    onChange={() => setAllergyOption("No")}
-                    className="accent-clinic-primary"
-                  />
-                  <span>No (ไม่มี)</span>
-                </label>
-
-                <label className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                  <input
-                    type="radio"
-                    name="allergy"
-                    checked={allergyOption === "Yes"}
-                    onChange={() => setAllergyOption("Yes")}
-                    className="accent-clinic-primary"
-                  />
-                  <span>Yes (มี)</span>
-                </label>
-
-                {allergyOption === "Yes" && (
-                  <input
-                    type="text"
-                    required
-                    placeholder="Specify drug allergy (ระบุชื่อยาที่แพ้)"
-                    value={drugAllergyDetail}
-                    onChange={(e) => setDrugAllergyDetail(e.target.value)}
-                    className="flex-1 min-w-[240px] px-3.5 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all animate-in fade-in"
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 4: Contact Address */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Contact Address <span className="text-xs font-normal text-clinic-ink-soft">(ที่อยู่อาศัยตามสำเนา)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                Full Address (ที่อยู่เต็ม)
-              </label>
-              <textarea
-                rows={2}
-                placeholder="Address line"
+        {/* 4. Address & Contacts */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-clinic-primary" />
+              <span>4. ข้อมูลที่อยู่และการติดต่อ</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="fullAddress">ที่อยู่ตามสำเนา (Full Address)</Label>
+              <Input
+                id="fullAddress"
                 value={fullAddress}
                 onChange={(e) => setFullAddress(e.target.value)}
-                className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Mobile (เบอร์โทรศัพท์) <span className="text-clinic-danger">*</span>
-                </label>
-                <input
-                  type="tel"
+              <div className="space-y-1.5">
+                <Label htmlFor="mobileNumber" required>
+                  เบอร์โทรศัพท์
+                </Label>
+                <Input
+                  id="mobileNumber"
                   required
-                  placeholder="08X-XXX-XXXX"
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all font-mono"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Email (อีเมล)
-                </label>
-                <input
+              <div className="space-y-1.5">
+                <Label htmlFor="email">อีเมล</Label>
+                <Input
+                  id="email"
                   type="email"
-                  placeholder="patient@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
                 />
               </div>
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        {/* Section 5: Emergency Contact */}
-        <section className="bg-clinic-primary/5 border border-clinic-primary/20 rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-clinic-primary/20 pb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-clinic-danger-bg text-clinic-danger flex items-center justify-center font-bold text-sm">
-                ✱
-              </div>
-              <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-                Emergency Contact <span className="text-xs font-normal text-clinic-ink-soft">(ผู้ติดต่อกรณีฉุกเฉิน)</span>
-              </h2>
-            </div>
-
-            <button
+        {/* 5. Emergency Contacts */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line flex flex-row items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Phone className="w-4 h-4 text-clinic-terracotta" />
+              <span>5. ผู้ติดต่อกรณีฉุกเฉิน (Emergency Contacts)</span>
+            </CardTitle>
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={addEmergencyContact}
-              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-clinic-primary text-clinic-primary hover:bg-clinic-primary hover:text-white rounded-control text-xs font-semibold transition-all shadow-xs cursor-pointer"
+              className="h-7 text-xs gap-1"
             >
-              + Add Contact
-            </button>
-          </div>
-
-          <div className="space-y-4">
+              <Plus className="w-3.5 h-3.5" />
+              <span>เพิ่มผู้ติดต่อ</span>
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3">
             {emergencyContacts.map((contact, index) => (
               <div
                 key={index}
-                className="bg-white border border-clinic-line rounded-control p-4 shadow-xs relative space-y-3"
+                className="p-4 bg-clinic-bg/50 border border-clinic-line rounded-control grid grid-cols-1 sm:grid-cols-3 gap-3 relative"
               >
-                {emergencyContacts.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeEmergencyContact(index)}
-                    className="absolute top-3 right-3 text-clinic-ink-soft hover:text-clinic-danger text-sm p-1 rounded-md transition-colors"
-                    title="Remove Contact"
-                  >
-                    ✕
-                  </button>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Name (ชื่อ-นามสกุล)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contact person name"
-                      value={contact.contactName}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "contactName", e.target.value)
-                      }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Relationship (ความสัมพันธ์)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Spouse, Parent"
-                      value={contact.relationship || ""}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "relationship", e.target.value)
-                      }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label>ชื่อผู้ติดต่อ</Label>
+                  <Input
+                    value={contact.contactName}
+                    onChange={(e) =>
+                      updateEmergencyContact(index, "contactName", e.target.value)
+                    }
+                  />
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Address (ที่อยู่)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contact address"
-                      value={contact.contactAddress || ""}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "contactAddress", e.target.value)
-                      }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Telephone (เบอร์โทรศัพท์)
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="08X-XXX-XXXX"
+                <div className="space-y-1.5">
+                  <Label>ความสัมพันธ์</Label>
+                  <Input
+                    value={contact.relationship || ""}
+                    onChange={(e) =>
+                      updateEmergencyContact(index, "relationship", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>เบอร์โทรศัพท์</Label>
+                  <div className="flex gap-2">
+                    <Input
                       value={contact.mobileNumber || ""}
                       onChange={(e) =>
                         updateEmergencyContact(index, "mobileNumber", e.target.value)
                       }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all font-mono"
                     />
+                    {emergencyContacts.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="icon"
+                        onClick={() => removeEmergencyContact(index)}
+                        className="shrink-0 h-10 w-10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        {/* Footer Actions */}
+        {/* Submit Actions */}
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Link
-            href={`/doctor/patients/${patientId}`}
-            className="px-6 py-2.5 rounded-control text-sm font-semibold text-clinic-ink bg-white border border-clinic-line hover:bg-clinic-bg transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
+          <Button asChild variant="outline" size="lg">
+            <Link href={`/doctor/patients/${patientId}`}>ยกเลิก</Link>
+          </Button>
+          <Button
             type="submit"
+            variant="terracotta"
+            size="lg"
             disabled={isPending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-control text-sm font-semibold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-md hover:shadow-lg disabled:opacity-60 cursor-pointer"
+            className="min-w-[140px]"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            {isPending ? "Updating Record…" : "Save Changes"}
-          </button>
+            {isPending ? "กำลังบันทึก..." : "✓ บันทึกการแก้ไข"}
+          </Button>
         </div>
       </form>
     </div>

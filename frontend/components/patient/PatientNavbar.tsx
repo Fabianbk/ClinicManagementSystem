@@ -5,18 +5,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LeafIcon } from "@/components/site/icons";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { LayoutDashboard, Calendar, PlusCircle, History, User, Menu, X } from "lucide-react";
 
 interface NavItem {
   label: string;
   href: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "หน้าหลัก", href: "/patient/dashboard" },
-  { label: "การนัดหมายของฉัน", href: "/patient/appointments" },
-  { label: "จองคิวออนไลน์", href: "/patient/book" },
-  { label: "ประวัติการรักษา", href: "/patient/treatments" },
-  { label: "ข้อมูลส่วนตัว", href: "/patient/profile" },
+  { label: "หน้าหลัก", href: "/patient/dashboard", icon: LayoutDashboard },
+  { label: "นัดหมายของฉัน", href: "/patient/appointments", icon: Calendar },
+  { label: "จองคิวออนไลน์", href: "/patient/book", icon: PlusCircle },
+  { label: "ประวัติการรักษา", href: "/patient/treatments", icon: History },
+  { label: "ข้อมูลส่วนตัว", href: "/patient/profile", icon: User },
 ];
 
 export function PatientNavbar({
@@ -30,7 +32,7 @@ export function PatientNavbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-clinic-primary-deep text-white shadow-md sticky top-0 z-30 border-b border-white/10">
+    <header className="bg-clinic-primary-deep text-white shadow-sm sticky top-0 z-30 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Left side: Brand Logo */}
@@ -39,19 +41,22 @@ export function PatientNavbar({
               href="/patient/dashboard"
               className="flex items-center gap-2.5 font-display font-bold text-lg text-white hover:opacity-90 transition-opacity"
             >
-              <div className="w-8 h-8 rounded-lg bg-clinic-accent/20 flex items-center justify-center border border-clinic-accent/30 shadow-inner">
-                <LeafIcon width={20} height={20} className="text-clinic-accent" />
+              <div className="w-8 h-8 rounded-control bg-clinic-terracotta/25 flex items-center justify-center border border-clinic-terracotta/40 shadow-inner">
+                <LeafIcon width={18} height={18} className="text-clinic-terracotta-soft text-emerald-300" />
               </div>
-              <span className="hidden sm:inline-block tracking-tight">พิมพ์วิมานคลินิก</span>
+              <span className="hidden sm:inline-block tracking-tight font-display">
+                พิมพ์วิมานคลินิก
+              </span>
             </Link>
-            <span className="bg-clinic-accent/25 text-clinic-accent border border-clinic-accent/40 text-[11px] font-bold px-2 py-0.5 rounded-full shadow-xs">
-              ผู้ป่วย
+            <span className="bg-clinic-terracotta/30 text-clinic-terracotta-soft border border-clinic-terracotta/40 text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
+              ผู้รับบริการ
             </span>
           </div>
 
           {/* Center: Desktop Navigation Menu */}
           <nav className="hidden md:flex items-center gap-1 sm:gap-1.5 overflow-x-auto py-1 scrollbar-none">
             {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
               const active =
                 item.href === "/patient/dashboard"
                   ? pathname === "/patient/dashboard"
@@ -61,13 +66,14 @@ export function PatientNavbar({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                     active
                       ? "bg-white/20 text-white shadow-xs border border-white/25 font-semibold"
                       : "text-white/80 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  {item.label}
+                  <Icon className="w-3.5 h-3.5 opacity-85" />
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
@@ -77,7 +83,7 @@ export function PatientNavbar({
           <div className="hidden sm:flex items-center gap-3 shrink-0">
             {(patientName || username) && (
               <div className="flex items-center gap-2 text-xs font-medium text-white/95 bg-white/10 px-3.5 py-1.5 rounded-full border border-white/15 shadow-inner">
-                <span className="w-2 h-2 rounded-full bg-clinic-accent animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-clinic-terracotta-soft bg-emerald-400 animate-pulse" />
                 <span className="max-w-[150px] truncate">{patientName || username}</span>
               </div>
             )}
@@ -90,15 +96,9 @@ export function PatientNavbar({
               type="button"
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-label="Toggle navigation menu"
-              className="p-2 rounded-md bg-white/10 hover:bg-white/15 text-white focus:outline-none focus:ring-2 focus:ring-clinic-accent transition-colors"
+              className="p-2 rounded-control bg-white/10 hover:bg-white/15 text-white focus:outline-none focus:ring-2 focus:ring-clinic-terracotta transition-colors"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                {mobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -106,15 +106,16 @@ export function PatientNavbar({
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-clinic-primary-deep/95 backdrop-blur-md border-b border-white/10 px-4 pt-2 pb-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden bg-clinic-primary-deep/98 backdrop-blur-md border-b border-white/10 px-4 pt-2 pb-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
           {(patientName || username) && (
-            <div className="px-3 py-2 text-xs font-medium text-clinic-accent border-b border-white/10 flex items-center justify-between">
+            <div className="px-3 py-2 text-xs font-medium text-clinic-terracotta-soft border-b border-white/10 flex items-center justify-between">
               <span>ผู้รับบริการ: {patientName || username}</span>
               <span className="font-mono text-white/60 text-[11px]">{username}</span>
             </div>
           )}
           <div className="flex flex-col gap-1">
             {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
               const active =
                 item.href === "/patient/dashboard"
                   ? pathname === "/patient/dashboard"
@@ -125,14 +126,17 @@ export function PatientNavbar({
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-between ${
+                  className={`px-3 py-2 rounded-control text-sm font-medium transition-colors flex items-center justify-between ${
                     active
                       ? "bg-white/20 text-white font-semibold"
                       : "text-white/80 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  <span>{item.label}</span>
-                  {active && <span className="w-1.5 h-1.5 rounded-full bg-clinic-accent" />}
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </div>
+                  {active && <span className="w-1.5 h-1.5 rounded-full bg-clinic-terracotta-soft bg-emerald-300" />}
                 </Link>
               );
             })}

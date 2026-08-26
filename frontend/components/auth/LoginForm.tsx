@@ -2,6 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface LoginFormProps {
   role: "DOCTOR" | "PATIENT";
@@ -30,7 +33,7 @@ export function LoginForm({ role, loginPath, defaultRedirect, nextPath }: LoginF
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        setError(body?.message ?? "Username or password is incorrect.");
+        setError(body?.message ?? "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
         return;
       }
 
@@ -39,7 +42,7 @@ export function LoginForm({ role, loginPath, defaultRedirect, nextPath }: LoginF
         router.refresh();
       });
     } catch {
-      setError("Could not reach the server. Check your connection and try again.");
+      setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อ");
     }
   }
 
@@ -48,49 +51,53 @@ export function LoginForm({ role, loginPath, defaultRedirect, nextPath }: LoginF
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
       {error && (
-        <p className="p-3 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium" role="alert">
+        <div className="p-3.5 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium" role="alert">
           {error}
-        </p>
+        </div>
       )}
 
-      <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-        <span>Username</span>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="username" required>
+          ชื่อผู้ใช้ (Username)
+        </Label>
+        <Input
+          id="username"
           name="username"
           autoComplete="username"
           required
+          placeholder={isDoctor ? "doctor1" : "patient1"}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={isPending}
-          className="w-full text-clinic-ink px-3.5 py-2.5 border border-clinic-line rounded-control bg-clinic-bg focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all font-normal normal-case text-base sm:text-sm"
         />
-      </label>
+      </div>
 
-      <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-        <span>Password</span>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="password" required>
+          รหัสผ่าน (Password)
+        </Label>
+        <Input
+          id="password"
           type="password"
           name="password"
           autoComplete="current-password"
           required
+          placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={isPending}
-          className="w-full text-clinic-ink px-3.5 py-2.5 border border-clinic-line rounded-control bg-clinic-bg focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all font-normal normal-case text-base sm:text-sm"
         />
-      </label>
+      </div>
 
-      <button
+      <Button
         type="submit"
         disabled={isPending}
-        className={`w-full mt-2 py-3 px-4 rounded-control font-semibold text-sm text-white transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 cursor-pointer ${
-          isDoctor
-            ? "bg-clinic-primary hover:bg-clinic-primary-deep focus:ring-clinic-primary-deep"
-            : "bg-clinic-accent-deep hover:bg-[#6E4C15] focus:ring-clinic-accent-deep"
-        }`}
+        variant={isDoctor ? "default" : "terracotta"}
+        className="w-full mt-2"
+        size="lg"
       >
-        {isPending ? "Signing in…" : "Sign in"}
-      </button>
+        {isPending ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+      </Button>
     </form>
   );
 }

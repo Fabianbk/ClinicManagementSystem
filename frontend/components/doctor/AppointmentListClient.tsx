@@ -3,10 +3,58 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { AppointmentResponseDTO, PageResponse, AppointmentStatus } from "@/lib/types";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge, AppointmentStatusBadge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Calendar,
+  Search,
+  CheckCircle2,
+  AlertCircle,
+  FilePlus,
+  UserX,
+  RefreshCw,
+  Clock,
+  User,
+  CalendarDays,
+} from "lucide-react";
 
 interface AppointmentListClientProps {
   doctorId: number;
   initialData: PageResponse<AppointmentResponseDTO> | null;
+}
+
+function formatDateThai(dateStr?: string): string {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("th-TH", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatTimeRange(startStr?: string, endStr?: string): string {
+  if (!startStr) return "-";
+  const s = new Date(startStr);
+  const startFormatted = s.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  if (!endStr) return startFormatted;
+  const e = new Date(endStr);
+  const endFormatted = e.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${startFormatted} - ${endFormatted} น.`;
 }
 
 export function AppointmentListClient({ doctorId, initialData }: AppointmentListClientProps) {
@@ -84,15 +132,12 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
 
   // Filter appointments
   const filteredAppointments = appointments.filter((app) => {
-    // Only logged-in doctor's appointments
     if (app.doctorId && app.doctorId !== doctorId) {
       return false;
     }
-    // Status filter
     if (statusFilter !== "ALL" && app.status !== statusFilter) {
       return false;
     }
-    // Search query filter (Patient Name or Doctor Name)
     if (searchQuery.trim() !== "") {
       const q = searchQuery.toLowerCase();
       const matchPatient = app.patientFullname?.toLowerCase().includes(q);
@@ -100,7 +145,6 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
       const matchId = app.patientId?.toString().includes(q) || app.appointmentId?.toString().includes(q);
       if (!matchPatient && !matchDoctor && !matchId) return false;
     }
-    // Date filter
     if (selectedDate !== "") {
       const slotDateStr = app.slotStartTime ? app.slotStartTime.split("T")[0] : "";
       if (slotDateStr !== selectedDate) return false;
@@ -108,7 +152,7 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
     return true;
   });
 
-  // KPI Calculations (only for doctor's own appointments)
+  // KPI Calculations
   const doctorAppointments = appointments.filter((a) => !a.doctorId || a.doctorId === doctorId);
   const totalCount = doctorAppointments.length;
   const scheduledCount = doctorAppointments.filter((a) => a.status === "SCHEDULED").length;
@@ -116,306 +160,249 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
   const noShowCount = doctorAppointments.filter((a) => a.status === "NO_SHOW" || a.status === "CANCELLED").length;
 
   return (
-    <div className="space-y-6 font-body text-clinic-ink">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-clinic-primary-deep flex items-center gap-2">
-            <span>รายการนัดหมายของฉัน</span>
-          </h1>
-          <p className="text-sm text-clinic-ink-soft mt-1">
-            ตรวจสอบตารางนัดหมายผู้ป่วยที่คุณรับผิดชอบ ปรับสถานะการรักษา และเข้าดูประวัติเวชระเบียน
-          </p>
-        </div>
+    <div className="space-y-6 pb-20 font-body text-clinic-ink">
+      <PageHeader
+        icon={<Calendar className="w-5 h-5 text-clinic-primary" />}
+        title="รายการนัดหมายตรวจรักษา (Appointments)"
+        subtitle="ตรวจสอบคิวผู้ป่วย นัดหมายที่กำลังมาถึง และบันทึกผลการตรวจรักษา"
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={refreshAppointments}
+            disabled={loading}
+            className="gap-1.5 shadow-2xs"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span>รีเฟรชข้อมูล</span>
+          </Button>
+        }
+      />
 
-        <button
-          onClick={refreshAppointments}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white border border-clinic-line transition-all shadow-xs cursor-pointer"
-        >
-          🔄 อัปเดตข้อมูล
-        </button>
-      </div>
-
-      {/* Alert Messages */}
+      {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium flex items-center justify-between">
-          <span>{errorMsg}</span>
-          <button onClick={() => setErrorMsg(null)} className="text-xs underline ml-2 cursor-pointer">
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+          <button type="button" onClick={() => setErrorMsg(null)} className="text-xs underline cursor-pointer">
             ปิด
           </button>
         </div>
       )}
+
       {successMsg && (
-        <div className="p-4 rounded-control bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between">
-          <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg(null)} className="text-xs underline ml-2 cursor-pointer">
+        <div className="p-4 rounded-control bg-clinic-success-bg border border-clinic-success text-clinic-success text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{successMsg}</span>
+          </div>
+          <button type="button" onClick={() => setSuccessMsg(null)} className="text-xs underline cursor-pointer">
             ปิด
           </button>
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            นัดหมายทั้งหมด
-          </span>
-          <div className="text-3xl font-bold text-clinic-primary-deep mt-1">{totalCount}</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            รอดำเนินการ (Scheduled)
-          </span>
-          <div className="text-3xl font-bold text-blue-600 mt-1">{scheduledCount}</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            เสร็จสิ้นการรักษา
-          </span>
-          <div className="text-3xl font-bold text-emerald-600 mt-1">{completedCount}</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            ไม่มาตามนัด / ยกเลิก
-          </span>
-          <div className="text-3xl font-bold text-amber-600 mt-1">{noShowCount}</div>
-        </div>
+      {/* KPI Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-semibold text-clinic-ink-soft">นัดหมายทั้งหมด</p>
+            <p className="text-2xl font-bold font-display text-clinic-primary-deep mt-1">
+              {totalCount}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-semibold text-clinic-primary">นัดหมายยืนยัน / รอตรวจ</p>
+            <p className="text-2xl font-bold font-display text-clinic-primary mt-1">
+              {scheduledCount}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-semibold text-emerald-700">ตรวจเสร็จสิ้นแล้ว</p>
+            <p className="text-2xl font-bold font-display text-emerald-800 mt-1">
+              {completedCount}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-semibold text-rose-700">ยกเลิก / ไม่มาตามนัด</p>
+            <p className="text-2xl font-bold font-display text-rose-800 mt-1">
+              {noShowCount}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Search and Filters Bar */}
-      <div className="bg-white p-4 rounded-card border border-clinic-line shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-clinic-ink-soft">
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="ค้นหาชื่อผู้ป่วย หรือรหัสผู้ป่วย..."
+      {/* Filter Toolbar */}
+      <Card>
+        <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 text-clinic-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              placeholder="ค้นหาชื่อผู้ป่วย, รหัส HN หรือรหัสนัดหมาย..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-clinic-line rounded-control text-sm text-clinic-ink focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40"
+              className="pl-9 text-xs"
             />
           </div>
 
-          {/* Date Picker Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-clinic-ink-soft whitespace-nowrap">
-              กรองตามวันที่:
-            </span>
-            <input
+          <div className="w-full sm:w-44">
+            <Input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/40 focus:ring-2 focus:ring-clinic-primary"
+              className="text-xs"
             />
-            {selectedDate && (
-              <button
-                onClick={() => setSelectedDate("")}
-                className="text-xs text-clinic-danger hover:underline cursor-pointer"
-              >
-                ล้างวันที่
-              </button>
-            )}
           </div>
-        </div>
 
-        {/* Status Tabs */}
-        <div className="flex items-center gap-2 border-t border-clinic-line/60 pt-3 overflow-x-auto">
-          {[
-            { key: "ALL", label: "ทั้งหมด", count: totalCount },
-            { key: "SCHEDULED", label: "รอดำเนินการ", count: scheduledCount },
-            { key: "COMPLETED", label: "เสร็จสิ้น", count: completedCount },
-            { key: "NO_SHOW", label: "ไม่มาตามนัด", count: doctorAppointments.filter((a) => a.status === "NO_SHOW").length },
-            { key: "CANCELLED", label: "ยกเลิกแล้ว", count: doctorAppointments.filter((a) => a.status === "CANCELLED").length },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setStatusFilter(tab.key as any)}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-colors whitespace-nowrap cursor-pointer ${
-                statusFilter === tab.key
-                  ? "bg-clinic-primary text-white shadow-xs"
-                  : "bg-clinic-bg text-clinic-ink-soft hover:bg-clinic-line/50"
-              }`}
+          <div className="w-full sm:w-48">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="text-xs"
             >
-              {tab.label} ({tab.count})
-            </button>
-          ))}
-        </div>
-      </div>
+              <option value="ALL">ทุกสถานะนัดหมาย</option>
+              <option value="SCHEDULED">ยืนยันแล้ว (SCHEDULED)</option>
+              <option value="COMPLETED">เสร็จสิ้น (COMPLETED)</option>
+              <option value="CANCELLED">ยกเลิก (CANCELLED)</option>
+              <option value="NO_SHOW">ไม่มาตามนัด (NO_SHOW)</option>
+            </Select>
+          </div>
 
-      {/* Appointments List Table */}
-      {loading ? (
-        <div className="p-12 text-center text-clinic-ink-soft">กำลังโหลดรายการนัดหมาย...</div>
-      ) : filteredAppointments.length === 0 ? (
-        <div className="border border-dashed border-clinic-line rounded-card p-12 text-center text-clinic-ink-soft bg-white/50 space-y-2">
-          <p className="text-base font-medium">ไม่พบรายการนัดหมายตรงตามเงื่อนไข</p>
-          <p className="text-xs">ลองปรับการค้นหาหรือเลือกแท็บอื่น</p>
+          {(searchQuery || selectedDate || statusFilter !== "ALL") && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedDate("");
+                setStatusFilter("ALL");
+              }}
+              className="text-xs text-clinic-ink-soft shrink-0"
+            >
+              ล้างตัวกรอง
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Appointments List */}
+      {filteredAppointments.length > 0 ? (
+        <div className="space-y-4">
+          {filteredAppointments.map((app) => {
+            const isUpdating = updatingId === app.appointmentId;
+            const isScheduled = app.status === "SCHEDULED";
+
+            return (
+              <Card
+                key={app.appointmentId}
+                className="hover:border-clinic-primary/40 hover:shadow-sm transition-all"
+              >
+                <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  {/* Left Info */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <AppointmentStatusBadge status={app.status} />
+                      <span className="text-xs font-mono text-clinic-ink-soft">
+                        นัดหมาย #{app.appointmentId}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-display font-bold text-base text-clinic-primary-deep">
+                        {app.patientFullname || `ผู้ป่วยรหัส #${app.patientId}`}
+                      </h3>
+                      {app.patientId && (
+                        <span className="text-xs font-mono text-clinic-ink-soft bg-clinic-bg px-2 py-0.5 rounded border border-clinic-line">
+                          HN: P-{String(app.patientId).padStart(5, "0")}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-clinic-ink-soft">
+                      <span className="flex items-center gap-1.5 font-medium text-clinic-ink">
+                        <CalendarDays className="w-3.5 h-3.5 text-clinic-primary" />
+                        {formatDateThai(app.slotStartTime)}
+                      </span>
+                      <span className="flex items-center gap-1.5 font-mono text-clinic-ink">
+                        <Clock className="w-3.5 h-3.5 text-clinic-terracotta" />
+                        {formatTimeRange(app.slotStartTime, app.slotEndTime)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right Actions */}
+                  <div className="flex flex-wrap items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-clinic-line">
+                    {app.patientId && (
+                      <Button asChild variant="outline" size="sm" className="text-xs gap-1">
+                        <Link href={`/doctor/patients/${app.patientId}`}>
+                          <User className="w-3.5 h-3.5" />
+                          <span>ดูประวัติ</span>
+                        </Link>
+                      </Button>
+                    )}
+
+                    {isScheduled && (
+                      <>
+                        <Button
+                          asChild
+                          variant="terracotta"
+                          size="sm"
+                          className="text-xs gap-1 shadow-2xs font-semibold"
+                        >
+                          <Link
+                            href={`/doctor/treatments/new?appointmentId=${app.appointmentId}&patientId=${app.patientId}`}
+                          >
+                            <FilePlus className="w-3.5 h-3.5" />
+                            <span>บันทึกการรักษา</span>
+                          </Link>
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={isUpdating}
+                          onClick={() => handleComplete(app.appointmentId)}
+                          className="text-xs text-emerald-800 hover:bg-emerald-100"
+                        >
+                          เสร็จสิ้น
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={isUpdating}
+                          onClick={() => handleNoShow(app.appointmentId)}
+                          className="text-xs text-rose-700 hover:bg-rose-50"
+                        >
+                          ไม่มาตามนัด
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       ) : (
-        <div className="bg-white border border-clinic-line rounded-card overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="bg-clinic-bg border-b border-clinic-line">
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    ผู้ป่วย
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    วัน-เวลาที่นัดหมาย
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    สถานะนัดหมาย
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft text-right">
-                    การจัดการ / ดำเนินการ
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-clinic-line">
-                {filteredAppointments.map((app) => {
-                  const isScheduled = app.status === "SCHEDULED";
-                  const isCompleted = app.status === "COMPLETED";
-                  const isNoShow = app.status === "NO_SHOW";
-                  const isCancelled = app.status === "CANCELLED";
-
-                  return (
-                    <tr key={app.appointmentId} className="hover:bg-clinic-bg/40 transition-colors">
-                      {/* Patient Info */}
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/doctor/patients/${app.patientId}`}
-                          className="font-bold text-clinic-primary-deep hover:underline flex items-center gap-1.5"
-                        >
-                          <span>{app.patientFullname || `ผู้ป่วย #${app.patientId}`}</span>
-                          <span className="text-[10px] font-mono font-normal text-clinic-ink-soft bg-clinic-bg px-1.5 py-0.5 rounded border border-clinic-line">
-                            ID: {app.patientId}
-                          </span>
-                        </Link>
-                      </td>
-
-                      {/* Date & Time Slot */}
-                      <td className="px-5 py-4">
-                        <div className="font-semibold text-clinic-ink">
-                          {formatDateThai(app.slotStartTime)}
-                        </div>
-                        <div className="text-xs font-mono text-clinic-ink-soft mt-0.5">
-                          🕒 {formatTimeOnly(app.slotStartTime)} - {formatTimeOnly(app.slotEndTime)} น.
-                        </div>
-                      </td>
-
-                      {/* Status Badge */}
-                      <td className="px-5 py-4">
-                        {isScheduled && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                            นัดหมายแล้ว (Scheduled)
-                          </span>
-                        )}
-                        {isCompleted && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            ✓ เสร็จสิ้นการรักษา
-                          </span>
-                        )}
-                        {isNoShow && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                            ✕ ไม่มาตามนัด (No-Show)
-                          </span>
-                        )}
-                        {isCancelled && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                            ยกเลิกนัดหมาย
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-5 py-4 text-right space-x-1.5 whitespace-nowrap">
-                        {isScheduled ? (
-                          <>
-                            <Link
-                              href={`/doctor/treatments/new?appointmentId=${app.appointmentId}&patientId=${app.patientId}`}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-2xs"
-                            >
-                              📝 บันทึกการรักษา
-                            </Link>
-                            <button
-                              disabled={updatingId === app.appointmentId}
-                              onClick={() => handleComplete(app.appointmentId)}
-                              className="px-2.5 py-1.5 rounded-control text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
-                              title="เปลี่ยนสถานะเป็นเสร็จสิ้น"
-                            >
-                              ✓ เสร็จสิ้น
-                            </button>
-                            <button
-                              disabled={updatingId === app.appointmentId}
-                              onClick={() => handleNoShow(app.appointmentId)}
-                              className="px-2.5 py-1.5 rounded-control text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-colors disabled:opacity-50 cursor-pointer"
-                              title="ไม่มาตามนัด"
-                            >
-                              ✕
-                            </button>
-                          </>
-                        ) : (
-                          <div className="space-x-1.5">
-                            <Link
-                              href={`/doctor/patients/${app.patientId}`}
-                              className="px-3 py-1.5 rounded-control text-xs font-semibold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white transition-colors border border-clinic-line"
-                            >
-                              👤 ประวัติผู้ป่วย
-                            </Link>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <EmptyState
+          icon={<Calendar className="w-6 h-6 text-clinic-primary" />}
+          title="ไม่พบรายการนัดหมายตามเงื่อนไขที่เลือก"
+          description="ลองปรับตัวกรองวันที่หรือสถานะนัดหมายใหม่"
+        />
       )}
     </div>
   );
-}
-
-// Helpers
-const THAI_WEEKDAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
-const THAI_MONTHS = [
-  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
-];
-
-function formatDateThai(dateStr?: string): string {
-  if (!dateStr) return "-";
-  try {
-    const cleanDate = dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`;
-    const d = new Date(cleanDate);
-    if (isNaN(d.getTime())) return dateStr;
-
-    const weekday = THAI_WEEKDAYS[d.getDay()];
-    const day = d.getDate();
-    const month = THAI_MONTHS[d.getMonth()];
-    const year = d.getFullYear() + 543;
-
-    return `${weekday} ${day} ${month} ${year}`;
-  } catch (e) {
-    return dateStr;
-  }
-}
-
-function formatTimeOnly(dateStr?: string): string {
-  if (!dateStr) return "-";
-  try {
-    const d = new Date(dateStr);
-    const hours = d.getHours().toString().padStart(2, "0");
-    const minutes = d.getMinutes().toString().padStart(2, "0");
-    return `${hours}:${minutes}`;
-  } catch (e) {
-    return dateStr;
-  }
 }

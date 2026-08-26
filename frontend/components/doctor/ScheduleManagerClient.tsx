@@ -2,11 +2,60 @@
 
 import { useState } from "react";
 import type { WorkingScheduleResponseDTO, AppointmentSlotResponseDTO } from "@/lib/types";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Clock,
+  Calendar,
+  Plus,
+  Trash2,
+  Lock,
+  Unlock,
+  CheckCircle2,
+  AlertCircle,
+  CalendarCheck,
+  Coffee,
+} from "lucide-react";
 
 interface ScheduleManagerClientProps {
   doctorId: number;
   doctorUsername?: string;
   initialSchedules: WorkingScheduleResponseDTO[];
+}
+
+function formatDateThai(dateStr: string): string {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("th-TH", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatTimeOnly(timeStr: string): string {
+  if (!timeStr) return "-";
+  const d = new Date(timeStr);
+  return d.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 export function ScheduleManagerClient({
@@ -25,7 +74,7 @@ export function ScheduleManagerClient({
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Form fields
   const [scheduleDate, setScheduleDate] = useState(() => {
     const tomorrow = new Date();
@@ -45,7 +94,7 @@ export function ScheduleManagerClient({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [updatingSlotId, setUpdatingSlotId] = useState<number | null>(null);
 
-  // Reload schedules via Next.js API route
+  // Reload schedules
   const refreshSchedules = async () => {
     try {
       setLoading(true);
@@ -61,7 +110,7 @@ export function ScheduleManagerClient({
     }
   };
 
-  // Open slot modal & fetch slots via Next.js API route
+  // Open slot modal & fetch slots
   const openSlotsModal = async (schedule: WorkingScheduleResponseDTO) => {
     setSelectedSchedule(schedule);
     setLoadingSlots(true);
@@ -96,7 +145,6 @@ export function ScheduleManagerClient({
 
     try {
       setSubmitting(true);
-
       const startDateTimeStr = `${scheduleDate}T${shiftStartTime}:00`;
       const endDateTimeStr = `${scheduleDate}T${shiftEndTime}:00`;
       const shiftStartObj = new Date(startDateTimeStr);
@@ -163,7 +211,7 @@ export function ScheduleManagerClient({
       }
 
       setSuccessMsg(
-        `สร้างตารางเวรวันที่ ${formatDateThai(scheduleDate)} สำเร็จ! พร้อมสร้างสล็อตเวลารับนัด ${createdSlotCount} สล็อต`
+        `สร้างตารางเวรวันที่ ${formatDateThai(scheduleDate)} สำเร็จ! พร้อมสล็อตเวลารับนัด ${createdSlotCount} สล็อต`
       );
       setIsCreateOpen(false);
       refreshSchedules();
@@ -198,510 +246,435 @@ export function ScheduleManagerClient({
   // Toggle slot status (AVAILABLE <-> BLOCKED)
   const handleToggleSlotStatus = async (slot: AppointmentSlotResponseDTO) => {
     if (slot.status === "BOOKED") {
-      alert("ไม่สามารถเปลี่ยนสถานะสล็อตที่มีการนัดหมายแล้วได้");
+      alert("สล็อตนี้มีผู้ป่วยจองคิวไว้แล้ว ไม่สามารถปิดหรือเปิดได้");
       return;
     }
-    const newStatus = slot.status === "AVAILABLE" ? "BLOCKED" : "AVAILABLE";
+
+    const nextStatus = slot.status === "AVAILABLE" ? "BLOCKED" : "AVAILABLE";
     try {
       setUpdatingSlotId(slot.slotId);
-      const res = await fetch(`/api/appointment-slots/${slot.slotId}/status?status=${newStatus}`, {
+      const res = await fetch(`/api/appointment-slots/${slot.slotId}/status?status=${nextStatus}`, {
         method: "PATCH",
       });
       if (!res.ok) throw new Error("ไม่สามารถเปลี่ยนสถานะสล็อตได้");
-      if (selectedSchedule) {
-        openSlotsModal(selectedSchedule);
-      }
+
+      setSlots((prev) =>
+        prev.map((s) => (s.slotId === slot.slotId ? { ...s, status: nextStatus as any } : s))
+      );
     } catch (err: any) {
-      alert(err.message || "ไม่สามารถอัปเดตสถานะสล็อตเวลาได้");
+      setErrorMsg(err.message || "เกิดข้อผิดพลาดในการปรับสถานะสล็อต");
     } finally {
       setUpdatingSlotId(null);
     }
   };
 
-  // Filter schedules
+  // Filtered schedules
   const todayStr = new Date().toISOString().split("T")[0];
-  const filteredSchedules = schedules.filter((sch) => {
-    const schDateStr = sch.date ? sch.date.split("T")[0] : "";
-    if (filterType === "TODAY") {
-      return schDateStr === todayStr;
-    }
-    if (filterType === "UPCOMING") {
-      return schDateStr >= todayStr;
-    }
+  const filteredSchedules = schedules.filter((s) => {
+    const sDate = s.date ? s.date.split("T")[0] : "";
+    if (filterType === "TODAY") return sDate === todayStr;
+    if (filterType === "UPCOMING") return sDate >= todayStr;
     return true;
   });
 
   return (
-    <div className="space-y-6 font-body text-clinic-ink">
-      {/* Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-clinic-primary-deep flex items-center gap-2">
-            <span>ตารางออกตรวจของฉัน</span>
-          </h1>
-          <p className="text-sm text-clinic-ink-soft mt-1">
-            จัดการตารางเวลาทำงาน วันออกตรวจ และสล็อตเวลารับนัดหมายผู้ป่วย
-          </p>
-        </div>
-
-        <button
-          onClick={() => {
-            setErrorMsg(null);
-            setSuccessMsg(null);
-            setIsCreateOpen(true);
-          }}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-md active:scale-95 cursor-pointer"
-        >
-          + เพิ่มตารางเวรออกตรวจ
-        </button>
-      </div>
+    <div className="space-y-6 pb-20 font-body text-clinic-ink">
+      <PageHeader
+        icon={<Clock className="w-5 h-5 text-clinic-primary" />}
+        title="จัดการตารางเวรแพทย์ (Duty Schedule)"
+        subtitle="กำหนดวันออกตรวจ เวลาทำงาน และสร้างช่วงเวลานัดหมาย (Slots) สำหรับคนไข้จองออนไลน์"
+        actions={
+          <Button
+            type="button"
+            variant="terracotta"
+            size="sm"
+            onClick={() => {
+              setErrorMsg(null);
+              setIsCreateOpen(true);
+            }}
+            className="gap-1.5 shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ กำหนดวันออกตรวจใหม่</span>
+          </Button>
+        }
+      />
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium flex items-center justify-between">
-          <span>{errorMsg}</span>
-          <button onClick={() => setErrorMsg(null)} className="text-xs underline ml-2">ปิด</button>
-        </div>
-      )}
-      {successMsg && (
-        <div className="p-4 rounded-control bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between">
-          <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg(null)} className="text-xs underline ml-2">ปิด</button>
-        </div>
-      )}
-
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            ตารางเวรทั้งหมด
-          </span>
-          <div className="text-3xl font-bold text-clinic-primary-deep mt-1">{schedules.length}</div>
-        </div>
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            ตารางเวรวันนี้
-          </span>
-          <div className="text-3xl font-bold text-emerald-700 mt-1">
-            {schedules.filter((s) => (s.date ? s.date.split("T")[0] : "") === todayStr).length}
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
           </div>
-        </div>
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            ตารางล่วงหน้า
-          </span>
-          <div className="text-3xl font-bold text-clinic-accent-deep mt-1">
-            {schedules.filter((s) => (s.date ? s.date.split("T")[0] : "") >= todayStr).length}
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-clinic-line pb-2">
-        <button
-          onClick={() => setFilterType("ALL")}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
-            filterType === "ALL"
-              ? "bg-clinic-primary text-white"
-              : "text-clinic-ink-soft hover:bg-clinic-line/40"
-          }`}
-        >
-          ทั้งหมด ({schedules.length})
-        </button>
-        <button
-          onClick={() => setFilterType("UPCOMING")}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
-            filterType === "UPCOMING"
-              ? "bg-clinic-primary text-white"
-              : "text-clinic-ink-soft hover:bg-clinic-line/40"
-          }`}
-        >
-          ล่วงหน้า & วันนี้ (
-          {schedules.filter((s) => (s.date ? s.date.split("T")[0] : "") >= todayStr).length})
-        </button>
-        <button
-          onClick={() => setFilterType("TODAY")}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
-            filterType === "TODAY"
-              ? "bg-clinic-primary text-white"
-              : "text-clinic-ink-soft hover:bg-clinic-line/40"
-          }`}
-        >
-          วันนี้ (
-          {schedules.filter((s) => (s.date ? s.date.split("T")[0] : "") === todayStr).length})
-        </button>
-      </div>
-
-      {/* Schedule List */}
-      {loading ? (
-        <div className="p-12 text-center text-clinic-ink-soft">กำลังโหลดตารางเวร...</div>
-      ) : filteredSchedules.length === 0 ? (
-        <div className="border border-dashed border-clinic-line rounded-card p-12 text-center text-clinic-ink-soft bg-white/50 space-y-3">
-          <p className="text-base font-medium">ยังไม่มีตารางเวรออกตรวจในช่วงนี้</p>
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="text-sm font-semibold text-clinic-primary hover:underline cursor-pointer"
-          >
-            + คลิกที่นี่เพื่อเพิ่มตารางเวรออกตรวจใหม่
+          <button type="button" onClick={() => setErrorMsg(null)} className="text-xs underline cursor-pointer">
+            ปิด
           </button>
         </div>
-      ) : (
-        <div className="bg-white border border-clinic-line rounded-card overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="bg-clinic-bg border-b border-clinic-line">
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    วันที่ออกตรวจ
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    เวลาปฏิบัติงาน (Shift)
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    สถานะ
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft text-right">
-                    การจัดการ
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-clinic-line">
-                {filteredSchedules.map((sch) => {
-                  const schDateStr = sch.date ? sch.date.split("T")[0] : "";
-                  const isToday = schDateStr === todayStr;
-                  const isPast = schDateStr < todayStr;
+      )}
 
-                  return (
-                    <tr key={sch.scheduleId} className="hover:bg-clinic-bg/40 transition-colors">
-                      <td className="px-5 py-4 font-semibold text-clinic-ink">
-                        {formatDateThai(sch.date)}
-                      </td>
-                      <td className="px-5 py-4 text-clinic-ink">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-clinic-bg font-mono text-xs text-clinic-ink font-medium border border-clinic-line">
-                          🕒 {formatTimeOnly(sch.shiftStart)} - {formatTimeOnly(sch.shiftEnd)} น.
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        {isToday ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                            วันนี้
-                          </span>
-                        ) : isPast ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                            ผ่านไปแล้ว
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            ล่วงหน้า
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 text-right space-x-2">
-                        <button
-                          onClick={() => openSlotsModal(sch)}
-                          className="px-3 py-1.5 rounded-control text-xs font-semibold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white transition-colors border border-clinic-line cursor-pointer"
-                        >
-                          📅 ดูสล็อตเวลา
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSchedule(sch.scheduleId)}
-                          className="px-3 py-1.5 rounded-control text-xs font-semibold text-clinic-danger bg-clinic-danger-bg hover:bg-clinic-danger hover:text-white transition-colors border border-clinic-danger/30 cursor-pointer"
-                        >
-                          🗑️ ลบ
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {successMsg && (
+        <div className="p-4 rounded-control bg-clinic-success-bg border border-clinic-success text-clinic-success text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{successMsg}</span>
           </div>
+          <button type="button" onClick={() => setSuccessMsg(null)} className="text-xs underline cursor-pointer">
+            ปิด
+          </button>
         </div>
       )}
 
-      {/* Modal: Create Schedule & Auto Generate Slots */}
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-lg rounded-card shadow-xl border border-clinic-line p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-clinic-line pb-3">
-              <h3 className="font-display text-lg font-bold text-clinic-primary-deep">
-                เพิ่มตารางเวรออกตรวจใหม่
-              </h3>
-              <button
-                onClick={() => setIsCreateOpen(false)}
-                className="text-clinic-ink-soft hover:text-clinic-ink text-xl font-bold cursor-pointer"
+      {/* Filter Tabs */}
+      <div className="flex items-center justify-between border-b border-clinic-line pb-3">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant={filterType === "ALL" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterType("ALL")}
+            className="h-8 text-xs"
+          >
+            ทั้งหมด ({schedules.length})
+          </Button>
+          <Button
+            type="button"
+            variant={filterType === "UPCOMING" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterType("UPCOMING")}
+            className="h-8 text-xs"
+          >
+            เร็วๆ นี้ / กำลังมาถึง
+          </Button>
+          <Button
+            type="button"
+            variant={filterType === "TODAY" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterType("TODAY")}
+            className="h-8 text-xs"
+          >
+            วันนี้
+          </Button>
+        </div>
+      </div>
+
+      {/* Schedules List Grid */}
+      {filteredSchedules.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredSchedules.map((schedule) => {
+            const isToday = schedule.date?.startsWith(todayStr);
+            const isPast = schedule.date ? schedule.date.split("T")[0] < todayStr : false;
+
+            return (
+              <Card
+                key={schedule.scheduleId}
+                className={`relative transition-all hover:shadow-md ${
+                  isToday
+                    ? "border-clinic-terracotta ring-1 ring-clinic-terracotta/20 bg-clinic-terracotta-soft/20"
+                    : isPast
+                    ? "opacity-80 bg-clinic-bg/40"
+                    : "hover:border-clinic-primary/40"
+                }`}
               >
-                ×
-              </button>
+                <CardHeader className="pb-3 border-b border-clinic-line flex flex-row items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-display font-bold text-base text-clinic-primary-deep">
+                        {formatDateThai(schedule.date)}
+                      </span>
+                      {isToday && (
+                        <Badge variant="terracotta" className="text-[10px] font-bold">
+                          วันนี้
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-clinic-ink-soft">
+                      รหัสเวร: #{schedule.scheduleId}
+                    </span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteSchedule(schedule.scheduleId)}
+                    title="ลบตารางเวร"
+                    className="h-8 w-8 text-clinic-ink-soft hover:text-clinic-danger hover:bg-clinic-danger-bg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </CardHeader>
+
+                <CardContent className="pt-4 space-y-4">
+                  <div className="flex items-center justify-between bg-clinic-bg p-3 rounded-control border border-clinic-line text-xs">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-clinic-primary" />
+                      <span className="font-semibold text-clinic-ink">เวลาออกตรวจ:</span>
+                    </div>
+                    <span className="font-mono font-bold text-clinic-primary-deep">
+                      {formatTimeOnly(schedule.shiftStart)} - {formatTimeOnly(schedule.shiftEnd)} น.
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openSlotsModal(schedule)}
+                      className="w-full text-xs gap-1.5 justify-center shadow-2xs font-semibold hover:border-clinic-primary"
+                    >
+                      <CalendarCheck className="w-4 h-4 text-clinic-primary" />
+                      <span>จัดการสล็อตเวลา (Slots)</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<Calendar className="w-6 h-6 text-clinic-primary" />}
+          title="ไม่พบรายการตารางเวรในช่วงที่เลือก"
+          description="ท่านสามารถเพิ่มวันออกตรวจและสร้างสล็อตเวลาอัตโนมัติได้ทันที"
+          action={
+            <Button
+              type="button"
+              variant="terracotta"
+              size="sm"
+              onClick={() => {
+                setErrorMsg(null);
+                setIsCreateOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              <span>+ กำหนดวันออกตรวจใหม่</span>
+            </Button>
+          }
+        />
+      )}
+
+      {/* 1. Modal: Create Working Schedule */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>กำหนดวันออกตรวจและสร้างสล็อต</DialogTitle>
+            <DialogDescription>
+              ระบบจะคำนวณและสร้างสล็อตเวลารับนัดให้อัตโนมัติ (ข้ามช่วงพักเที่ยง)
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateSchedule} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="scheduleDate" required>
+                วันที่ออกตรวจ (Date)
+              </Label>
+              <Input
+                id="scheduleDate"
+                type="date"
+                required
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+              />
             </div>
 
-            <form onSubmit={handleCreateSchedule} className="space-y-4 text-sm">
-              <div>
-                <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                  วันที่ออกตรวจ *
-                </label>
-                <input
-                  type="date"
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="shiftStartTime" required>
+                  เวลาเริ่มตรวจ
+                </Label>
+                <Input
+                  id="shiftStartTime"
+                  type="time"
                   required
-                  value={scheduleDate}
-                  onChange={(e) => setScheduleDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-clinic-line rounded-control focus:outline-hidden focus:ring-2 focus:ring-clinic-primary"
+                  value={shiftStartTime}
+                  onChange={(e) => setShiftStartTime(e.target.value)}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                    เวลาเริ่มเข้าเวร *
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={shiftStartTime}
-                    onChange={(e) => setShiftStartTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-clinic-line rounded-control focus:outline-hidden focus:ring-2 focus:ring-clinic-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                    เวลาสิ้นสุดเวร *
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={shiftEndTime}
-                    onChange={(e) => setShiftEndTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-clinic-line rounded-control focus:outline-hidden focus:ring-2 focus:ring-clinic-primary"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="shiftEndTime" required>
+                  เวลาสิ้นสุด
+                </Label>
+                <Input
+                  id="shiftEndTime"
+                  type="time"
+                  required
+                  value={shiftEndTime}
+                  onChange={(e) => setShiftEndTime(e.target.value)}
+                />
               </div>
-
-              <div className="bg-clinic-bg/60 border border-clinic-line rounded-card p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-clinic-primary-deep text-xs">
-                    ⚡ สล็อตเวลารับนัด (Auto Slots)
-                  </label>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-clinic-ink-soft mb-1">
-                    ความยาวแต่ละสล็อต (นาที) *
-                  </label>
-                  <input
-                    type="number"
-                    min={5}
-                    max={120}
-                    step={5}
-                    required
-                    value={slotMinutes}
-                    onChange={(e) => setSlotMinutes(Number(e.target.value))}
-                    className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-white focus:ring-2 focus:ring-clinic-primary"
-                  />
-                </div>
-
-                <div className="pt-2 border-t border-clinic-line/60">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-clinic-ink cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={hasLunchBreak}
-                      onChange={(e) => setHasLunchBreak(e.target.checked)}
-                      className="rounded text-clinic-primary focus:ring-clinic-primary"
-                    />
-                    <span>เว้นช่วงพักเที่ยง (Auto-close at Lunch)</span>
-                  </label>
-
-                  {hasLunchBreak && (
-                    <div className="grid grid-cols-2 gap-3 mt-2 pl-6">
-                      <div>
-                        <span className="text-[11px] text-clinic-ink-soft">เริ่มพัก</span>
-                        <input
-                          type="time"
-                          value={lunchStart}
-                          onChange={(e) => setLunchStart(e.target.value)}
-                          className="w-full px-2 py-1 text-xs border border-clinic-line rounded bg-white"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-[11px] text-clinic-ink-soft">สิ้นสุดพัก</span>
-                        <input
-                          type="time"
-                          value={lunchEnd}
-                          onChange={(e) => setLunchEnd(e.target.value)}
-                          className="w-full px-2 py-1 text-xs border border-clinic-line rounded bg-white"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-clinic-line">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-clinic-ink-soft hover:bg-clinic-line/30 rounded-control cursor-pointer"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 text-xs font-semibold text-white bg-clinic-primary hover:bg-clinic-primary-deep rounded-control shadow-sm disabled:opacity-50 cursor-pointer"
-                >
-                  {submitting ? "กำลังสร้างตาราง..." : "บันทึกและสร้างสล็อตเวลา"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: View & Manage Slots for a Schedule */}
-      {selectedSchedule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-2xl rounded-card shadow-xl border border-clinic-line p-6 space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-clinic-line pb-3">
-              <div>
-                <h3 className="font-display text-lg font-bold text-clinic-primary-deep">
-                  สล็อตเวลารับนัดหมาย
-                </h3>
-                <p className="text-xs text-clinic-ink-soft mt-0.5">
-                  วันที่ {formatDateThai(selectedSchedule.date)} (
-                  {formatTimeOnly(selectedSchedule.shiftStart)} -{" "}
-                  {formatTimeOnly(selectedSchedule.shiftEnd)} น.)
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedSchedule(null)}
-                className="text-clinic-ink-soft hover:text-clinic-ink text-xl font-bold cursor-pointer"
-              >
-                ×
-              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-1">
-              {loadingSlots ? (
-                <div className="py-12 text-center text-clinic-ink-soft text-sm">
-                  กำลังโหลดสล็อตเวลา...
-                </div>
-              ) : slots.length === 0 ? (
-                <div className="py-12 text-center text-clinic-ink-soft text-sm border border-dashed border-clinic-line rounded-card">
-                  ยังไม่มีสล็อตเวลาสำหรับตารางเวรนี้
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {slots.map((slot) => {
-                    const isAvailable = slot.status === "AVAILABLE";
-                    const isBooked = slot.status === "BOOKED";
-                    const isBlocked = slot.status === "BLOCKED";
+            <div className="space-y-1.5">
+              <Label htmlFor="slotMinutes" required>
+                ระยะเวลาต่อ 1 สล็อตนัดหมาย
+              </Label>
+              <Select
+                id="slotMinutes"
+                value={slotMinutes}
+                onChange={(e) => setSlotMinutes(Number(e.target.value))}
+              >
+                <option value={15}>15 นาที (ตรวจเร็ว/จ่ายยา)</option>
+                <option value={20}>20 นาที</option>
+                <option value={30}>30 นาที (มาตรฐานการตรวจแผนไทย)</option>
+                <option value={45}>45 นาที (ตรวจ + หัตถการสั้น)</option>
+                <option value={60}>60 นาที (นวดรักษา/ประคบสมุนไพร)</option>
+              </Select>
+            </div>
 
-                    return (
-                      <div
-                        key={slot.slotId}
-                        className={`p-3 rounded-control border flex items-center justify-between text-xs transition-all ${
-                          isAvailable
-                            ? "bg-emerald-50/50 border-emerald-200"
-                            : isBooked
-                            ? "bg-amber-50/60 border-amber-200"
-                            : "bg-gray-100 border-gray-200 opacity-75"
-                        }`}
-                      >
-                        <div>
-                          <div className="font-mono font-bold text-clinic-ink">
-                            🕒 {formatTimeOnly(slot.startTime)} - {formatTimeOnly(slot.endTime)} น.
-                          </div>
-                          <div className="mt-1">
-                            {isAvailable && (
-                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                                ว่าง (เปิดรับจอง)
-                              </span>
-                            )}
-                            {isBooked && (
-                              <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
-                                จองแล้ว
-                              </span>
-                            )}
-                            {isBlocked && (
-                              <span className="text-[10px] font-medium text-gray-700 bg-gray-200 px-2 py-0.5 rounded">
-                                ปิดรับจอง (Blocked)
-                              </span>
-                            )}
-                          </div>
-                        </div>
+            {/* Lunch Break Settings */}
+            <div className="p-3 bg-clinic-bg rounded-control border border-clinic-line space-y-3">
+              <label className="flex items-center gap-2 text-xs font-semibold text-clinic-ink cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hasLunchBreak}
+                  onChange={(e) => setHasLunchBreak(e.target.checked)}
+                  className="rounded text-clinic-primary focus:ring-clinic-primary"
+                />
+                <Coffee className="w-3.5 h-3.5 text-clinic-terracotta" />
+                <span>เว้นช่วงพักเที่ยง (ไม่สร้างสล็อต)</span>
+              </label>
 
-                        {!isBooked && (
-                          <button
-                            disabled={updatingSlotId === slot.slotId}
-                            onClick={() => handleToggleSlotStatus(slot)}
-                            className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition-colors cursor-pointer ${
-                              isAvailable
-                                ? "bg-white text-clinic-danger border-clinic-danger/40 hover:bg-clinic-danger-bg"
-                                : "bg-clinic-primary text-white border-clinic-primary hover:bg-clinic-primary-deep"
-                            }`}
-                          >
-                            {updatingSlotId === slot.slotId
-                              ? "..."
-                              : isAvailable
-                              ? "ปิดรับจอง"
-                              : "เปิดรับจอง"}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+              {hasLunchBreak && (
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-clinic-ink-soft">เริ่มพัก</Label>
+                    <Input
+                      type="time"
+                      value={lunchStart}
+                      onChange={(e) => setLunchStart(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-clinic-ink-soft">สิ้นสุดพัก</Label>
+                    <Input
+                      type="time"
+                      value={lunchEnd}
+                      onChange={(e) => setLunchEnd(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end border-t border-clinic-line pt-3">
-              <button
-                onClick={() => setSelectedSchedule(null)}
-                className="px-4 py-1.5 bg-clinic-bg text-clinic-ink font-semibold text-xs rounded-control hover:bg-clinic-line/50 cursor-pointer"
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateOpen(false)}
+                disabled={submitting}
               >
-                ปิด
-              </button>
-            </div>
+                ยกเลิก
+              </Button>
+              <Button
+                type="submit"
+                variant="terracotta"
+                disabled={submitting}
+              >
+                {submitting ? "กำลังสร้างสล็อต..." : "✓ ยืนยันสร้างตารางเวร"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2. Modal: Manage Appointment Slots */}
+      <Dialog open={!!selectedSchedule} onOpenChange={(open) => !open && setSelectedSchedule(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              สล็อตเวลานัดหมาย: {selectedSchedule ? formatDateThai(selectedSchedule.date) : ""}
+            </DialogTitle>
+            <DialogDescription>
+              เวลาเวร: {selectedSchedule ? `${formatTimeOnly(selectedSchedule.shiftStart)} - ${formatTimeOnly(selectedSchedule.shiftEnd)} น.` : ""} · คลิกที่สล็อตเพื่อ เปิด/ปิด การรับนัดหมาย
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-2 pr-1 space-y-3">
+            {loadingSlots ? (
+              <div className="p-8 text-center text-xs text-clinic-ink-soft">
+                กำลังโหลดรายการสล็อต...
+              </div>
+            ) : slots.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {slots.map((slot) => {
+                  const isAvailable = slot.status === "AVAILABLE";
+                  const isBooked = slot.status === "BOOKED";
+                  const isBlocked = slot.status === "BLOCKED";
+                  const isUpdating = updatingSlotId === slot.slotId;
+
+                  return (
+                    <div
+                      key={slot.slotId}
+                      className={`p-2.5 rounded-control border text-xs flex flex-col justify-between gap-2 transition-all ${
+                        isAvailable
+                          ? "bg-emerald-50/70 border-emerald-300 text-emerald-900"
+                          : isBooked
+                          ? "bg-blue-50/80 border-blue-300 text-blue-900 shadow-2xs"
+                          : "bg-stone-100 border-stone-300 text-stone-500 opacity-70"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-sm">
+                          {formatTimeOnly(slot.startTime)} - {formatTimeOnly(slot.endTime)}
+                        </span>
+                        {isAvailable && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
+                        {isBooked && <span className="w-2 h-2 rounded-full bg-blue-500" />}
+                        {isBlocked && <span className="w-2 h-2 rounded-full bg-stone-400" />}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-black/5 text-[11px]">
+                        <span>
+                          {isAvailable ? "ว่าง (พร้อมจอง)" : isBooked ? "มีนัดหมายแล้ว" : "ปิดรับจอง"}
+                        </span>
+
+                        {!isBooked && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isUpdating}
+                            onClick={() => handleToggleSlotStatus(slot)}
+                            className="h-6 px-1.5 text-[10px] text-clinic-ink hover:bg-black/5"
+                          >
+                            {isAvailable ? (
+                              <span className="text-amber-800 flex items-center gap-0.5">
+                                <Lock className="w-3 h-3" /> ปิด
+                              </span>
+                            ) : (
+                              <span className="text-emerald-700 flex items-center gap-0.5">
+                                <Unlock className="w-3 h-3" /> เปิด
+                              </span>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-center py-6 text-xs text-clinic-ink-soft">
+                ยังไม่มีสล็อตเวลาในตารางเวรนี้
+              </p>
+            )}
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedSchedule(null)}
+            >
+              ปิดหน้าต่าง
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
-
-// Helpers
-const THAI_WEEKDAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
-const THAI_MONTHS = [
-  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
-];
-
-function formatDateThai(dateStr?: string): string {
-  if (!dateStr) return "-";
-  try {
-    const cleanDate = dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`;
-    const d = new Date(cleanDate);
-    if (isNaN(d.getTime())) return dateStr;
-
-    const weekday = THAI_WEEKDAYS[d.getDay()];
-    const day = d.getDate();
-    const month = THAI_MONTHS[d.getMonth()];
-    const year = d.getFullYear() + 543;
-
-    return `${weekday} ${day} ${month} ${year}`;
-  } catch (e) {
-    return dateStr;
-  }
-}
-
-function formatTimeOnly(dateStr?: string): string {
-  if (!dateStr) return "-";
-  try {
-    const d = new Date(dateStr);
-    const hours = d.getHours().toString().padStart(2, "0");
-    const minutes = d.getMinutes().toString().padStart(2, "0");
-    return `${hours}:${minutes}`;
-  } catch (e) {
-    return dateStr;
-  }
 }
