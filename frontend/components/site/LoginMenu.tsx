@@ -45,25 +45,6 @@ export function LoginMenu() {
           role="menu"
         >
           <Link
-            href="/doctor/login"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex items-start gap-3 p-2.5 rounded-control hover:bg-clinic-primary-soft transition-colors group"
-          >
-            <div className="w-8 h-8 rounded-control bg-clinic-primary-soft text-clinic-primary flex items-center justify-center shrink-0 group-hover:bg-clinic-primary group-hover:text-white transition-colors">
-              <Stethoscope className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-semibold text-xs block text-clinic-primary-deep">
-                สำหรับแพทย์แผนไทย
-              </span>
-              <span className="block text-clinic-ink-soft text-[11px] mt-0.5">
-                ตรวจรักษา ตารางเวร และจ่ายยา
-              </span>
-            </div>
-          </Link>
-
-          <Link
             href="/patient/login"
             role="menuitem"
             onClick={() => setOpen(false)}
@@ -78,6 +59,25 @@ export function LoginMenu() {
               </span>
               <span className="block text-clinic-ink-soft text-[11px] mt-0.5">
                 จองคิวออนไลน์และประวัติการรักษา
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href="/doctor/login"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-start gap-3 p-2.5 rounded-control hover:bg-clinic-primary-soft transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-control bg-clinic-primary-soft text-clinic-primary flex items-center justify-center shrink-0 group-hover:bg-clinic-primary group-hover:text-white transition-colors">
+              <Stethoscope className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-semibold text-xs block text-clinic-primary-deep">
+                สำหรับแพทย์แผนไทย
+              </span>
+              <span className="block text-clinic-ink-soft text-[11px] mt-0.5">
+                ตรวจรักษา ตารางเวร และจ่ายยา
               </span>
             </div>
           </Link>
