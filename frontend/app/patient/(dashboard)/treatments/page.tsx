@@ -16,6 +16,7 @@ import {
   Receipt,
   User,
   Calendar,
+  Star,
 } from "lucide-react";
 
 export default async function PatientTreatmentsPage() {
@@ -189,21 +190,31 @@ export default async function PatientTreatmentsPage() {
                     </div>
                   )}
 
-                  {/* Receipt Footer */}
-                  {treatment.receipt && (
-                    <div className="flex items-center justify-between pt-2 border-t border-clinic-line text-xs">
+                  {/* Receipt & Review Footer */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-clinic-line text-xs">
+                    {treatment.receipt ? (
                       <div className="flex items-center gap-2">
                         <Receipt className="w-3.5 h-3.5 text-clinic-primary" />
                         <span className="text-clinic-ink-soft">
                           ใบเสร็จรับเงิน #{treatment.receipt.receiptId} ·
                         </span>
                         <PaymentStatusBadge status={treatment.receipt.paymentStatus} />
+                        <span className="font-bold text-xs text-clinic-primary-deep font-mono ml-1">
+                          (฿{(treatment.receipt.totalPrice ?? 0).toLocaleString()} บาท)
+                        </span>
                       </div>
-                      <span className="font-bold text-sm text-clinic-primary-deep font-mono">
-                        ยอดรวม: ฿{(treatment.receipt.totalPrice ?? 0).toLocaleString()} บาท
-                      </span>
-                    </div>
-                  )}
+                    ) : (
+                      <span className="text-clinic-ink-soft text-[11px]">การตรวจรักษาเสร็จสมบูรณ์</span>
+                    )}
+
+                    <Link
+                      href="/patient/reviews"
+                      className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline flex items-center gap-1 shrink-0"
+                    >
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span>ให้คะแนน / รีวิวบริการ →</span>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             );

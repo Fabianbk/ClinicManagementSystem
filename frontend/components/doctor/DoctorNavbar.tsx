@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LeafIcon } from "@/components/site/icons";
 import { LogoutButton } from "@/components/auth/LogoutButton";
-import { Users, Calendar, Clock, FileText, Pill } from "lucide-react";
+import { Users, Calendar, Clock, FileText, Pill, Star } from "lucide-react";
 
 interface NavItem {
   label: string;
@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "การนัดหมาย", href: "/doctor/appointments", icon: Calendar },
   { label: "การรักษา", href: "/doctor/treatments", icon: FileText },
   { label: "คลังยา", href: "/doctor/medicine", icon: Pill },
+  { label: "รีวิว", href: "/doctor/reviews", icon: Star },
 ];
 
 export function DoctorNavbar({ username }: { username?: string }) {

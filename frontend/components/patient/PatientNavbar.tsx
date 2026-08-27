@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LeafIcon } from "@/components/site/icons";
 import { LogoutButton } from "@/components/auth/LogoutButton";
-import { LayoutDashboard, Calendar, PlusCircle, History, User, Menu, X } from "lucide-react";
+import { LayoutDashboard, Calendar, PlusCircle, History, User, Star, Menu, X } from "lucide-react";
 
 interface NavItem {
   label: string;
@@ -19,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "จองคิวออนไลน์", href: "/patient/book", icon: PlusCircle },
   { label: "ประวัติการรักษา", href: "/patient/treatments", icon: History },
   { label: "ข้อมูลส่วนตัว", href: "/patient/profile", icon: User },
+  { label: "รีวิวคลินิก", href: "/patient/reviews", icon: Star },
 ];
 
 export function PatientNavbar({

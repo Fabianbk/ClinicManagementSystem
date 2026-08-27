@@ -7,6 +7,7 @@ import {
   getUpcomingNotifications,
 } from "@/lib/resources/appointments";
 import { getRecordTreatmentsByPatientId } from "@/lib/resources/record-treatments";
+import { getReviewByPatientId } from "@/lib/resources/reviews";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge, AppointmentStatusBadge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ import {
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
+  Star,
 } from "lucide-react";
 import { LeafIcon } from "@/components/site/icons";
 
@@ -41,10 +43,11 @@ export default async function PatientDashboardPage() {
     );
   }
 
-  const [upcomingNotifications, appointmentsData, treatmentsData] = await Promise.all([
+  const [upcomingNotifications, appointmentsData, treatmentsData, patientReview] = await Promise.all([
     getUpcomingNotifications(session.id).catch(() => []),
     getAppointmentsByPatientId(session.id, 0, 5).catch(() => ({ content: [] })),
     getRecordTreatmentsByPatientId(session.id, 0, 3).catch(() => ({ content: [] })),
+    getReviewByPatientId(session.id).catch(() => null),
   ]);
 
   const upcomingAppointment = upcomingNotifications.length > 0 ? upcomingNotifications[0] : null;
@@ -167,7 +170,7 @@ export default async function PatientDashboardPage() {
       </Card>
 
       {/* Quick Action Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <Link
           href="/patient/book"
           className="group bg-white p-5 rounded-card border border-clinic-line hover:border-clinic-primary hover:shadow-md transition-all flex flex-col justify-between"
@@ -253,6 +256,30 @@ export default async function PatientDashboardPage() {
           </div>
           <span className="text-xs font-semibold text-clinic-terracotta mt-4 flex items-center gap-1">
             ดูโปรไฟล์ →
+          </span>
+        </Link>
+
+        <Link
+          href="/patient/reviews"
+          className="group bg-white p-5 rounded-card border border-clinic-line hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between"
+        >
+          <div className="space-y-3">
+            <div className="w-10 h-10 rounded-control bg-amber-50 text-amber-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-clinic-primary-deep group-hover:text-clinic-primary transition-colors">
+                รีวิว & ประเมินบริการ
+              </h3>
+              <p className="text-xs text-clinic-ink-soft mt-1 line-clamp-2">
+                {patientReview
+                  ? `คะแนนที่ให้: ⭐ ${patientReview.ratingClinicScore}/5 ดาว (แก้ไขได้)`
+                  : "ให้ข้อคิดเห็นและความพึงพอใจการรักษา"}
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-semibold text-amber-700 mt-4 flex items-center gap-1">
+            {patientReview ? "จัดการรีวิว →" : "เขียนรีวิวคลินิก →"}
           </span>
         </Link>
       </section>
