@@ -4,7 +4,7 @@ import { sarabun, taviraj } from '@/lib/fonts';
 
 export const metadata: Metadata = {
   title: 'พิมพ์วิมาน คลินิกการแพทย์แผนไทย',
-  description: 'Thai Traditional Medicine Clinic — Clinic Management System',
+  description: 'Thai Traditional Medicine Clinic',
 };
 
 export default function RootLayout({

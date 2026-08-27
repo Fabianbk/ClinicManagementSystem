@@ -2,6 +2,42 @@
 
 import { useState } from "react";
 import type { MedicineResponseDTO, PageResponse, MedicineRequestDTO } from "@/lib/types";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Pill,
+  Plus,
+  Search,
+  AlertTriangle,
+  Edit,
+  Trash2,
+  CheckCircle2,
+  RefreshCw,
+  Archive,
+} from "lucide-react";
 
 interface MedicineManagerClientProps {
   initialData: PageResponse<MedicineResponseDTO> | null;
@@ -101,486 +137,441 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
     setSuccessMsg(null);
 
     if (!medicineName.trim()) {
-      setErrorMsg("กรุณาระบุชื่อยา / เวชภัณฑ์");
-      return;
-    }
-    if (unitPrice < 0) {
-      setErrorMsg("ราคาต่อหน่วยต้องไม่ติดลบ");
+      setErrorMsg("กรุณากรอกชื่อยา");
       return;
     }
 
     const payload: MedicineRequestDTO = {
       medicineName: medicineName.trim(),
-      medicineCategory: medicineCategory.trim() || undefined,
+      medicineCategory,
       unitPrice: Number(unitPrice),
-      unitType: unitType.trim() || undefined,
-      stockRemaining: Number(stockRemaining ?? 0),
-      stockBroughtForward: Number(stockBroughtForward ?? 0),
-      stockReceived: Number(stockReceived ?? 0),
-      stockIssued: Number(stockIssued ?? 0),
+      unitType: unitType.trim(),
+      stockRemaining: Number(stockRemaining),
+      stockBroughtForward: Number(stockBroughtForward),
+      stockReceived: Number(stockReceived),
+      stockIssued: Number(stockIssued),
       note: note.trim() || undefined,
     };
 
     try {
       setSubmitting(true);
-      const isEdit = !!editingMedicine;
-      const url = isEdit ? `/api/medicines/${editingMedicine.medicineId}` : "/api/medicines";
-      const method = isEdit ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        const msg = errJson.errors?.length ? errJson.errors.join(", ") : errJson.message || "ไม่สามารถบันทึกข้อมูลยาได้";
-        throw new Error(msg);
+      if (editingMedicine) {
+        // Edit existing
+        const res = await fetch(`/api/medicines/${editingMedicine.medicineId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.message || "ไม่สามารถอัปเดตข้อมูลยาได้");
+        }
+        setSuccessMsg(`อัปเดตข้อมูลยา "${payload.medicineName}" เรียบร้อยแล้ว`);
+      } else {
+        // Add new
+        const res = await fetch("/api/medicines", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.message || "ไม่สามารถเพิ่มยาใหม่ได้");
+        }
+        setSuccessMsg(`เพิ่มยา "${payload.medicineName}" เข้าสู่คลังยาเรียบร้อยแล้ว`);
       }
 
-      setSuccessMsg(isEdit ? `แก้ไขข้อมูลยา "${medicineName}" เรียบร้อยแล้ว` : `เพิ่มยาใหม่ "${medicineName}" สำเร็จแล้ว`);
       setIsModalOpen(false);
       refreshMedicines();
     } catch (err: any) {
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Delete Medicine
+  const handleDelete = async (medicineId: number, name: string) => {
+    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบยา "${name}" ออกจากคลัง?`)) return;
+
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/medicines/${medicineId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || "ไม่สามารถลบยาได้ (อาจมียานี้ในประวัติการรักษา)");
+      }
+      setSuccessMsg(`ลบยา "${name}" เรียบร้อยแล้ว`);
+      refreshMedicines();
+    } catch (err: any) {
+      setErrorMsg(err.message || "เกิดข้อผิดพลาดในการลบยา");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter medicines
   const filteredMedicines = medicines.filter((med) => {
-    // Search query filter
+    if (selectedCategory !== "ทั้งหมด" && med.medicineCategory !== selectedCategory) {
+      return false;
+    }
+    if (showLowStockOnly && (med.stockRemaining ?? 0) > 20) {
+      return false;
+    }
     if (searchQuery.trim() !== "") {
       const q = searchQuery.toLowerCase();
-      const matchName = med.medicineName?.toLowerCase().includes(q);
+      const matchName = med.medicineName.toLowerCase().includes(q);
       const matchCat = med.medicineCategory?.toLowerCase().includes(q);
       const matchNote = med.note?.toLowerCase().includes(q);
       if (!matchName && !matchCat && !matchNote) return false;
     }
-    // Category filter
-    if (selectedCategory !== "ทั้งหมด") {
-      if (!med.medicineCategory?.includes(selectedCategory.replace(/ \(.+\)/, ""))) {
-        return false;
-      }
-    }
-    // Low stock filter (stock <= 10)
-    if (showLowStockOnly) {
-      const stock = med.stockRemaining ?? 0;
-      if (stock > 10) return false;
-    }
     return true;
   });
 
-  // KPI Calculations
-  const totalCount = medicines.length;
-  const lowStockCount = medicines.filter((m) => (m.stockRemaining ?? 0) <= 10).length;
-  const totalInventoryValue = medicines.reduce(
-    (sum, m) => sum + (m.unitPrice ?? 0) * (m.stockRemaining ?? 0),
-    0
-  );
-  const categoriesCount = new Set(medicines.map((m) => m.medicineCategory).filter(Boolean)).size;
+  const lowStockCount = medicines.filter((m) => (m.stockRemaining ?? 0) <= 20).length;
 
   return (
-    <div className="space-y-6 font-body text-clinic-ink">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-clinic-primary-deep flex items-center gap-2">
-            <span>คลังยาและเวชภัณฑ์</span>
-          </h1>
-          <p className="text-sm text-clinic-ink-soft mt-1">
-            จัดการรายการยา ราคาต่อหน่วย ตรวจสอบสต็อกคงเหลือ และอัปเดตเวชภัณฑ์คลินิก
-          </p>
-        </div>
-
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-md active:scale-95 cursor-pointer"
-        >
-          + เพิ่มรายการยาใหม่
-        </button>
-      </div>
+    <div className="space-y-6 pb-20 font-body text-clinic-ink">
+      <PageHeader
+        icon={<Pill className="w-5 h-5 text-clinic-primary" />}
+        title="คลังยาสมุนไพรและเวชภัณฑ์ (Pharmacy & Inventory)"
+        subtitle="จัดการสต็อกยาสมุนไพร ตำรับยาไทย ราคาต่อหน่วย และการตรวจนับยอดคงเหลือ"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={refreshMedicines}
+              disabled={loading}
+              className="gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span>รีเฟรช</span>
+            </Button>
+            <Button
+              type="button"
+              variant="terracotta"
+              size="sm"
+              onClick={openCreateModal}
+              className="gap-1.5 shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ เพิ่มยาสมุนไพรใหม่</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium flex items-center justify-between">
-          <span>{errorMsg}</span>
-          <button onClick={() => setErrorMsg(null)} className="text-xs underline ml-2 cursor-pointer">
-            ปิด
-          </button>
-        </div>
-      )}
-      {successMsg && (
-        <div className="p-4 rounded-control bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between">
-          <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg(null)} className="text-xs underline ml-2 cursor-pointer">
-            ปิด
-          </button>
-        </div>
-      )}
-
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            รายการยาทั้งหมด
-          </span>
-          <div className="text-3xl font-bold text-clinic-primary-deep mt-1">{totalCount} รายการ</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            ยาใกล้หมด / หมดคลัง
-          </span>
-          <div className="text-3xl font-bold text-amber-600 mt-1">{lowStockCount} รายการ</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            มูลค่าคลังยารวม
-          </span>
-          <div className="text-3xl font-bold text-emerald-700 mt-1 font-mono">
-            ฿{totalInventoryValue.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
           </div>
+          <button type="button" onClick={() => setErrorMsg(null)} className="text-xs underline cursor-pointer">
+            ปิด
+          </button>
         </div>
+      )}
 
-        <div className="bg-white p-5 rounded-card border border-clinic-line shadow-xs">
-          <span className="text-xs font-semibold text-clinic-ink-soft uppercase tracking-wider">
-            หมวดยาที่มีในคลัง
-          </span>
-          <div className="text-3xl font-bold text-clinic-accent-deep mt-1">{categoriesCount} หมวด</div>
+      {successMsg && (
+        <div className="p-4 rounded-control bg-clinic-success-bg border border-clinic-success text-clinic-success text-xs font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{successMsg}</span>
+          </div>
+          <button type="button" onClick={() => setSuccessMsg(null)} className="text-xs underline cursor-pointer">
+            ปิด
+          </button>
         </div>
+      )}
+
+      {/* Summary Chips */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-[11px] font-semibold text-clinic-ink-soft">รายการยาทั้งหมด</p>
+            <p className="text-2xl font-bold font-display text-clinic-primary-deep mt-1">
+              {medicines.length} <span className="text-xs font-normal text-clinic-ink-soft">รายการ</span>
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-[11px] font-semibold text-amber-800">ยาที่สต็อกใกล้หมด (≤ 20)</p>
+            <p className="text-2xl font-bold font-display text-amber-900 mt-1">
+              {lowStockCount} <span className="text-xs font-normal text-clinic-ink-soft">รายการ</span>
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="col-span-2 sm:col-span-1">
+          <CardContent className="p-4">
+            <p className="text-[11px] font-semibold text-clinic-primary">หมวดหมู่ยา</p>
+            <p className="text-2xl font-bold font-display text-clinic-primary mt-1">
+              {CATEGORY_OPTIONS.length - 1} <span className="text-xs font-normal text-clinic-ink-soft">หมวดหมู่</span>
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Search and Filters Bar */}
-      <div className="bg-white p-4 rounded-card border border-clinic-line shadow-xs space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-clinic-ink-soft">
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="ค้นหาชื่อยา, หมวดหมู่ หรือวิธีใช้..."
+      {/* Filter Toolbar */}
+      <Card>
+        <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 text-clinic-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              placeholder="ค้นหาชื่อยา, สรรพคุณ หรือหมายเหตุ..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-clinic-line rounded-control text-sm text-clinic-ink focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40"
+              className="pl-9 text-xs"
             />
           </div>
 
-          {/* Category Dropdown */}
-          <div className="flex items-center gap-3">
-            <label className="text-xs font-semibold text-clinic-ink-soft whitespace-nowrap">
-              หมวดหมู่:
-            </label>
-            <select
+          <div className="w-full sm:w-56">
+            <Select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/40 focus:ring-2 focus:ring-clinic-primary cursor-pointer"
+              className="text-xs"
             >
               {CATEGORY_OPTIONS.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
                 </option>
               ))}
-            </select>
-
-            {/* Low Stock Toggle */}
-            <button
-              onClick={() => setShowLowStockOnly((prev) => !prev)}
-              className={`px-3 py-2 rounded-control text-xs font-semibold border transition-all cursor-pointer ${
-                showLowStockOnly
-                  ? "bg-amber-100 text-amber-900 border-amber-300 shadow-xs"
-                  : "bg-clinic-bg text-clinic-ink-soft border-clinic-line hover:border-clinic-primary"
-              }`}
-            >
-              ⚠️ แสดงเฉพาะยาใกล้หมด ({lowStockCount})
-            </button>
+            </Select>
           </div>
-        </div>
-      </div>
 
-      {/* Medicines Table */}
-      {loading ? (
-        <div className="p-12 text-center text-clinic-ink-soft">กำลังโหลดข้อมูลคลังยา...</div>
-      ) : filteredMedicines.length === 0 ? (
-        <div className="border border-dashed border-clinic-line rounded-card p-12 text-center text-clinic-ink-soft bg-white/50 space-y-3">
-          <p className="text-base font-medium">ไม่พบรายการยาตามเงื่อนไขที่ค้นหา</p>
-          <button
-            onClick={openCreateModal}
-            className="text-sm font-semibold text-clinic-primary hover:underline cursor-pointer"
-          >
-            + เพิ่มรายการยาใหม่
-          </button>
-        </div>
+          <label className="flex items-center gap-2 text-xs font-semibold text-clinic-ink select-none cursor-pointer whitespace-nowrap px-2">
+            <input
+              type="checkbox"
+              checked={showLowStockOnly}
+              onChange={(e) => setShowLowStockOnly(e.target.checked)}
+              className="rounded text-clinic-terracotta focus:ring-clinic-terracotta"
+            />
+            <span>แสดงเฉพาะยาใกล้หมด</span>
+          </label>
+        </CardContent>
+      </Card>
+
+      {/* Medicine Table */}
+      {filteredMedicines.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">รหัส</TableHead>
+              <TableHead>ชื่อยาสมุนไพร / เวชภัณฑ์</TableHead>
+              <TableHead>หมวดหมู่</TableHead>
+              <TableHead className="text-right">ราคา/หน่วย</TableHead>
+              <TableHead className="text-center">คงเหลือ (Stock)</TableHead>
+              <TableHead className="text-right">จัดการ</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredMedicines.map((med) => {
+              const remaining = med.stockRemaining ?? 0;
+              const isLowStock = remaining <= 20;
+
+              return (
+                <TableRow key={med.medicineId}>
+                  <TableCell className="font-mono text-xs text-clinic-ink-soft">
+                    #{med.medicineId}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-0.5">
+                      <span className="font-semibold text-clinic-ink block">
+                        {med.medicineName}
+                      </span>
+                      {med.note && (
+                        <span className="text-xs text-clinic-ink-soft block line-clamp-1">
+                          {med.note}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {med.medicineCategory || "ยาสมุนไพร"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-mono font-semibold text-clinic-ink">
+                    ฿{(med.unitPrice ?? 0).toLocaleString()} / {med.unitType || "หน่วย"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ${
+                        isLowStock
+                          ? "bg-rose-50 text-rose-700 border border-rose-200"
+                          : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      }`}
+                    >
+                      {remaining} {med.unitType || "หน่วย"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditModal(med)}
+                        className="h-7 px-2 text-xs text-clinic-primary gap-1"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        <span>แก้ไข</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(med.medicineId, med.medicineName)}
+                        className="h-7 px-2 text-xs text-clinic-danger hover:bg-clinic-danger-bg gap-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>ลบ</span>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       ) : (
-        <div className="bg-white border border-clinic-line rounded-card overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="bg-clinic-bg border-b border-clinic-line">
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    ชื่อยา / เวชภัณฑ์
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    หมวดหมู่ / หน่วย
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    ราคา / หน่วย (฿)
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    คงเหลือในคลัง
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft">
-                    คำแนะนำ / สรรพคุณ
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-clinic-ink-soft text-right">
-                    การจัดการ
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-clinic-line">
-                {filteredMedicines.map((med) => {
-                  const stock = med.stockRemaining ?? 0;
-                  const isOutOfStock = stock <= 0;
-                  const isLowStock = stock > 0 && stock <= 10;
-
-                  return (
-                    <tr key={med.medicineId} className="hover:bg-clinic-bg/40 transition-colors">
-                      {/* Name & ID */}
-                      <td className="px-5 py-4">
-                        <div className="font-bold text-clinic-primary-deep">{med.medicineName}</div>
-                        <div className="text-[11px] font-mono text-clinic-ink-soft mt-0.5">
-                          ID: #{med.medicineId}
-                        </div>
-                      </td>
-
-                      {/* Category & Unit */}
-                      <td className="px-5 py-4">
-                        <div className="text-clinic-ink font-medium">
-                          {med.medicineCategory || "ทั่วไป"}
-                        </div>
-                        <div className="text-xs text-clinic-ink-soft">
-                          หน่วย: <span className="font-semibold">{med.unitType || "หน่วย"}</span>
-                        </div>
-                      </td>
-
-                      {/* Unit Price */}
-                      <td className="px-5 py-4 font-mono font-bold text-clinic-ink">
-                        ฿{(med.unitPrice ?? 0).toFixed(2)}
-                      </td>
-
-                      {/* Stock Remaining */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-base text-clinic-ink">
-                            {stock} {med.unitType || ""}
-                          </span>
-                          {isOutOfStock && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
-                              หมดคลัง
-                            </span>
-                          )}
-                          {isLowStock && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                              ใกล้หมด
-                            </span>
-                          )}
-                          {!isOutOfStock && !isLowStock && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              มีในคลัง
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-clinic-ink-soft mt-0.5">
-                          รับเข้า: {med.stockReceived ?? 0} | จ่ายออก: {med.stockIssued ?? 0}
-                        </div>
-                      </td>
-
-                      {/* Note */}
-                      <td className="px-5 py-4 text-xs text-clinic-ink-soft max-w-xs truncate">
-                        {med.note || "-"}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() => openEditModal(med)}
-                          className="px-3 py-1.5 rounded-control text-xs font-semibold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white transition-colors border border-clinic-line cursor-pointer"
-                        >
-                          ✏️ แก้ไขข้อมูล
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <EmptyState
+          icon={<Archive className="w-6 h-6 text-clinic-primary" />}
+          title="ไม่พบรายการยาตามเงื่อนไขที่เลือก"
+          description="ท่านสามารถกดปุ่มเพิ่มยาใหม่ หรือปรับเปลี่ยนคำค้นหา"
+          action={
+            <Button type="button" variant="terracotta" size="sm" onClick={openCreateModal}>
+              <Plus className="w-4 h-4 mr-1" />
+              <span>+ เพิ่มยาสมุนไพรใหม่</span>
+            </Button>
+          }
+        />
       )}
 
-      {/* Modal: Add / Edit Medicine */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-lg rounded-card shadow-xl border border-clinic-line p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-clinic-line pb-3">
-              <h3 className="font-display text-lg font-bold text-clinic-primary-deep">
-                {editingMedicine ? `แก้ไขข้อมูลยา #${editingMedicine.medicineId}` : "เพิ่มรายการยาใหม่"}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-clinic-ink-soft hover:text-clinic-ink text-xl font-bold cursor-pointer"
-              >
-                ×
-              </button>
+      {/* Add / Edit Medicine Dialog */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingMedicine ? `แก้ไขข้อมูลยา: ${editingMedicine.medicineName}` : "เพิ่มยาสมุนไพร / เวชภัณฑ์ใหม่"}
+            </DialogTitle>
+            <DialogDescription>
+              บันทึกข้อมูลชื่อยา หมวดหมู่ ราคาต่อหน่วย และยอดคงเหลือในคลัง
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="medicineName" required>
+                ชื่อยาสมุนไพร / ตำรับยา (Medicine Name)
+              </Label>
+              <Input
+                id="medicineName"
+                required
+                placeholder="เช่น ขมิ้นชันแคปซูล, ยาหอมนวโกฐ"
+                value={medicineName}
+                onChange={(e) => setMedicineName(e.target.value)}
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-              <div>
-                <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                  ชื่อยา / เวชภัณฑ์ *
-                </label>
-                <input
-                  type="text"
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="medicineCategory" required>
+                  หมวดหมู่ยา
+                </Label>
+                <Select
+                  id="medicineCategory"
+                  value={medicineCategory}
+                  onChange={(e) => setMedicineCategory(e.target.value)}
+                >
+                  {CATEGORY_OPTIONS.filter((c) => c !== "ทั้งหมด").map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="unitType" required>
+                  หน่วยนับ (Unit)
+                </Label>
+                <Input
+                  id="unitType"
                   required
-                  placeholder="เช่น ยาแก้ไอสมุนไพร, Paracetamol 500mg"
-                  value={medicineName}
-                  onChange={(e) => setMedicineName(e.target.value)}
-                  className="w-full px-3 py-2 border border-clinic-line rounded-control focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40"
+                  placeholder="เช่น เม็ด, ซอง, ขวด"
+                  value={unitType}
+                  onChange={(e) => setUnitType(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="unitPrice" required>
+                  ราคาต่อหน่วย (บาท)
+                </Label>
+                <Input
+                  id="unitPrice"
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  required
+                  value={unitPrice}
+                  onChange={(e) => setUnitPrice(Number(e.target.value))}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                    หมวดยา
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น ยาสมุนไพร, ยาเม็ด"
-                    value={medicineCategory}
-                    onChange={(e) => setMedicineCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-clinic-line rounded-control focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                    หน่วยนับ (Unit Type)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น เม็ด, ขวด, แผง, ซอง"
-                    value={unitType}
-                    onChange={(e) => setUnitType(e.target.value)}
-                    className="w-full px-3 py-2 border border-clinic-line rounded-control focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                    ราคาต่อหน่วย (฿) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={unitPrice}
-                    onChange={(e) => setUnitPrice(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-clinic-line rounded-control font-mono focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                    จำนวนคงเหลือในคลัง
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={stockRemaining}
-                    onChange={(e) => setStockRemaining(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-clinic-line rounded-control font-mono focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-clinic-bg/50 border border-clinic-line rounded-card p-3 space-y-3">
-                <span className="text-xs font-bold text-clinic-primary-deep block">
-                  📊 รายละเอียดการหมุนเวียนสต็อก
-                </span>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-clinic-ink-soft mb-1">ยกมา</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={stockBroughtForward}
-                      onChange={(e) => setStockBroughtForward(Number(e.target.value))}
-                      className="w-full px-2 py-1 border border-clinic-line rounded text-xs bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-clinic-ink-soft mb-1">รับเข้า</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={stockReceived}
-                      onChange={(e) => setStockReceived(Number(e.target.value))}
-                      className="w-full px-2 py-1 border border-clinic-line rounded text-xs bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-clinic-ink-soft mb-1">จ่ายออก</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={stockIssued}
-                      onChange={(e) => setStockIssued(Number(e.target.value))}
-                      className="w-full px-2 py-1 border border-clinic-line rounded text-xs bg-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-clinic-ink-soft mb-1">
-                  วิธีใช้ / หมายเหตุ
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="เช่น รับประทานครั้งละ 1 เม็ด หลังอาหาร เช้า-เย็น"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="w-full px-3 py-2 border border-clinic-line rounded-control focus:outline-hidden focus:ring-2 focus:ring-clinic-primary bg-clinic-bg/40 text-xs"
+              <div className="space-y-1.5">
+                <Label htmlFor="stockRemaining" required>
+                  จำนวนคงเหลือในคลัง
+                </Label>
+                <Input
+                  id="stockRemaining"
+                  type="number"
+                  min={0}
+                  required
+                  value={stockRemaining}
+                  onChange={(e) => setStockRemaining(Number(e.target.value))}
                 />
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-clinic-line">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-clinic-ink-soft hover:bg-clinic-line/30 rounded-control cursor-pointer"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 text-xs font-semibold text-white bg-clinic-primary hover:bg-clinic-primary-deep rounded-control shadow-sm disabled:opacity-50 cursor-pointer"
-                >
-                  {submitting ? "กำลังบันทึก..." : "บันทึกข้อมูลยา"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="space-y-1.5">
+              <Label htmlFor="note">สรรพคุณ / วิธีใช้ / หมายเหตุ</Label>
+              <Textarea
+                id="note"
+                placeholder="เช่น บรรเทาอาการท้องอืด ขับลม รับประทานครั้งละ 2 แคปซูล ก่อนอาหาร"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                disabled={submitting}
+              >
+                ยกเลิก
+              </Button>
+              <Button
+                type="submit"
+                variant="terracotta"
+                disabled={submitting}
+              >
+                {submitting ? "กำลังบันทึก..." : "✓ บันทึกข้อมูลยา"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

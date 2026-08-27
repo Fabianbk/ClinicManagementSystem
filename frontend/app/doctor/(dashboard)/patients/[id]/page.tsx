@@ -4,6 +4,25 @@ import { getPatient } from "@/lib/resources/patients";
 import { getRecordTreatmentsByPatientId } from "@/lib/resources/record-treatments";
 import { ApiError } from "@/lib/api-client";
 import type { PatientResponseDTO, RecordTreatmentResponseDTO } from "@/lib/types";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  User,
+  Phone,
+  Calendar,
+  AlertTriangle,
+  FilePlus,
+  Edit,
+  ArrowLeft,
+  Heart,
+  MapPin,
+  ShieldCheck,
+  Eye,
+  Activity,
+  History,
+} from "lucide-react";
 
 export default async function PatientDetailPage({
   params,
@@ -36,15 +55,13 @@ export default async function PatientDetailPage({
   if (errorMessage || !patient) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/doctor/patients"
-            className="text-sm font-semibold text-clinic-primary hover:underline flex items-center gap-1"
-          >
-            ← ย้อนกลับไปรายชื่อผู้ป่วย
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/doctor/patients">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            <span>กลับไปยังรายชื่อผู้ป่วย</span>
           </Link>
-        </div>
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium">
+        </Button>
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium">
           {errorMessage || "ไม่พบข้อมูลผู้ป่วย"}
         </div>
       </div>
@@ -60,309 +77,298 @@ export default async function PatientDetailPage({
     : null;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-16 font-body text-clinic-ink">
-      {/* Top Action & Navigation */}
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/doctor/patients"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-control text-xs font-semibold text-clinic-ink bg-white border border-clinic-line hover:bg-clinic-bg transition-colors shadow-xs"
-        >
-          ← ย้อนกลับ
-        </Link>
+    <div className="space-y-6 pb-16 font-body text-clinic-ink">
+      {/* Top Page Header */}
+      <PageHeader
+        icon={<User className="w-5 h-5 text-clinic-primary" />}
+        title={patient.fullname}
+        subtitle={`HN: P-${String(patient.patientId).padStart(5, "0")} · ข้อมูลเวชระเบียนผู้ป่วยและประวัติการรักษา`}
+        badge={
+          <Badge variant="terracotta" className="text-xs">
+            HN: P-{String(patient.patientId).padStart(5, "0")}
+          </Badge>
+        }
+        actions={
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/doctor/patients">
+                <ArrowLeft className="w-4 h-4" />
+                <span>ย้อนกลับ</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/doctor/patients/${patient.patientId}/edit`}>
+                <Edit className="w-4 h-4" />
+                <span>แก้ไขข้อมูล</span>
+              </Link>
+            </Button>
+            <Button asChild variant="terracotta" size="sm">
+              <Link href={`/doctor/treatments/new?patientId=${patient.patientId}`}>
+                <FilePlus className="w-4 h-4" />
+                <span>+ บันทึกการรักษาใหม่</span>
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
-        <div className="flex items-center gap-2.5">
-          <Link
-            href={`/doctor/treatments/new?patientId=${patient.patientId}`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-sm"
-          >
-            <span>📝 บันทึกการรักษาใหม่</span>
-          </Link>
-
-          <Link
-            href={`/doctor/patients/${patient.patientId}/edit`}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-control text-xs font-semibold text-clinic-ink bg-white hover:bg-slate-50 border border-clinic-line transition-all shadow-xs"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            แก้ไขข้อมูล
-          </Link>
+      {/* Patient Key Metrics Banner */}
+      <div className="bg-white border border-clinic-line rounded-card p-5 shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-clinic-line">
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold text-clinic-ink-soft uppercase">เพศ / อายุ</p>
+          <p className="text-sm font-bold text-clinic-ink">
+            {patient.gender || "-"} · {age !== null ? `${age} ปี` : "-"}
+          </p>
+        </div>
+        <div className="space-y-0.5 sm:pl-4 pt-2 sm:pt-0">
+          <p className="text-[11px] font-semibold text-clinic-ink-soft uppercase">กรุ๊ปเลือด</p>
+          <p className="text-sm font-bold text-clinic-primary-deep">
+            {patient.bloodGroup || "-"}
+          </p>
+        </div>
+        <div className="space-y-0.5 sm:pl-4 pt-2 sm:pt-0">
+          <p className="text-[11px] font-semibold text-clinic-ink-soft uppercase">เบอร์ติดต่อ</p>
+          <p className="text-sm font-bold font-mono text-clinic-ink">
+            {patient.mobileNumber || "-"}
+          </p>
+        </div>
+        <div className="space-y-0.5 sm:pl-4 pt-2 sm:pt-0">
+          <p className="text-[11px] font-semibold text-clinic-ink-soft uppercase">ธาตุเจ้าเรือนกำเนิด</p>
+          <p className="text-sm font-bold text-clinic-terracotta-deep">
+            {patient.principle?.principleDhatu || "รอตรวจประเมิน"}
+          </p>
         </div>
       </div>
 
-      {/* Patient Header Card */}
-      <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-clinic-primary-deep text-white font-display font-bold text-xl flex items-center justify-center shrink-0 shadow-md">
-            {patient.fullname.substring(0, 2)}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-display font-bold text-clinic-primary-deep">
-                {patient.fullname}
-              </h1>
-              <span className="bg-clinic-primary/10 text-clinic-primary-deep border border-clinic-primary/20 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                ID: {patient.patientId}
-              </span>
-            </div>
-            <p className="text-xs text-clinic-ink-soft mt-1 flex flex-wrap items-center gap-3">
-              <span>เพศ: <strong>{patient.gender}</strong></span>
-              <span>•</span>
-              <span>อายุ: <strong>{age !== null ? `${age} ปี` : "-"}</strong></span>
-              <span>•</span>
-              <span>เกิด: <strong>{patient.dateOfBirthThai || patient.dateOfBirth}</strong></span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 self-start md:self-auto border-t md:border-t-0 border-clinic-line pt-4 md:pt-0">
-          <div className="text-center px-4 py-2 bg-clinic-bg rounded-control border border-clinic-line">
-            <span className="block text-[10px] font-semibold text-clinic-ink-soft uppercase">กรุ๊ปเลือด</span>
-            <span className="text-sm font-bold text-clinic-primary-deep">{patient.bloodGroup || "-"}</span>
-          </div>
-          <div className="text-center px-4 py-2 bg-clinic-bg rounded-control border border-clinic-line">
-            <span className="block text-[10px] font-semibold text-clinic-ink-soft uppercase">เบอร์โทรศัพท์</span>
-            <span className="text-sm font-bold font-mono text-clinic-ink">{patient.mobileNumber || "-"}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Details Grid */}
+      {/* 2-Column Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Basic Info */}
-        <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
-          <h2 className="font-display font-bold text-base text-clinic-primary-deep border-b border-clinic-line pb-2.5 flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            ข้อมูลพื้นฐาน (Basic Info)
-          </h2>
+        {/* Left Column: Basic Information */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <User className="w-4 h-4 text-clinic-primary" />
+              <span>ข้อมูลพื้นฐาน (Basic Information)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <dl className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
+              <div>
+                <dt className="text-clinic-ink-soft font-semibold">เลขบัตรประชาชน</dt>
+                <dd className="font-mono text-clinic-ink mt-0.5">{patient.idNumber || "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-clinic-ink-soft font-semibold">วันเกิด</dt>
+                <dd className="text-clinic-ink mt-0.5">{patient.dateOfBirth || "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-clinic-ink-soft font-semibold">อาชีพ</dt>
+                <dd className="text-clinic-ink mt-0.5">{patient.occupation || "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-clinic-ink-soft font-semibold">สถานภาพ</dt>
+                <dd className="text-clinic-ink mt-0.5">{patient.marital || "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-clinic-ink-soft font-semibold">สัญชาติ / เชื้อชาติ</dt>
+                <dd className="text-clinic-ink mt-0.5">
+                  {patient.nationality || "-"} / {patient.ethnic || "-"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-clinic-ink-soft font-semibold">ศาสนา</dt>
+                <dd className="text-clinic-ink mt-0.5">{patient.religion || "-"}</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
 
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        {/* Right Column: Health Profile & Allergies */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Heart className="w-4 h-4 text-clinic-terracotta" />
+              <span>ประวัติสุขภาพ & การแพ้ยา (Health Profile)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3.5 text-xs">
             <div>
-              <dt className="text-xs font-semibold text-clinic-ink-soft">เลขบัตรประชาชน/พาสปอร์ต</dt>
-              <dd className="font-mono font-medium text-clinic-ink mt-0.5">{patient.idNumber || "-"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold text-clinic-ink-soft">อาชีพ</dt>
-              <dd className="font-medium text-clinic-ink mt-0.5">{patient.occupation || "-"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold text-clinic-ink-soft">สถานภาพสมรส</dt>
-              <dd className="font-medium text-clinic-ink mt-0.5">{patient.marital || "-"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold text-clinic-ink-soft">สัญชาติ / เชื้อชาติ</dt>
-              <dd className="font-medium text-clinic-ink mt-0.5">
-                {patient.nationality || "-"} / {patient.ethnic || "-"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold text-clinic-ink-soft">ศาสนา</dt>
-              <dd className="font-medium text-clinic-ink mt-0.5">{patient.religion || "-"}</dd>
-            </div>
-          </dl>
-        </div>
-
-        {/* Health Profile */}
-        <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
-          <h2 className="font-display font-bold text-base text-clinic-primary-deep border-b border-clinic-line pb-2.5 flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-            ประวัติสุขภาพ & การแพ้ยา (Health Profile)
-          </h2>
-
-          <div className="space-y-3 text-sm">
-            <div>
-              <span className="text-xs font-semibold text-clinic-ink-soft block mb-1">ประวัติแพ้ยา (Drug Allergy)</span>
-              {patient.healthProfile?.drugAllergy && patient.healthProfile.drugAllergy !== "ไม่มีประวัติแพ้ยา" ? (
-                <div className="p-3 bg-clinic-danger-bg border border-clinic-danger/40 rounded-control text-clinic-danger font-semibold text-xs flex items-center gap-2">
-                  <span>⚠️ {patient.healthProfile.drugAllergy}</span>
+              <span className="font-semibold text-clinic-ink-soft block mb-1">
+                ประวัติการแพ้ยา (Drug Allergy)
+              </span>
+              {patient.healthProfile?.drugAllergy &&
+              patient.healthProfile.drugAllergy !== "ไม่มีประวัติแพ้ยา" &&
+              patient.healthProfile.drugAllergy !== "ไม่ทราบประวัติแพ้ยา" ? (
+                <div className="p-3 bg-clinic-danger-bg border border-clinic-danger/40 rounded-control text-clinic-danger font-semibold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{patient.healthProfile.drugAllergy}</span>
                 </div>
               ) : (
-                <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
-                  ✓ {patient.healthProfile?.drugAllergy || "ไม่มีประวัติแพ้ยา"}
-                </span>
+                <Badge variant="success" className="gap-1 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{patient.healthProfile?.drugAllergy || "ไม่มีประวัติแพ้ยา"}</span>
+                </Badge>
               )}
             </div>
 
-            {patient.healthProfile?.underlyingDisease && (
-              <div>
-                <span className="text-xs font-semibold text-clinic-ink-soft block">โรคประจำตัว</span>
-                <p className="text-clinic-ink font-medium">{patient.healthProfile.underlyingDisease}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Contact Address */}
-        <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
-          <h2 className="font-display font-bold text-base text-clinic-primary-deep border-b border-clinic-line pb-2.5 flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            ที่อยู่อาศัย & ข้อมูลติดต่อ (Contact Address)
-          </h2>
-
-          <dl className="space-y-2.5 text-sm">
             <div>
-              <dt className="text-xs font-semibold text-clinic-ink-soft">ที่อยู่ตามสำเนา</dt>
-              <dd className="font-medium text-clinic-ink mt-0.5 leading-relaxed">
+              <span className="font-semibold text-clinic-ink-soft block">โรคประจำตัว</span>
+              <p className="text-clinic-ink font-medium mt-0.5">
+                {patient.healthProfile?.underlyingDisease || "ไม่มี"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Address & Contact */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-clinic-primary" />
+              <span>ที่อยู่อาศัย & ข้อมูลติดต่อ</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-2.5 text-xs">
+            <div>
+              <span className="font-semibold text-clinic-ink-soft block">ที่อยู่ตามสำเนา</span>
+              <p className="text-clinic-ink leading-relaxed mt-0.5">
                 {patient.address || "-"}
-              </dd>
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-1">
               <div>
-                <dt className="text-xs font-semibold text-clinic-ink-soft">เบอร์โทรศัพท์</dt>
-                <dd className="font-mono font-medium text-clinic-ink mt-0.5">{patient.mobileNumber || "-"}</dd>
+                <span className="font-semibold text-clinic-ink-soft block">เบอร์โทรศัพท์</span>
+                <p className="font-mono text-clinic-ink mt-0.5">{patient.mobileNumber || "-"}</p>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-clinic-ink-soft">อีเมล</dt>
-                <dd className="font-medium text-clinic-ink mt-0.5">{patient.email || "-"}</dd>
+                <span className="font-semibold text-clinic-ink-soft block">อีเมล</span>
+                <p className="text-clinic-ink mt-0.5">{patient.email || "-"}</p>
               </div>
             </div>
-          </dl>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Emergency Contact */}
-        <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
-          <h2 className="font-display font-bold text-base text-clinic-primary-deep border-b border-clinic-line pb-2.5 flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            ผู้ติดต่อกรณีฉุกเฉิน (Emergency Contact)
-          </h2>
-
-          {patient.contactPersons && patient.contactPersons.length > 0 ? (
-            <div className="space-y-3">
-              {patient.contactPersons.map((contact) => (
-                <div
-                  key={contact.contactId}
-                  className="p-3.5 bg-clinic-bg border border-clinic-line rounded-control space-y-1 text-sm"
-                >
-                  <div className="flex items-center justify-between font-semibold text-clinic-ink">
-                    <span>{contact.contactName}</span>
-                    <span className="text-xs bg-white px-2 py-0.5 rounded border border-clinic-line text-clinic-ink-soft">
-                      {contact.relationship || "ผู้ติดต่อ"}
-                    </span>
+        {/* Emergency Contacts */}
+        <Card>
+          <CardHeader className="pb-3 border-b border-clinic-line">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Phone className="w-4 h-4 text-clinic-terracotta" />
+              <span>ผู้ติดต่อกรณีฉุกเฉิน (Emergency Contacts)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {patient.contactPersons && patient.contactPersons.length > 0 ? (
+              <div className="space-y-2.5">
+                {patient.contactPersons.map((contact) => (
+                  <div
+                    key={contact.contactId}
+                    className="p-3 bg-clinic-bg border border-clinic-line rounded-control text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between font-semibold text-clinic-ink">
+                      <span>{contact.contactName}</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {contact.relationship || "ผู้ติดต่อ"}
+                      </Badge>
+                    </div>
+                    {contact.mobileNumber && (
+                      <p className="font-mono text-clinic-ink-soft">
+                        โทร: {contact.mobileNumber}
+                      </p>
+                    )}
                   </div>
-                  {contact.mobileNumber && (
-                    <p className="text-xs font-mono text-clinic-ink-soft">
-                      โทร: {contact.mobileNumber}
-                    </p>
-                  )}
-                  {contact.contactAddress && (
-                    <p className="text-xs text-clinic-ink-soft">
-                      ที่อยู่: {contact.contactAddress}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-clinic-ink-soft italic">ไม่มีข้อมูลผู้ติดต่อฉุกเฉิน</p>
-          )}
-        </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-clinic-ink-soft italic">ไม่มีข้อมูลผู้ติดต่อฉุกเฉิน</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Treatment History Section */}
-      <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-clinic-line pb-3">
-          <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-            <span>🌿 ประวัติการตรวจรักษาทั้งหมด ({treatments.length} ครั้ง)</span>
-          </h2>
-          <Link
-            href={`/doctor/treatments/new?patientId=${patient.patientId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-bold text-clinic-primary bg-clinic-bg hover:bg-clinic-primary hover:text-white transition-all border border-clinic-line shadow-2xs"
-          >
-            + บันทึกการรักษาใหม่
-          </Link>
-        </div>
-
-        {treatments.length > 0 ? (
-          <div className="space-y-4">
-            {treatments.map((t) => {
-              const meds = t.recordTreatmentMedicines || [];
-              return (
-                <div
-                  key={t.recordTreatmentId}
-                  className="p-4 bg-clinic-bg/40 border border-clinic-line rounded-control space-y-3 hover:border-clinic-primary/40 transition-colors"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-clinic-line/60 pb-2.5">
-                    <div>
-                      <span className="font-bold text-sm text-clinic-primary-deep">
-                        การรักษา #{t.recordTreatmentId}
-                      </span>
-                      <span className="text-xs text-clinic-ink-soft ml-2">
-                        {t.recordDate
-                          ? new Date(t.recordDate).toLocaleDateString("th-TH", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })
-                          : "-"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-clinic-ink-soft">
-                        แพทย์: <strong>{t.doctorFullname}</strong>
-                      </span>
-                      <Link
-                        href={`/doctor/treatments/${t.recordTreatmentId}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-clinic-primary bg-white hover:bg-clinic-primary hover:text-white border border-clinic-line transition-all shadow-2xs"
-                      >
-                        👁️ ดูรายละเอียด
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <span className="font-semibold text-clinic-ink-soft">อาการ:</span>{" "}
-                      <span className="text-clinic-ink">{t.symptoms || "-"}</span>
-                    </div>
-                    <div>
-                      <span className="font-semibold text-clinic-ink-soft">การวินิจฉัยแผนไทย:</span>{" "}
-                      <span className="text-clinic-primary font-semibold">{t.ttmDiagnosis || "-"}</span>
-                    </div>
-                    {t.treatmentProgram && (
-                      <div>
-                        <span className="font-semibold text-clinic-ink-soft">หัตถการ:</span>{" "}
-                        <span className="text-clinic-ink">{t.treatmentProgram}</span>
-                      </div>
-                    )}
-                    {meds.length > 0 && (
-                      <div>
-                        <span className="font-semibold text-clinic-ink-soft">ยาที่ได้รับ:</span>{" "}
-                        <span className="text-clinic-ink font-medium">
-                          {meds.map((m) => `${m.medicineName} (${m.quantity})`).join(", ")}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-clinic-line">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <History className="w-4 h-4 text-clinic-primary" />
+            <span>ประวัติการตรวจรักษาทั้งหมด ({treatments.length} ครั้ง)</span>
+          </CardTitle>
+          <Button asChild variant="secondary" size="sm" className="h-7 text-xs">
+            <Link href={`/doctor/treatments/new?patientId=${patient.patientId}`}>
+              + บันทึกการรักษาใหม่
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {treatments.length > 0 ? (
+            <div className="space-y-3">
+              {treatments.map((t) => {
+                const meds = t.recordTreatmentMedicines || [];
+                return (
+                  <div
+                    key={t.recordTreatmentId}
+                    className="p-4 bg-clinic-bg/40 border border-clinic-line rounded-control space-y-2.5 hover:border-clinic-primary/40 transition-colors"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-clinic-line/60 pb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="text-xs font-bold">
+                          การรักษา #{t.recordTreatmentId}
+                        </Badge>
+                        <span className="text-xs text-clinic-ink-soft">
+                          {t.recordDate
+                            ? new Date(t.recordDate).toLocaleDateString("th-TH", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })
+                            : "-"}
                         </span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-clinic-ink-soft">
+                          แพทย์: <strong className="text-clinic-ink">{t.doctorFullname}</strong>
+                        </span>
+                        <Button asChild variant="ghost" size="sm" className="h-6 px-2 text-xs text-clinic-primary">
+                          <Link href={`/doctor/treatments/${t.recordTreatmentId}`}>
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            <span>ดูบันทึก</span>
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="font-semibold text-clinic-ink-soft">อาการ:</span>{" "}
+                        <span className="text-clinic-ink">{t.symptoms || "-"}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-clinic-ink-soft">การวินิจฉัยแผนไทย:</span>{" "}
+                        <span className="text-clinic-primary font-semibold">{t.ttmDiagnosis || "-"}</span>
+                      </div>
+                      {meds.length > 0 && (
+                        <div className="sm:col-span-2">
+                          <span className="font-semibold text-clinic-ink-soft">ยาที่ได้รับ:</span>{" "}
+                          <span className="text-clinic-ink">
+                            {meds.map((m) => `${m.medicineName} (${m.quantity})`).join(", ")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-clinic-ink-soft space-y-2">
-            <p className="text-xs">ยังไม่มีประวัติการบันทึกการรักษาสำหรับผู้ป่วยรายนี้</p>
-            <Link
-              href={`/doctor/treatments/new?patientId=${patient.patientId}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-clinic-primary text-white text-xs font-semibold rounded-control hover:bg-clinic-primary-deep transition-colors"
-            >
-              + บันทึกการตรวจรักษาครั้งแรก
-            </Link>
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-clinic-ink-soft space-y-2">
+              <p className="text-xs">ยังไม่มีประวัติการบันทึกการรักษาสำหรับผู้ป่วยรายนี้</p>
+              <Button asChild variant="terracotta" size="sm">
+                <Link href={`/doctor/treatments/new?patientId=${patient.patientId}`}>
+                  + บันทึกการตรวจรักษาครั้งแรก
+                </Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

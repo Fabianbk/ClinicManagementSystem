@@ -4,7 +4,28 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AppointmentResponseDTO } from "@/lib/types";
-import { CalendarIcon } from "@/components/site/icons";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge, AppointmentStatusBadge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Calendar,
+  CalendarPlus,
+  Clock,
+  User,
+  AlertTriangle,
+  CalendarDays,
+  XCircle,
+} from "lucide-react";
 
 export function PatientAppointmentsClient({
   initialAppointments,
@@ -60,230 +81,178 @@ export function PatientAppointmentsClient({
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "SCHEDULED":
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            นัดหมายยืนยันแล้ว
-          </span>
-        );
-      case "COMPLETED":
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-            ตรวจเสร็จสิ้น
-          </span>
-        );
-      case "CANCELLED":
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300">
-            ยกเลิกแล้ว
-          </span>
-        );
-      case "NO_SHOW":
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-            ไม่มาตามนัด
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-            {status}
-          </span>
-        );
-    }
-  };
-
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-clinic-line rounded-card p-6 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-clinic-primary-deep flex items-center gap-2">
-            การนัดหมายของฉัน
-          </h1>
-          <p className="text-xs text-clinic-ink-soft mt-0.5">
-            ตรวจสอบรายการนัดพบแพทย์แผนไทย ปรับปรุง หรือยกเลิกการนัดหมาย
-          </p>
-        </div>
+    <div className="space-y-6 pb-16 font-body text-clinic-ink">
+      {/* Top Header */}
+      <PageHeader
+        icon={<Calendar className="w-5 h-5 text-clinic-primary" />}
+        title="รายการนัดหมายของฉัน (My Appointments)"
+        subtitle="ตรวจสอบวัน เวลา สถานะการนัดหมาย และแพทย์แผนไทยผู้ตรวจรักษา"
+        actions={
+          <Button asChild variant="terracotta" size="sm" className="gap-1.5 shadow-xs">
+            <Link href="/patient/book">
+              <CalendarPlus className="w-4 h-4" />
+              <span>+ จองคิวตรวจใหม่</span>
+            </Link>
+          </Button>
+        }
+      />
 
-        <Link
-          href="/patient/book"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-control font-semibold text-sm bg-clinic-primary hover:bg-clinic-primary-deep text-white transition-all shadow-sm hover:shadow-md cursor-pointer shrink-0"
-        >
-          <CalendarIcon width={18} height={18} />
-          <span>+ จองคิวนัดหมายใหม่</span>
-        </Link>
-      </div>
-
-      {errorMessage && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium animate-in fade-in">
-          {errorMessage}
-        </div>
-      )}
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-clinic-line pb-px">
-        <button
+      {/* Tabs Switcher */}
+      <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
+        <Button
           type="button"
+          variant={activeTab === "upcoming" ? "default" : "outline"}
+          size="sm"
           onClick={() => setActiveTab("upcoming")}
-          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-            activeTab === "upcoming"
-              ? "border-clinic-primary text-clinic-primary"
-              : "border-transparent text-clinic-ink-soft hover:text-clinic-ink"
-          }`}
+          className="h-8 text-xs"
         >
-          นัดหมายที่กำลังจะมาถึง ({upcomingList.length})
-        </button>
-        <button
+          นัดหมายที่กำลังมาถึง ({upcomingList.length})
+        </Button>
+        <Button
           type="button"
+          variant={activeTab === "all" ? "default" : "outline"}
+          size="sm"
           onClick={() => setActiveTab("all")}
-          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-            activeTab === "all"
-              ? "border-clinic-primary text-clinic-primary"
-              : "border-transparent text-clinic-ink-soft hover:text-clinic-ink"
-          }`}
+          className="h-8 text-xs"
         >
           ประวัตินัดหมายทั้งหมด ({appointments.length})
-        </button>
+        </Button>
       </div>
 
-      {/* Appointment Cards List */}
+      {/* Appointments List */}
       {displayList.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           {displayList.map((app) => {
-            const startDate = new Date(app.slotStartTime);
-            const endDate = new Date(app.slotEndTime);
-            const canCancel = app.status === "SCHEDULED";
+            const isFuture = new Date(app.slotEndTime).getTime() >= now;
+            const canCancel = app.status === "SCHEDULED" && isFuture;
 
             return (
-              <div
+              <Card
                 key={app.appointmentId}
-                className="bg-white border border-clinic-line rounded-card p-5 shadow-sm hover:border-clinic-primary/40 transition-all flex flex-col justify-between space-y-4"
+                className="hover:border-clinic-primary/40 hover:shadow-sm transition-all"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs text-clinic-ink-soft font-medium">
-                      รหัสนัดหมาย #{app.appointmentId}
-                    </span>
-                    {getStatusBadge(app.status)}
-                  </div>
+                <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5">
+                      <AppointmentStatusBadge status={app.status} />
+                      <span className="text-xs font-mono text-clinic-ink-soft">
+                        รหัสนัดหมาย #{app.appointmentId}
+                      </span>
+                    </div>
 
-                  <div className="space-y-1">
-                    <p className="font-display font-bold text-base text-clinic-primary-deep">
-                      {startDate.toLocaleDateString("th-TH", {
+                    <p className="text-base font-bold font-display text-clinic-primary-deep">
+                      วัน{new Date(app.slotStartTime).toLocaleDateString("th-TH", {
                         weekday: "long",
                         year: "numeric",
                         month: "long",
                         day: "numeric",
                       })}
                     </p>
-                    <p className="text-sm text-clinic-ink">
-                      เวลา:{" "}
-                      <strong className="font-semibold">
-                        {startDate.toLocaleTimeString("th-TH", {
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-clinic-ink-soft">
+                      <span className="flex items-center gap-1.5 font-mono font-medium text-clinic-ink">
+                        <Clock className="w-3.5 h-3.5 text-clinic-terracotta" />
+                        {new Date(app.slotStartTime).toLocaleTimeString("th-TH", {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}{" "}
                         -{" "}
-                        {endDate.toLocaleTimeString("th-TH", {
+                        {new Date(app.slotEndTime).toLocaleTimeString("th-TH", {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}{" "}
                         น.
-                      </strong>
-                    </p>
-                    <p className="text-xs text-clinic-ink-soft">
-                      แพทย์ผู้ตรวจ:{" "}
-                      <span className="font-semibold text-clinic-ink">
-                        {app.doctorFullname}
                       </span>
-                    </p>
-                  </div>
-                </div>
 
-                {canCancel && (
-                  <div className="pt-3 border-t border-clinic-line flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setCancelModalId(app.appointmentId)}
-                      className="px-3.5 py-1.5 rounded-control text-xs font-semibold border border-clinic-danger/30 text-clinic-danger hover:bg-clinic-danger hover:text-white transition-all cursor-pointer shadow-xs"
-                    >
-                      ยกเลิกนัดหมาย
-                    </button>
+                      <span className="flex items-center gap-1.5 text-clinic-ink">
+                        <User className="w-3.5 h-3.5 text-clinic-primary" />
+                        <span>แพทย์ผู้ตรวจ:</span>
+                        <strong className="text-clinic-primary-deep font-semibold">
+                          {app.doctorFullname}
+                        </strong>
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {canCancel && (
+                    <div className="flex items-center justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-clinic-line">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCancelModalId(app.appointmentId)}
+                        className="text-xs text-clinic-danger hover:bg-clinic-danger-bg gap-1"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>ยกเลิกนัดหมาย</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
             );
           })}
         </div>
       ) : (
-        <div className="bg-white border border-clinic-line rounded-card p-12 text-center text-clinic-ink-soft space-y-3">
-          <div className="w-12 h-12 rounded-full bg-clinic-bg border border-clinic-line mx-auto flex items-center justify-center text-clinic-primary">
-            <CalendarIcon width={24} height={24} />
-          </div>
-          <h3 className="font-bold text-base text-clinic-ink">
-            {activeTab === "upcoming"
+        <EmptyState
+          icon={<Calendar className="w-6 h-6 text-clinic-primary" />}
+          title={
+            activeTab === "upcoming"
               ? "ไม่มีรายการนัดหมายที่กำลังจะมาถึง"
-              : "ยังไม่มีประวัติการนัดหมาย"}
-          </h3>
-          <p className="text-xs text-clinic-ink-soft max-w-sm mx-auto">
-            คุณสามารถจองคิวนัดตรวจกับแพทย์แผนไทยของพิมพ์วิมานคลินิกได้ล่วงหน้าผ่านระบบออนไลน์
-          </p>
-          <Link
-            href="/patient/book"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-clinic-primary text-white text-xs font-semibold rounded-control hover:bg-clinic-primary-deep transition-colors mt-2"
-          >
-            + จองคิวออนไลน์ตอนนี้
-          </Link>
-        </div>
+              : "ยังไม่มีประวัติการนัดหมาย"
+          }
+          description="ท่านสามารถเลือกวัน เวลา และแพทย์แผนไทยที่ต้องการตรวจเพื่อจองคิวล่วงหน้าได้ทันที"
+          action={
+            <Button asChild variant="terracotta" size="sm">
+              <Link href="/patient/book">
+                <CalendarPlus className="w-4 h-4 mr-1.5" />
+                <span>+ จองคิวนัดหมายออนไลน์</span>
+              </Link>
+            </Button>
+          }
+        />
       )}
 
-      {/* Cancel Confirmation Modal */}
-      {cancelModalId && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-card border border-clinic-line max-w-md w-full p-6 shadow-xl space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 text-clinic-danger">
-              <div className="w-10 h-10 rounded-full bg-clinic-danger-bg flex items-center justify-center font-bold text-lg">
-                !
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-lg text-clinic-ink">
-                  ยืนยันการยกเลิกนัดหมาย
-                </h3>
-                <p className="text-xs text-clinic-ink-soft">
-                  รหัสนัดหมาย #{cancelModalId}
-                </p>
-              </div>
-            </div>
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={!!cancelModalId} onOpenChange={(open) => !open && setCancelModalId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-clinic-danger flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <span>ยืนยันการยกเลิกนัดหมาย?</span>
+            </DialogTitle>
+            <DialogDescription>
+              การยกเลิกจะมีผลทันที และสล็อตเวลาจะถูกเปิดให้ผู้รับบริการท่านอื่นจองคิวแทน
+            </DialogDescription>
+          </DialogHeader>
 
-            <p className="text-sm text-clinic-ink leading-relaxed">
-              คุณต้องการยกเลิกการนัดหมายนี้ใช่หรือไม่? หลังจากยกเลิกแล้ว
-              ช่องเวลานัดหมายจะเปิดให้ผู้ป่วยท่านอื่นสามารถจองได้
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setCancelModalId(null)}
-                disabled={isPending}
-                className="px-4 py-2 rounded-control text-xs font-semibold text-clinic-ink bg-clinic-bg border border-clinic-line hover:bg-slate-100 transition-colors"
-              >
-                ย้อนกลับ
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmCancel}
-                disabled={isPending}
-                className="px-4 py-2 rounded-control text-xs font-semibold text-white bg-clinic-danger hover:bg-red-700 transition-colors shadow-xs"
-              >
-                {isPending ? "กำลังยกเลิก…" : "ยืนยันยกเลิกนัด"}
-              </button>
+          {errorMessage && (
+            <div className="p-3 bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs rounded-control">
+              {errorMessage}
             </div>
-          </div>
-        </div>
-      )}
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancelModalId(null)}
+              disabled={isPending}
+            >
+              ย้อนกลับ
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleConfirmCancel}
+              disabled={isPending}
+            >
+              {isPending ? "กำลังยกเลิก..." : "ยืนยันยกเลิกนัด"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
