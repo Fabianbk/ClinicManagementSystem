@@ -42,7 +42,7 @@ public class ReviewController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<PageResponse<ReviewResponseDTO>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {

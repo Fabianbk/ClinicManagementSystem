@@ -99,4 +99,35 @@ export function PaymentStatusBadge({ status }: { status?: string }) {
   }
 }
 
+/**
+ * Helper component to render standardized Appointment Slot Status Badges
+ */
+export function SlotStatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "AVAILABLE":
+      return (
+        <Badge variant="success" className="text-[11px] px-2 py-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+          <span>ว่าง (พร้อมจอง)</span>
+        </Badge>
+      );
+    case "BOOKED":
+      return (
+        <Badge variant="muted" className="text-[11px] px-2 py-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-stone-500" />
+          <span>มีผู้จองแล้ว</span>
+        </Badge>
+      );
+    case "BLOCKED":
+      return (
+        <Badge variant="danger" className="text-[11px] px-2 py-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+          <span>งดให้บริการ</span>
+        </Badge>
+      );
+    default:
+      return <Badge variant="secondary" className="text-[11px] px-2 py-0">{status}</Badge>;
+  }
+}
+
 export { Badge, badgeVariants };

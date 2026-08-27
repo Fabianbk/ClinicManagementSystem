@@ -11,21 +11,31 @@ export function NavBar() {
           พิมพ์วิมานคลินิก
         </Link>
 
-        <nav className="flex items-center gap-7">
-          <ul className="hidden md:flex items-center gap-6 list-none m-0 p-0">
+        <nav className="flex items-center gap-6">
+          <ul className="hidden md:flex items-center gap-5 list-none m-0 p-0">
             <li>
-              <a href="#" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-sm font-medium transition-colors">
+              <a href="#" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-xs lg:text-sm font-medium transition-colors">
                 หน้าหลัก
               </a>
             </li>
             <li>
-              <a href="#services" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-sm font-medium transition-colors">
-                บริการของเรา
+              <a href="#services" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-xs lg:text-sm font-medium transition-colors">
+                บริการตรวจรักษา
               </a>
             </li>
             <li>
-              <a href="#contact" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-sm font-medium transition-colors">
-                เกี่ยวกับหมอ
+              <a href="#schedule" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-xs lg:text-sm font-medium transition-colors">
+                ตารางตรวจแพทย์
+              </a>
+            </li>
+            <li>
+              <a href="#reviews" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-xs lg:text-sm font-medium transition-colors">
+                รีวิวจากคนไข้
+              </a>
+            </li>
+            <li>
+              <a href="#contact" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-xs lg:text-sm font-medium transition-colors">
+                ข้อมูลคลินิก
               </a>
             </li>
           </ul>
