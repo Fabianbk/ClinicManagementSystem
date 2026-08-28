@@ -142,9 +142,6 @@ public class Patient {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private Principle principle;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    private HealthProfile healthProfile;
-
     /** Returns national ID if set, otherwise passport number. */
     public String getIdNumber() {
         if (nationalId != null && !nationalId.isBlank()) {

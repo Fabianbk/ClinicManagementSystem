@@ -261,32 +261,45 @@ export default async function PatientDetailPage({
         <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
           <h2 className="font-display font-bold text-base text-clinic-primary-deep border-b border-clinic-line pb-2.5 flex items-center gap-2">
             <HeartPulse className="w-4 h-4 text-clinic-terracotta" />
-            <span>ประวัติสุขภาพ & การแพ้ยา (Health Profile)</span>
+            <span>ประวัติสุขภาพ & การแพ้ยา (ล่าสุดจากการตรวจรักษา)</span>
           </h2>
 
-          <div className="space-y-3 text-sm">
-            <div>
-              <span className="text-xs font-semibold text-clinic-ink-soft block mb-1">ประวัติแพ้ยา (Drug Allergy)</span>
-              {patient.healthProfile?.drugAllergy &&
-              patient.healthProfile.drugAllergy !== "ไม่มีประวัติแพ้ยา" &&
-              patient.healthProfile.drugAllergy !== "No" ? (
-                <div className="p-3 bg-clinic-danger-bg border border-clinic-danger/40 rounded-control text-clinic-danger font-semibold text-xs flex items-center gap-2">
-                  <span>⚠️ {patient.healthProfile.drugAllergy}</span>
+          {(() => {
+            const latestHp = treatments.find((t) => t.healthProfile)?.healthProfile;
+            return (
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="text-xs font-semibold text-clinic-ink-soft block mb-1">ประวัติแพ้ยา (Drug Allergy)</span>
+                  {latestHp?.drugAllergy &&
+                  latestHp.drugAllergy !== "ไม่มีประวัติแพ้ยา" &&
+                  latestHp.drugAllergy !== "ปฏิเสธการแพ้ยา" &&
+                  latestHp.drugAllergy !== "No" ? (
+                    <div className="p-3 bg-clinic-danger-bg border border-clinic-danger/40 rounded-control text-clinic-danger font-semibold text-xs flex items-center gap-2">
+                      <span>⚠️ {latestHp.drugAllergy}</span>
+                    </div>
+                  ) : (
+                    <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
+                      ✓ {latestHp?.drugAllergy || "ไม่มีประวัติแพ้ยา / ปฏิเสธ"}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
-                  ✓ {patient.healthProfile?.drugAllergy || "ไม่มีประวัติแพ้ยา"}
-                </span>
-              )}
-            </div>
 
-            {patient.healthProfile?.underlyingDisease && (
-              <div>
-                <span className="text-xs font-semibold text-clinic-ink-soft block">โรคประจำตัว</span>
-                <p className="text-clinic-ink font-medium">{patient.healthProfile.underlyingDisease}</p>
+                <div>
+                  <span className="text-xs font-semibold text-clinic-ink-soft block">โรคประจำตัว</span>
+                  <p className="text-clinic-ink font-medium">
+                    {latestHp?.underlyingDisease || "ปฏิเสธโรคประจำตัว"}
+                  </p>
+                </div>
+
+                {latestHp?.foodAllergy && !latestHp.foodAllergy.includes("ปฏิเสธ") && (
+                  <div>
+                    <span className="text-xs font-semibold text-clinic-ink-soft block">แพ้อาหาร</span>
+                    <p className="text-amber-700 font-medium">{latestHp.foodAllergy}</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
         </div>
 
         {/* Structured Address */}

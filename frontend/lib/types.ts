@@ -384,6 +384,7 @@ export interface RecordTreatmentResponseDTO {
   patientFullname: string;
   recordTreatmentMedicines: RecordTreatmentMedicineResponseDTO[] | null;
   receipt: ReceiptResponseDTO | null;
+  healthProfile?: HealthProfileResponseDTO | null;
 }
 
 // ---------- Medicine ----------

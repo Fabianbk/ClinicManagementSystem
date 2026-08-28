@@ -88,9 +88,17 @@ public class RecordTreatment {
     @JoinColumn(name = "appointment_id", nullable = false, unique = true)
     private Appointment appointment;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "health_profile_health_id")
+    private HealthProfile healthProfile;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "recordTreatment")
     private List<RecordTreatmentMedicine> recordTreatmentMedicines;
 
     @OneToOne(mappedBy = "recordTreatment", cascade = CascadeType.ALL)
     private Receipt receipt;
+
+    public Patient getPatient() {
+        return appointment != null ? appointment.getPatient() : null;
+    }
 }

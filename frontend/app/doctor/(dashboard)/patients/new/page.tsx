@@ -281,9 +281,6 @@ export default function NewPatientPage() {
       email: email.trim() || undefined,
 
       contactPersons: emergencyContacts.filter((c) => c.contactName.trim() !== ""),
-      healthProfile: {
-        drugAllergy: drugAllergyStr,
-      },
     };
 
     try {

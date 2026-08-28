@@ -149,23 +149,31 @@ export function TreatmentDetailClient({
               </div>
             </div>
 
-            {/* Health profile badges */}
+            {/* Health profile badges for this visit */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
                 <span className="text-[10px] text-clinic-ink-soft block">โรคประจำตัว:</span>
-                <span className="font-semibold text-clinic-ink">{patient?.healthProfile?.underlyingDisease || "ปฏิเสธ"}</span>
+                <span className="font-semibold text-clinic-ink">
+                  {treatment.healthProfile?.underlyingDisease || "ปฏิเสธโรคประจำตัว"}
+                </span>
               </div>
               <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
                 <span className="text-[10px] text-clinic-ink-soft block">การแพ้ยา:</span>
-                <span className="font-semibold text-rose-700">{patient?.healthProfile?.drugAllergy || "ปฏิเสธ"}</span>
+                <span className="font-semibold text-rose-700">
+                  {treatment.healthProfile?.drugAllergy || "ปฏิเสธการแพ้ยา"}
+                </span>
               </div>
               <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
                 <span className="text-[10px] text-clinic-ink-soft block">การแพ้อาหาร:</span>
-                <span className="font-semibold text-amber-700">{patient?.healthProfile?.foodAllergy || "ปฏิเสธ"}</span>
+                <span className="font-semibold text-amber-700">
+                  {treatment.healthProfile?.foodAllergy || "ปฏิเสธการแพ้อาหาร"}
+                </span>
               </div>
               <div className="p-2 bg-clinic-bg/30 rounded border border-clinic-line">
-                <span className="text-[10px] text-clinic-ink-soft block">แอลกอฮอล์/บุหรี่:</span>
-                <span className="font-semibold text-clinic-ink">ปฏิเสธ</span>
+                <span className="text-[10px] text-clinic-ink-soft block">แอลกอฮอล์ / บุหรี่:</span>
+                <span className="font-semibold text-clinic-ink">
+                  {treatment.healthProfile?.alcoholConsumption || "ปฏิเสธ"} / {treatment.healthProfile?.smokingHistory || "ปฏิเสธ"}
+                </span>
               </div>
             </div>
           </div>

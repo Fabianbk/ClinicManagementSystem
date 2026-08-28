@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getPatient } from "@/lib/resources/patients";
+import { getRecordTreatmentsByPatientId } from "@/lib/resources/record-treatments";
 
 export default async function PatientProfilePage() {
   const session = await getSession();
@@ -8,7 +9,12 @@ export default async function PatientProfilePage() {
     redirect("/patient/login");
   }
 
-  const patient = await getPatient(session.id).catch(() => null);
+  const [patient, treatmentsData] = await Promise.all([
+    getPatient(session.id).catch(() => null),
+    getRecordTreatmentsByPatientId(session.id, 0, 10).catch(() => ({ content: [] })),
+  ]);
+
+  const latestHealthProfile = treatmentsData.content?.find((t) => t.healthProfile)?.healthProfile;
   if (!patient) {
     return (
       <div className="p-8 bg-white rounded-card border border-clinic-line shadow-sm text-center">
@@ -126,9 +132,10 @@ export default async function PatientProfilePage() {
             {/* Drug Allergy Box */}
             <div
               className={`p-4 rounded-control border ${
-                patient.healthProfile?.drugAllergy &&
-                patient.healthProfile.drugAllergy !== "ไม่มีประวัติแพ้ยา" &&
-                patient.healthProfile.drugAllergy !== "ไม่ทราบประวัติแพ้ยา"
+                latestHealthProfile?.drugAllergy &&
+                latestHealthProfile.drugAllergy !== "ไม่มีประวัติแพ้ยา" &&
+                latestHealthProfile.drugAllergy !== "ปฏิเสธการแพ้ยา" &&
+                latestHealthProfile.drugAllergy !== "ไม่ทราบประวัติแพ้ยา"
                   ? "bg-clinic-danger-bg border-clinic-danger text-clinic-danger"
                   : "bg-emerald-50 border-emerald-200 text-emerald-800"
               }`}
@@ -137,7 +144,7 @@ export default async function PatientProfilePage() {
                 ประวัติแพ้ยา (Drug Allergy)
               </p>
               <p className="text-sm font-semibold">
-                {patient.healthProfile?.drugAllergy || "ไม่มีประวัติแพ้ยา"}
+                {latestHealthProfile?.drugAllergy || "ไม่มีประวัติแพ้ยา / ปฏิเสธ"}
               </p>
             </div>
 
@@ -145,37 +152,37 @@ export default async function PatientProfilePage() {
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">แพ้อาหาร</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.healthProfile?.foodAllergy || "ไม่มี"}
+                  {latestHealthProfile?.foodAllergy || "ไม่มี / ปฏิเสธ"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">โรคประจำตัว</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.healthProfile?.underlyingDisease || "ไม่มี"}
+                  {latestHealthProfile?.underlyingDisease || "ไม่มี / ปฏิเสธ"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">โรคทางพันธุกรรม</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.healthProfile?.hereditaryDisease || "ไม่มี"}
+                  {latestHealthProfile?.hereditaryDisease || "ไม่มี / ปฏิเสธ"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">ประวัติอุบัติเหตุ/ผ่าตัด</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.healthProfile?.accidentHistory || "ไม่มี"}
+                  {latestHealthProfile?.accidentHistory || "ไม่มี"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">การดื่มแอลกอฮอล์</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.healthProfile?.alcoholConsumption || "ไม่ระบุ"}
+                  {latestHealthProfile?.alcoholConsumption || "ไม่ระบุ / ปฏิเสธ"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">การสูบบุหรี่</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.healthProfile?.smokingHistory || "ไม่ระบุ"}
+                  {latestHealthProfile?.smokingHistory || "ไม่ระบุ / ปฏิเสธ"}
                 </dd>
               </div>
             </dl>

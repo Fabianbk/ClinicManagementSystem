@@ -260,11 +260,12 @@ export function RecordTreatmentFormClient({
     }
   };
 
-  // Fetch patient previous treatment records
+  // Fetch patient previous treatment records and latest health profile for pre-filling
   useEffect(() => {
     if (!selectedPatientId) return;
     let isMounted = true;
 
+    // 1. Fetch patient treatment history
     fetch(`/api/record-treatments/patient/${selectedPatientId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -284,12 +285,78 @@ export function RecordTreatmentFormClient({
       })
       .catch(() => { });
 
+    // 2. Fetch latest HealthProfile snapshot to pre-fill checkboxes & details
+    fetch(`/api/record-treatments/patient/${selectedPatientId}/latest-health-profile`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((resJson) => {
+        if (!isMounted) return;
+        const hp = resJson?.data || resJson;
+        if (!hp) return;
+
+        if (hp.underlyingDisease) {
+          const dis = hp.underlyingDisease;
+          if (dis && !dis.includes("ปฏิเสธ")) {
+            setHasUnderlyingDisease(true);
+            setUnderlyingDiseaseDetails(dis);
+          } else {
+            setHasUnderlyingDisease(false);
+            setUnderlyingDiseaseDetails("");
+          }
+        }
+
+        if (hp.drugAllergy) {
+          const drug = hp.drugAllergy;
+          if (drug && !drug.includes("ปฏิเสธ")) {
+            setHasDrugAllergy(true);
+            setDrugAllergyDetails(drug);
+          } else {
+            setHasDrugAllergy(false);
+            setDrugAllergyDetails("");
+          }
+        }
+
+        if (hp.foodAllergy) {
+          const food = hp.foodAllergy;
+          if (food && !food.includes("ปฏิเสธ")) {
+            setHasFoodAllergy(true);
+            setFoodAllergyDetails(food);
+          } else {
+            setHasFoodAllergy(false);
+            setFoodAllergyDetails("");
+          }
+        }
+
+        if (hp.hereditaryDisease) {
+          const fam = hp.hereditaryDisease;
+          if (fam && !fam.includes("ปฏิเสธ")) {
+            setHasFamilyDisease(true);
+            setFamilyDiseaseDetails(fam);
+          } else {
+            setHasFamilyDisease(false);
+            setFamilyDiseaseDetails("");
+          }
+        }
+
+        if (hp.alcoholConsumption) {
+          setDrinksAlcohol(hp.alcoholConsumption.includes("ดื่ม") && !hp.alcoholConsumption.includes("ปฏิเสธ"));
+        }
+
+        if (hp.smokingHistory) {
+          setSmokes(hp.smokingHistory.includes("สูบ") && !hp.smokingHistory.includes("ปฏิเสธ"));
+        }
+
+        if (hp.menstruation) {
+          setMenstruationHistory(hp.menstruation);
+        }
+      })
+      .catch(() => { });
+
     return () => {
       isMounted = false;
     };
   }, [selectedPatientId]);
 
-  // Auto-fill from patient health profile if available
+  // Auto-fill from patient principle if available
   useEffect(() => {
     if (!currentPatient) return;
     if (currentPatient.principle?.principleDhatu) {
@@ -297,27 +364,6 @@ export function RecordTreatmentFormClient({
     }
     if (currentPatient.principle?.secondaryDhatu) {
       setSecondaryDhatu(currentPatient.principle.secondaryDhatu);
-    }
-    if (currentPatient.healthProfile?.underlyingDisease) {
-      const dis = currentPatient.healthProfile.underlyingDisease;
-      if (dis && !dis.includes("ปฏิเสธ")) {
-        setHasUnderlyingDisease(true);
-        setUnderlyingDiseaseDetails(dis);
-      }
-    }
-    if (currentPatient.healthProfile?.drugAllergy) {
-      const drug = currentPatient.healthProfile.drugAllergy;
-      if (drug && !drug.includes("ปฏิเสธ")) {
-        setHasDrugAllergy(true);
-        setDrugAllergyDetails(drug);
-      }
-    }
-    if (currentPatient.healthProfile?.foodAllergy) {
-      const food = currentPatient.healthProfile.foodAllergy;
-      if (food && !food.includes("ปฏิเสธ")) {
-        setHasFoodAllergy(true);
-        setFoodAllergyDetails(food);
-      }
     }
   }, [currentPatient]);
 

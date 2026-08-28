@@ -57,6 +57,14 @@ public class RecordTreatmentController {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }
 
+    @GetMapping("/patient/{patientId}/latest-health-profile")
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
+    public ResponseEntity<ApiResponse<com.clinic.clinicmanagementsystem.dto.HealthProfileResponseDTO>> getLatestHealthProfile(
+            @PathVariable int patientId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                recordTreatmentService.getLatestHealthProfileByPatientId(patientId)));
+    }
+
     @GetMapping("/appointment/{appointmentId}")
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<RecordTreatmentResponseDTO>> getByAppointmentId(

@@ -46,4 +46,6 @@ public class RecordTreatmentResponseDTO {
 
     /** Null until a receipt has actually been issued for this treatment. */
     private ReceiptResponseDTO receipt;
+
+    private HealthProfileResponseDTO healthProfile;
 }

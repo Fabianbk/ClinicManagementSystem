@@ -15,7 +15,7 @@ import org.mapstruct.MappingTarget;
  */
 @Mapper(
         componentModel = "spring",
-        uses = {ContactPersonMapper.class, PrincipleMapper.class, HealthProfileMapper.class}
+        uses = {ContactPersonMapper.class, PrincipleMapper.class}
 )
 public interface PatientMapper {
 
@@ -31,7 +31,7 @@ public interface PatientMapper {
 
     /**
      * Updates only Patient's own scalar fields on an already-loaded entity.
-     * Deliberately leaves contactPersons / principle / healthProfile alone —
+     * Deliberately leaves contactPersons / principle alone —
      * those have dedicated update paths in PatientService so we never
      * silently orphan a row (see PatientService for why).
      */
@@ -40,7 +40,6 @@ public interface PatientMapper {
     @Mapping(target = "appointments", ignore = true)
     @Mapping(target = "contactPersons", ignore = true)
     @Mapping(target = "principle", ignore = true)
-    @Mapping(target = "healthProfile", ignore = true)
     void updateBasicInfo(PatientRequestDTO dto, @MappingTarget Patient entity);
 
     default String formatBloodGroup(BloodGroupAbo abo, BloodGroupRh rh) {

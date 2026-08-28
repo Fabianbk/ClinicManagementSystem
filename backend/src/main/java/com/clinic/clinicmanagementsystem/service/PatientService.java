@@ -45,7 +45,6 @@ public class PatientService {
 
     private final PatientMapper patientMapper;
     private final PrincipleMapper principleMapper;
-    private final HealthProfileMapper healthProfileMapper;
     private final ContactPersonMapper contactPersonMapper;
 
     /**
@@ -104,14 +103,6 @@ public class PatientService {
 
         patientMapper.updateBasicInfo(dto, existing);
 
-        if (dto.getHealthProfile() != null) {
-            if (existing.getHealthProfile() == null) {
-                existing.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
-            } else {
-                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), existing.getHealthProfile());
-            }
-        }
-
         if (dto.getPrinciple() != null) {
             if (existing.getPrinciple() == null) {
                 existing.setPrinciple(principleMapper.toEntity(dto.getPrinciple()));
@@ -146,20 +137,6 @@ public class PatientService {
 
         Patient saved = patientRepository.save(patient);
         return principleMapper.toResponseDTO(saved.getPrinciple());
-    }
-
-    /** Updates the patient's health profile in place; creates one if none exists yet. */
-    public HealthProfileResponseDTO updateHealthProfile(int patientId, HealthProfileRequestDTO dto) {
-        Patient patient = findPatientOrThrow(patientId);
-
-        if (patient.getHealthProfile() == null) {
-            patient.setHealthProfile(healthProfileMapper.toEntity(dto));
-        } else {
-            healthProfileMapper.updateEntityFromDto(dto, patient.getHealthProfile());
-        }
-
-        Patient saved = patientRepository.save(patient);
-        return healthProfileMapper.toResponseDTO(saved.getHealthProfile());
     }
 
     /** Adds one emergency contact to the patient. */

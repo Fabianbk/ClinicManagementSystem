@@ -68,5 +68,4 @@ public class PatientResponseDTO {
 
     private List<ContactPersonResponseDTO> contactPersons;
     private PrincipleResponseDTO principle;
-    private HealthProfileResponseDTO healthProfile;
 }

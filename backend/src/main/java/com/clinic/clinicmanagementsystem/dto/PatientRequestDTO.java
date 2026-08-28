@@ -129,10 +129,6 @@ public class PatientRequestDTO {
     @Valid
     private PrincipleRequestDTO principle;
 
-    /** Optional: submit health profile as part of patient intake */
-    @Valid
-    private HealthProfileRequestDTO healthProfile;
-
     @AssertTrue(message = "ID number configuration is invalid: exactly one of nationalId (13 digits) or passportNo (up to 15 characters) must match idType")
     public boolean isValidId() {
         if (idType == null) return false;
