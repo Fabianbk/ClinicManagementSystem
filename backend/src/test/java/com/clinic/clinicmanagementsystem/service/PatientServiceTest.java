@@ -82,7 +82,6 @@ class PatientServiceTest {
                 .nationalId("1234567890123")
                 .gender(Gender.MALE)
                 .dateOfBirth(birthDate)
-                .dateOfBirthThai("15/08/2538")
                 .occupation("Engineer")
                 .maritalStatus(MaritalStatus.SINGLE)
                 .citizenship("Thai")

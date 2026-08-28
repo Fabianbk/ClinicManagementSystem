@@ -48,9 +48,6 @@ public class Patient {
     @Column(name = "date_of_birth", nullable = false)
     private Date dateOfBirth;
 
-    @Column(name = "date_of_birth_thai", length = 100)
-    private String dateOfBirthThai;
-
     @Column(name = "thai_calendar_birth_date", length = 100)
     private String thaiCalendarBirthDate;
 

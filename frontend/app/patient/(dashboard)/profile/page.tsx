@@ -59,8 +59,12 @@ export default async function PatientProfilePage() {
               <dd className="font-semibold text-clinic-ink">{patient.gender === "MALE" ? "ชาย" : "หญิง"}</dd>
             </div>
             <div className="py-2.5 flex justify-between">
-              <dt className="text-clinic-ink-soft">วันเกิด (ไทย)</dt>
-              <dd className="font-semibold text-clinic-ink">{patient.dateOfBirthThai || "-"}</dd>
+              <dt className="text-clinic-ink-soft">วันเกิด</dt>
+              <dd className="font-semibold text-clinic-ink">
+                {patient.dateOfBirth
+                  ? new Date(patient.dateOfBirth).toLocaleDateString("th-TH")
+                  : "-"}
+              </dd>
             </div>
             <div className="py-2.5 flex justify-between">
               <dt className="text-clinic-ink-soft">กรุ๊ปเลือด</dt>

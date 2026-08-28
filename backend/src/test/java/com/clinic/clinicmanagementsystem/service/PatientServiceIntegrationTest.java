@@ -51,7 +51,6 @@ class PatientServiceIntegrationTest {
                 .nationalId(testIdNumber)
                 .gender(Gender.FEMALE)
                 .dateOfBirth(testDob)
-                .dateOfBirthThai("20/05/2541")
                 .occupation("Developer")
                 .maritalStatus(MaritalStatus.SINGLE)
                 .citizenship("Thai")

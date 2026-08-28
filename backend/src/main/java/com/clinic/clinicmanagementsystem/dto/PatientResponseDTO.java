@@ -29,7 +29,6 @@ public class PatientResponseDTO {
 
     private Gender gender;
     private Date dateOfBirth;
-    private String dateOfBirthThai;
     private String thaiCalendarBirthDate;
     private String occupation;
     private MaritalStatus maritalStatus;

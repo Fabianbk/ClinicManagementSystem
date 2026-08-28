@@ -96,7 +96,11 @@ export function TreatmentDetailClient({
             </div>
             <div>
               <span className="text-clinic-ink-soft">วันเกิด:</span>{" "}
-              <strong className="text-clinic-ink">{patient?.dateOfBirthThai || patient?.dateOfBirth || "-"}</strong>
+              <strong className="text-clinic-ink">
+                {patient?.dateOfBirth
+                  ? new Date(patient.dateOfBirth).toLocaleDateString("th-TH")
+                  : "-"}
+              </strong>
             </div>
             <div>
               <span className="text-clinic-ink-soft">เลขบัตรประชาชน:</span>{" "}

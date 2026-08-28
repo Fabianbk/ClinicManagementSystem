@@ -136,7 +136,6 @@ export interface PatientRequestDTO {
   passportNo?: string;
   gender: Gender;
   dateOfBirth: string; // ISO date string over the wire
-  dateOfBirthThai?: string;
   thaiCalendarBirthDate?: string;
   occupation?: string;
   maritalStatus?: MaritalStatus;
@@ -185,7 +184,6 @@ export interface PatientResponseDTO {
 
   gender: Gender;
   dateOfBirth: string;
-  dateOfBirthThai?: string | null;
   thaiCalendarBirthDate?: string | null;
   occupation?: string | null;
   maritalStatus?: MaritalStatus | null;

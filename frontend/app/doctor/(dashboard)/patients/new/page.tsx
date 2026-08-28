@@ -235,10 +235,6 @@ export default function NewPatientPage() {
       return;
     }
 
-    // Format Date of Birth Thai
-    const dobObj = new Date(dateOfBirth);
-    const dobThaiStr = `${dobObj.getDate()}/${dobObj.getMonth() + 1}/${dobObj.getFullYear() + 543}`;
-
     // Format Drug Allergy
     let drugAllergyStr = "ไม่มีประวัติแพ้ยา";
     if (allergyOption === "Unknown") drugAllergyStr = "ไม่ทราบประวัติแพ้ยา";
@@ -251,7 +247,6 @@ export default function NewPatientPage() {
       passportNo: idType === "PASSPORT" ? passportNo.trim() : undefined,
       gender,
       dateOfBirth: new Date(dateOfBirth).toISOString(),
-      dateOfBirthThai: dobThaiStr,
       thaiCalendarBirthDate: thaiCalendarBirthDate.trim() || undefined,
       occupation: occupation.trim() || undefined,
       maritalStatus,
@@ -456,7 +451,7 @@ export default function NewPatientPage() {
               </div>
 
               {/* Date of Birth */}
-              <div className="md:col-span-5 space-y-1.5">
+              <div className="md:col-span-4 space-y-1.5">
                 <label className="text-xs font-semibold text-clinic-ink block">
                   วัน/เดือน/ปีเกิด (Date of Birth) <span className="text-clinic-danger">*</span>
                 </label>
@@ -470,11 +465,25 @@ export default function NewPatientPage() {
               </div>
 
               {/* Calculated Age */}
-              <div className="md:col-span-4 space-y-1.5">
+              <div className="md:col-span-3 space-y-1.5">
                 <label className="text-xs font-semibold text-clinic-ink block">อายุ (Age)</label>
                 <div className="w-full h-9 px-3 text-xs bg-clinic-bg/60 border border-clinic-line rounded-control flex items-center text-clinic-ink font-semibold">
                   {calculatedAge ? `${calculatedAge} ปี` : "-"}
                 </div>
+              </div>
+
+              {/* Lunar Astrological Birth Date (For both Thai and Foreign Patients) */}
+              <div className="md:col-span-5 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  วันเดือนปีเกิดทางจันทรคติ (Lunar Date)
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น 1ฯ 8- 12"
+                  value={thaiCalendarBirthDate}
+                  onChange={(e) => setThaiCalendarBirthDate(e.target.value)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary font-mono"
+                />
               </div>
 
               {/* Occupation */}
@@ -689,32 +698,36 @@ export default function NewPatientPage() {
           <CardContent className="p-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5">
               <div className="md:col-span-3 space-y-1">
-                <label className="text-[11px] font-semibold text-clinic-ink">บ้านเลขที่ (House No.)</label>
+                <label className="text-[11px] font-semibold text-clinic-ink">
+                  {idType === "THAI_ID" ? "บ้านเลขที่ (House No.)" : "ที่พัก/โรงแรม/บ้านเลขที่ (Hotel / Room / House No.)"}
+                </label>
                 <input
                   type="text"
-                  placeholder="เช่น 304/5"
+                  placeholder={idType === "THAI_ID" ? "เช่น 304/5" : "e.g. Pai Village Resort / 123"}
                   value={houseNo}
                   onChange={(e) => setHouseNo(e.target.value)}
                   className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 />
               </div>
 
-              <div className="md:col-span-3 space-y-1">
-                <label className="text-[11px] font-semibold text-clinic-ink">หมู่ที่ (Moo)</label>
-                <input
-                  type="text"
-                  placeholder="เช่น 8"
-                  value={moo}
-                  onChange={(e) => setMoo(e.target.value)}
-                  className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
-                />
-              </div>
+              {idType === "THAI_ID" && (
+                <div className="md:col-span-3 space-y-1">
+                  <label className="text-[11px] font-semibold text-clinic-ink">หมู่ที่ (Moo)</label>
+                  <input
+                    type="text"
+                    placeholder="เช่น 8"
+                    value={moo}
+                    onChange={(e) => setMoo(e.target.value)}
+                    className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+              )}
 
               <div className="md:col-span-3 space-y-1">
-                <label className="text-[11px] font-semibold text-clinic-ink">ซอย (Soi)</label>
+                <label className="text-[11px] font-semibold text-clinic-ink">ซอย (Soi / Lane)</label>
                 <input
                   type="text"
-                  placeholder="เช่น ซอย 5"
+                  placeholder="เช่น ซอย 5 / Lane 2"
                   value={soi}
                   onChange={(e) => setSoi(e.target.value)}
                   className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
@@ -722,10 +735,10 @@ export default function NewPatientPage() {
               </div>
 
               <div className="md:col-span-3 space-y-1">
-                <label className="text-[11px] font-semibold text-clinic-ink">ถนน (Road)</label>
+                <label className="text-[11px] font-semibold text-clinic-ink">ถนน (Road / Street)</label>
                 <input
                   type="text"
-                  placeholder="เช่น ถนนเวียงใต้"
+                  placeholder="เช่น ถนนเวียงใต้ / Walking Street"
                   value={road}
                   onChange={(e) => setRoad(e.target.value)}
                   className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
@@ -733,7 +746,9 @@ export default function NewPatientPage() {
               </div>
 
               <div className="md:col-span-3 space-y-1">
-                <label className="text-[11px] font-semibold text-clinic-ink">ตำบล / แขวง (Sub-district)</label>
+                <label className="text-[11px] font-semibold text-clinic-ink">
+                  ตำบล / แขวง (Sub-district) {idType === "PASSPORT" && <span className="text-clinic-ink-soft font-normal">(ไม่บังคับ)</span>}
+                </label>
                 <input
                   type="text"
                   placeholder="เช่น เวียงใต้"
@@ -744,10 +759,13 @@ export default function NewPatientPage() {
               </div>
 
               <div className="md:col-span-3 space-y-1">
-                <label className="text-[11px] font-semibold text-clinic-ink">อำเภอ / เขต (District)</label>
+                <label className="text-[11px] font-semibold text-clinic-ink">
+                  {idType === "THAI_ID" ? "อำเภอ / เขต (District) *" : "อำเภอ / เมือง (District / City) *"}
+                </label>
                 <input
                   type="text"
-                  placeholder="เช่น ปาย"
+                  required
+                  placeholder="เช่น ปาย / Pai"
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
                   className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
@@ -912,23 +930,6 @@ export default function NewPatientPage() {
                     value={spouseName}
                     onChange={(e) => setSpouseName(e.target.value)}
                     className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
-                  />
-                </div>
-
-                {/* Thai Astrological Birth Date */}
-                <div className="md:col-span-12 space-y-1.5 pt-2 border-t border-clinic-line">
-                  <label className="text-xs font-semibold text-clinic-ink flex items-center justify-between">
-                    <span>วันเดือนปีเกิดทางจันทรคติ / ฤกษ์กำเนิดแผนไทย (Thai Calendar Birth Date)</span>
-                    <span className="text-[10px] text-clinic-ink-soft">
-                      * แพทย์คำนวณและกรอกเพิ่มเติมภายหลังได้
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น 7ฯ 13 ค่ำ เดือน 11 ปีระกา"
-                    value={thaiCalendarBirthDate}
-                    onChange={(e) => setThaiCalendarBirthDate(e.target.value)}
-                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary font-serif"
                   />
                 </div>
               </div>

@@ -44,9 +44,6 @@ public class PatientRequestDTO {
     private Date dateOfBirth;
 
     @Size(max = 100)
-    private String dateOfBirthThai;
-
-    @Size(max = 100)
     private String thaiCalendarBirthDate;
 
     @Size(max = 255)

@@ -759,7 +759,11 @@ export function RecordTreatmentFormClient({
               </div>
               <div>
                 <span className="text-clinic-ink-soft">วันเกิด:</span>{" "}
-                <span className="text-clinic-ink">{currentPatient.dateOfBirthThai || currentPatient.dateOfBirth || "-"}</span>
+                <span className="text-clinic-ink">
+                  {currentPatient.dateOfBirth
+                    ? new Date(currentPatient.dateOfBirth).toLocaleDateString("th-TH")
+                    : "-"}
+                </span>
               </div>
               <div>
                 <span className="text-clinic-ink-soft">สถานภาพ:</span>{" "}

@@ -187,7 +187,7 @@ export default async function PatientDetailPage({
               <span>•</span>
               <span>อายุ: <strong>{age !== null ? `${age} ปี` : "-"}</strong></span>
               <span>•</span>
-              <span>เกิด: <strong>{patient.dateOfBirthThai || patient.dateOfBirth}</strong></span>
+              <span>เกิด: <strong>{patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString("th-TH") : "-"}</strong></span>
               <span>•</span>
               <span>สัญชาติ: <strong>{patient.citizenship || "ไทย"}</strong></span>
             </p>
@@ -250,6 +250,10 @@ export default async function PatientDetailPage({
               <dt className="text-xs font-semibold text-clinic-ink-soft">สิทธิการรักษา</dt>
               <dd className="font-medium text-clinic-terracotta mt-0.5">{rightsBadge.label}</dd>
             </div>
+            <div className="sm:col-span-2 pt-1">
+              <dt className="text-xs font-semibold text-clinic-ink-soft">วันเดือนปีเกิดทางจันทรคติ (Lunar Birth Date)</dt>
+              <dd className="font-mono font-bold text-clinic-primary-deep mt-0.5">{patient.thaiCalendarBirthDate || "-"}</dd>
+            </div>
           </dl>
         </div>
 
@@ -302,8 +306,8 @@ export default async function PatientDetailPage({
                     patient.moo ? `หมู่ ${patient.moo}` : "",
                     patient.soi ? `ซอย ${patient.soi}` : "",
                     patient.road ? `ถนน ${patient.road}` : "",
-                    patient.subDistrict ? `ต./แขวง ${patient.subDistrict}` : "",
-                    patient.district ? `อ./เขต ${patient.district}` : "",
+                    patient.subDistrict ? `ต. ${patient.subDistrict}` : "",
+                    patient.district ? `อ. ${patient.district}` : "",
                     patient.province ? `จ. ${patient.province}` : "",
                     patient.zipCode,
                   ]
