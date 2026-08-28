@@ -1,11 +1,14 @@
 package com.clinic.clinicmanagementsystem.dto;
 
+import com.clinic.clinicmanagementsystem.enums.BloodGroupAbo;
+import com.clinic.clinicmanagementsystem.enums.BloodGroupRh;
+import com.clinic.clinicmanagementsystem.enums.Gender;
+import com.clinic.clinicmanagementsystem.enums.HouseholdStatus;
+import com.clinic.clinicmanagementsystem.enums.IdType;
+import com.clinic.clinicmanagementsystem.enums.MaritalStatus;
+import com.clinic.clinicmanagementsystem.enums.TreatmentRights;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,50 +27,96 @@ public class PatientRequestDTO {
     @Size(max = 255)
     private String fullname;
 
-    @NotBlank(message = "Gender is required")
-    @Size(max = 10)
-    private String gender;
+    @NotNull(message = "ID type is required")
+    private IdType idType;
 
-    @NotBlank(message = "ID number is required")
-    @Size(min = 13, max = 13, message = "ID number must be 13 digits")
-    private String idNumber;
+    @Size(max = 13)
+    private String nationalId;
+
+    @Size(max = 15)
+    private String passportNo;
+
+    @NotNull(message = "Gender is required")
+    private Gender gender;
 
     @NotNull(message = "Date of birth is required")
     @Past(message = "Date of birth must be in the past")
     private Date dateOfBirth;
 
-    @NotBlank
+    @Size(max = 100)
     private String dateOfBirthThai;
 
-    @NotBlank
+    @Size(max = 100)
+    private String thaiCalendarBirthDate;
+
     @Size(max = 255)
     private String occupation;
 
-    @NotBlank
-    @Size(max = 50)
-    private String marital;
+    private MaritalStatus maritalStatus;
 
-    @NotBlank
     @Size(max = 100)
-    private String nationality;
+    private String citizenship;
 
-    @NotBlank
     @Size(max = 100)
-    private String ethnic;
+    private String ethnicity;
 
-    @NotBlank
     @Size(max = 100)
     private String religion;
 
-    @NotBlank
-    @Size(max = 5)
-    private String bloodGroup;
+    private BloodGroupAbo bloodGroupAbo;
 
-    @NotBlank
+    private BloodGroupRh bloodGroupRh;
+
+    private TreatmentRights treatmentRights;
+
+    // Structured Address
+    @Size(max = 50)
+    private String houseNo;
+
+    @Size(max = 50)
+    private String moo;
+
+    @Size(max = 100)
+    private String soi;
+
+    @Size(max = 100)
+    private String road;
+
+    @Size(max = 100)
+    private String subDistrict;
+
+    @Size(max = 100)
+    private String district;
+
+    @Size(max = 100)
+    private String province;
+
+    @Size(max = 20)
+    private String zipCode;
+
+    // Thai-Specific Master Data (Nullable)
     @Size(max = 255)
-    private String address;
+    private String birthPlace;
 
-    @NotBlank
+    @Size(max = 255)
+    private String originalDomicile;
+
+    @Size(max = 255)
+    private String fatherName;
+
+    @Size(max = 255)
+    private String motherName;
+
+    @Size(max = 255)
+    private String spouseName;
+
+    private HouseholdStatus householdStatus;
+
+    @Size(max = 100)
+    private String education;
+
+    // Contact
+    @NotBlank(message = "Mobile number is required")
     @Size(max = 20)
     private String mobileNumber;
 
@@ -86,4 +135,15 @@ public class PatientRequestDTO {
     /** Optional: submit health profile as part of patient intake */
     @Valid
     private HealthProfileRequestDTO healthProfile;
+
+    @AssertTrue(message = "ID number configuration is invalid: exactly one of nationalId (13 digits) or passportNo (up to 15 characters) must match idType")
+    public boolean isValidId() {
+        if (idType == null) return false;
+        if (idType == IdType.THAI_ID) {
+            return nationalId != null && nationalId.trim().length() == 13 && (passportNo == null || passportNo.trim().isEmpty());
+        } else if (idType == IdType.PASSPORT) {
+            return passportNo != null && !passportNo.trim().isEmpty() && passportNo.trim().length() <= 15 && (nationalId == null || nationalId.trim().isEmpty());
+        }
+        return false;
+    }
 }

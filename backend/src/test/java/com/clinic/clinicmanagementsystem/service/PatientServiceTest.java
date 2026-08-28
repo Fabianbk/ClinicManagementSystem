@@ -3,7 +3,12 @@ package com.clinic.clinicmanagementsystem.service;
 import com.clinic.clinicmanagementsystem.dto.PatientRequestDTO;
 import com.clinic.clinicmanagementsystem.dto.PatientResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.Patient;
-import com.clinic.clinicmanagementsystem.entity.PatientAccount;
+import com.clinic.clinicmanagementsystem.enums.BloodGroupAbo;
+import com.clinic.clinicmanagementsystem.enums.BloodGroupRh;
+import com.clinic.clinicmanagementsystem.enums.Gender;
+import com.clinic.clinicmanagementsystem.enums.IdType;
+import com.clinic.clinicmanagementsystem.enums.MaritalStatus;
+import com.clinic.clinicmanagementsystem.enums.TreatmentRights;
 import com.clinic.clinicmanagementsystem.exception.DuplicateResourceException;
 import com.clinic.clinicmanagementsystem.mapper.ContactPersonMapper;
 import com.clinic.clinicmanagementsystem.mapper.HealthProfileMapper;
@@ -73,17 +78,22 @@ class PatientServiceTest {
 
         requestDTO = PatientRequestDTO.builder()
                 .fullname("Somchai Jaidee")
-                .gender("Male")
-                .idNumber("1234567890123")
+                .idType(IdType.THAI_ID)
+                .nationalId("1234567890123")
+                .gender(Gender.MALE)
                 .dateOfBirth(birthDate)
                 .dateOfBirthThai("15/08/2538")
                 .occupation("Engineer")
-                .marital("Single")
-                .nationality("Thai")
-                .ethnic("Thai")
+                .maritalStatus(MaritalStatus.SINGLE)
+                .citizenship("Thai")
+                .ethnicity("Thai")
                 .religion("Buddhism")
-                .bloodGroup("O+")
-                .address("123 Sukhumvit Road")
+                .bloodGroupAbo(BloodGroupAbo.O)
+                .bloodGroupRh(BloodGroupRh.POSITIVE)
+                .treatmentRights(TreatmentRights.PAY_DIRECT)
+                .houseNo("123")
+                .road("Sukhumvit Road")
+                .province("Bangkok")
                 .mobileNumber("0812345678")
                 .email("somchai@example.com")
                 .build();
@@ -91,14 +101,16 @@ class PatientServiceTest {
         patientEntity = new Patient();
         patientEntity.setPatientId(101);
         patientEntity.setFullname("Somchai Jaidee");
-        patientEntity.setIdNumber("1234567890123");
+        patientEntity.setIdType(IdType.THAI_ID);
+        patientEntity.setNationalId("1234567890123");
+        patientEntity.setGender(Gender.MALE);
         patientEntity.setDateOfBirth(birthDate);
         patientEntity.setMobileNumber("0812345678");
     }
 
     @Test
     void create_shouldAutoCreatePatientAccountWithMobileAndFormattedBirthday() {
-        when(patientRepository.existsByIdNumber("1234567890123")).thenReturn(false);
+        when(patientRepository.existsByNationalId("1234567890123")).thenReturn(false);
         when(patientAccountRepository.existsById("0812345678")).thenReturn(false);
         when(patientMapper.toEntity(requestDTO)).thenReturn(patientEntity);
         when(patientRepository.save(patientEntity)).thenReturn(patientEntity);
@@ -124,8 +136,8 @@ class PatientServiceTest {
     }
 
     @Test
-    void create_shouldThrowWhenIdNumberExists() {
-        when(patientRepository.existsByIdNumber("1234567890123")).thenReturn(true);
+    void create_shouldThrowWhenNationalIdExists() {
+        when(patientRepository.existsByNationalId("1234567890123")).thenReturn(true);
 
         assertThatThrownBy(() -> patientService.create(requestDTO))
                 .isInstanceOf(DuplicateResourceException.class)
@@ -137,7 +149,7 @@ class PatientServiceTest {
 
     @Test
     void create_shouldThrowWhenMobileNumberExistsInPatientAccount() {
-        when(patientRepository.existsByIdNumber("1234567890123")).thenReturn(false);
+        when(patientRepository.existsByNationalId("1234567890123")).thenReturn(false);
         when(patientAccountRepository.existsById("0812345678")).thenReturn(true);
 
         assertThatThrownBy(() -> patientService.create(requestDTO))
@@ -160,7 +172,7 @@ class PatientServiceTest {
         PatientResponseDTO result = patientService.getById(101);
 
         assertThat(result).isNotNull();
-        assertThat(result.getPatientId()).isEqualTo(101);
+        assertThat(result.getFullname()).isEqualTo("Somchai Jaidee");
         verify(currentUser).requireSelfOrDoctor(101);
     }
 }

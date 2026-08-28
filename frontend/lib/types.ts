@@ -109,21 +109,67 @@ export interface HealthProfileResponseDTO extends Required<HealthProfileRequestD
   healthId: number;
 }
 
+export type IdType = "THAI_ID" | "PASSPORT";
+export type Gender = "MALE" | "FEMALE";
+export type MaritalStatus =
+  | "SINGLE"
+  | "IN_RELATIONSHIP"
+  | "MARRIED"
+  | "WIDOWED"
+  | "SEPARATED"
+  | "DIVORCED"
+  | "MONK";
+export type BloodGroupAbo = "A" | "B" | "AB" | "O" | "UNKNOWN";
+export type BloodGroupRh = "POSITIVE" | "NEGATIVE" | "UNKNOWN";
+export type HouseholdStatus = "HEAD_OF_HOUSEHOLD" | "RESIDENT";
+export type TreatmentRights =
+  | "PAY_DIRECT"
+  | "ELDERLY"
+  | "MONK"
+  | "DISABLED"
+  | "OTHER";
+
 export interface PatientRequestDTO {
   fullname: string;
-  gender: string;
-  idNumber: string;
+  idType: IdType;
+  nationalId?: string;
+  passportNo?: string;
+  gender: Gender;
   dateOfBirth: string; // ISO date string over the wire
-  dateOfBirthThai: string;
-  occupation: string;
-  marital: string;
-  nationality: string;
-  ethnic: string;
-  religion: string;
-  bloodGroup: string;
-  address: string;
+  dateOfBirthThai?: string;
+  thaiCalendarBirthDate?: string;
+  occupation?: string;
+  maritalStatus?: MaritalStatus;
+  citizenship?: string;
+  ethnicity?: string;
+  religion?: string;
+  bloodGroupAbo?: BloodGroupAbo;
+  bloodGroupRh?: BloodGroupRh;
+  treatmentRights?: TreatmentRights;
+
+  // Structured Address
+  houseNo?: string;
+  moo?: string;
+  soi?: string;
+  road?: string;
+  subDistrict?: string;
+  district?: string;
+  province?: string;
+  zipCode?: string;
+
+  // Thai-Specific Master Data
+  birthPlace?: string;
+  originalDomicile?: string;
+  fatherName?: string;
+  motherName?: string;
+  spouseName?: string;
+  householdStatus?: HouseholdStatus;
+  education?: string;
+
+  // Contact
   mobileNumber: string;
   email?: string;
+
   contactPersons?: ContactPersonRequestDTO[];
   principle?: PrincipleRequestDTO;
   healthProfile?: HealthProfileRequestDTO;
@@ -132,19 +178,54 @@ export interface PatientRequestDTO {
 export interface PatientResponseDTO {
   patientId: number;
   fullname: string;
-  gender: string;
-  idNumber: string;
+  idType: IdType;
+  nationalId?: string | null;
+  passportNo?: string | null;
+  idNumber: string; // Unified display ID
+
+  gender: Gender;
   dateOfBirth: string;
-  dateOfBirthThai: string;
-  occupation: string;
-  marital: string;
-  nationality: string;
-  ethnic: string;
-  religion: string;
-  bloodGroup: string;
-  address: string;
+  dateOfBirthThai?: string | null;
+  thaiCalendarBirthDate?: string | null;
+  occupation?: string | null;
+  maritalStatus?: MaritalStatus | null;
+  marital?: string | null; // Backward compatibility alias
+  citizenship?: string | null;
+  nationality?: string | null; // Backward compatibility alias
+  ethnicity?: string | null;
+  ethnic?: string | null; // Backward compatibility alias
+  religion?: string | null;
+
+  bloodGroupAbo?: BloodGroupAbo | null;
+  bloodGroupRh?: BloodGroupRh | null;
+  bloodGroup?: string | null; // Unified e.g. "O+" or "A-"
+
+  treatmentRights?: TreatmentRights | null;
+
+  // Structured Address
+  houseNo?: string | null;
+  moo?: string | null;
+  soi?: string | null;
+  road?: string | null;
+  subDistrict?: string | null;
+  district?: string | null;
+  province?: string | null;
+  zipCode?: string | null;
+  address?: string | null; // Full address string
+
+  // Thai-Specific Master Data
+  birthPlace?: string | null;
+  originalDomicile?: string | null;
+  fatherName?: string | null;
+  motherName?: string | null;
+  spouseName?: string | null;
+  householdStatus?: HouseholdStatus | null;
+  education?: string | null;
+
+  // Contact
   mobileNumber: string;
   email: string | null;
+
   contactPersons: ContactPersonResponseDTO[] | null;
   principle: PrincipleResponseDTO | null;
   healthProfile: HealthProfileResponseDTO | null;

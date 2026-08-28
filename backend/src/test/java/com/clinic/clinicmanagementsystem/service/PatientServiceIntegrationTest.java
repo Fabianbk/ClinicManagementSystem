@@ -3,6 +3,12 @@ package com.clinic.clinicmanagementsystem.service;
 import com.clinic.clinicmanagementsystem.dto.PatientRequestDTO;
 import com.clinic.clinicmanagementsystem.dto.PatientResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.PatientAccount;
+import com.clinic.clinicmanagementsystem.enums.BloodGroupAbo;
+import com.clinic.clinicmanagementsystem.enums.BloodGroupRh;
+import com.clinic.clinicmanagementsystem.enums.Gender;
+import com.clinic.clinicmanagementsystem.enums.IdType;
+import com.clinic.clinicmanagementsystem.enums.MaritalStatus;
+import com.clinic.clinicmanagementsystem.enums.TreatmentRights;
 import com.clinic.clinicmanagementsystem.repository.PatientAccountRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
 import org.junit.jupiter.api.Test;
@@ -41,17 +47,22 @@ class PatientServiceIntegrationTest {
 
         PatientRequestDTO dto = PatientRequestDTO.builder()
                 .fullname("Test Auto Account")
-                .gender("Female")
-                .idNumber(testIdNumber)
+                .idType(IdType.THAI_ID)
+                .nationalId(testIdNumber)
+                .gender(Gender.FEMALE)
                 .dateOfBirth(testDob)
                 .dateOfBirthThai("20/05/2541")
                 .occupation("Developer")
-                .marital("Single")
-                .nationality("Thai")
-                .ethnic("Thai")
+                .maritalStatus(MaritalStatus.SINGLE)
+                .citizenship("Thai")
+                .ethnicity("Thai")
                 .religion("Buddhism")
-                .bloodGroup("B+")
-                .address("456 Test Street")
+                .bloodGroupAbo(BloodGroupAbo.B)
+                .bloodGroupRh(BloodGroupRh.POSITIVE)
+                .treatmentRights(TreatmentRights.PAY_DIRECT)
+                .houseNo("456")
+                .road("Test Street")
+                .province("Bangkok")
                 .mobileNumber(testMobile)
                 .email("testauto@example.com")
                 .build();

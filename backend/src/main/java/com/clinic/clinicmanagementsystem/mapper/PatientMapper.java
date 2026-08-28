@@ -3,6 +3,8 @@ package com.clinic.clinicmanagementsystem.mapper;
 import com.clinic.clinicmanagementsystem.dto.PatientRequestDTO;
 import com.clinic.clinicmanagementsystem.dto.PatientResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.Patient;
+import com.clinic.clinicmanagementsystem.enums.BloodGroupAbo;
+import com.clinic.clinicmanagementsystem.enums.BloodGroupRh;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -22,6 +24,9 @@ public interface PatientMapper {
     @Mapping(target = "appointments", ignore = true)
     Patient toEntity(PatientRequestDTO dto);
 
+    @Mapping(target = "idNumber", expression = "java(entity.getIdNumber())")
+    @Mapping(target = "address", expression = "java(entity.getFullAddress())")
+    @Mapping(target = "bloodGroup", expression = "java(formatBloodGroup(entity.getBloodGroupAbo(), entity.getBloodGroupRh()))")
     PatientResponseDTO toResponseDTO(Patient entity);
 
     /**
@@ -37,4 +42,10 @@ public interface PatientMapper {
     @Mapping(target = "principle", ignore = true)
     @Mapping(target = "healthProfile", ignore = true)
     void updateBasicInfo(PatientRequestDTO dto, @MappingTarget Patient entity);
+
+    default String formatBloodGroup(BloodGroupAbo abo, BloodGroupRh rh) {
+        if (abo == null || abo == BloodGroupAbo.UNKNOWN) return "UNKNOWN";
+        if (rh == null || rh == BloodGroupRh.UNKNOWN) return abo.name();
+        return abo.name() + (rh == BloodGroupRh.POSITIVE ? "+" : "-");
+    }
 }

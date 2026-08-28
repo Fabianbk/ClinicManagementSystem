@@ -56,7 +56,7 @@ export default async function PatientProfilePage() {
             </div>
             <div className="py-2.5 flex justify-between">
               <dt className="text-clinic-ink-soft">เพศ</dt>
-              <dd className="font-semibold text-clinic-ink">{patient.gender}</dd>
+              <dd className="font-semibold text-clinic-ink">{patient.gender === "MALE" ? "ชาย" : "หญิง"}</dd>
             </div>
             <div className="py-2.5 flex justify-between">
               <dt className="text-clinic-ink-soft">วันเกิด (ไทย)</dt>
@@ -72,12 +72,28 @@ export default async function PatientProfilePage() {
             </div>
             <div className="py-2.5 flex justify-between">
               <dt className="text-clinic-ink-soft">สถานภาพ</dt>
-              <dd className="font-semibold text-clinic-ink">{patient.marital || "-"}</dd>
+              <dd className="font-semibold text-clinic-ink">
+                {patient.maritalStatus === "SINGLE"
+                  ? "โสด"
+                  : patient.maritalStatus === "IN_RELATIONSHIP"
+                  ? "มีคู่ / อยู่ด้วยกัน"
+                  : patient.maritalStatus === "MARRIED"
+                  ? "สมรส"
+                  : patient.maritalStatus === "WIDOWED"
+                  ? "หม้าย"
+                  : patient.maritalStatus === "SEPARATED"
+                  ? "แยกกันอยู่"
+                  : patient.maritalStatus === "DIVORCED"
+                  ? "หย่า"
+                  : patient.maritalStatus === "MONK"
+                  ? "สมณะ / นักบวช"
+                  : "-"}
+              </dd>
             </div>
             <div className="py-2.5 flex justify-between">
               <dt className="text-clinic-ink-soft">สัญชาติ / เชื้อชาติ</dt>
               <dd className="font-semibold text-clinic-ink">
-                {patient.nationality || "-"} / {patient.ethnic || "-"}
+                {patient.citizenship || "ไทย"} / {patient.ethnicity || "ไทย"}
               </dd>
             </div>
             <div className="py-2.5 flex justify-between">

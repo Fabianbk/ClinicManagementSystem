@@ -3,11 +3,95 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { ContactPersonRequestDTO, PatientResponseDTO } from "@/lib/types";
+import type {
+  ContactPersonRequestDTO,
+  Gender,
+  IdType,
+  MaritalStatus,
+  BloodGroupAbo,
+  BloodGroupRh,
+  HouseholdStatus,
+  TreatmentRights,
+  PatientRequestDTO,
+  PatientResponseDTO,
+} from "@/lib/types";
+// Local UI helpers
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`bg-white rounded-card border border-clinic-line ${className}`}>{children}</div>;
+}
+function CardHeader({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`p-4 sm:p-5 ${className}`}>{children}</div>;
+}
+function CardTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <h2 className={className}>{children}</h2>;
+}
+function CardContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`p-4 sm:p-6 ${className}`}>{children}</div>;
+}
+function Button({
+  children,
+  type = "button",
+  variant = "default",
+  size = "md",
+  disabled,
+  onClick,
+  className = "",
+  asChild,
+}: {
+  children: React.ReactNode;
+  type?: "button" | "submit" | "reset";
+  variant?: "default" | "outline" | "terracotta";
+  size?: "sm" | "md" | "lg";
+  disabled?: boolean;
+  onClick?: () => void;
+  className?: string;
+  asChild?: boolean;
+}) {
+  const variantStyles =
+    variant === "terracotta"
+      ? "bg-clinic-terracotta text-white hover:bg-clinic-terracotta-deep"
+      : variant === "outline"
+      ? "bg-white border border-clinic-line text-clinic-ink hover:bg-clinic-bg"
+      : "bg-clinic-primary text-white hover:bg-clinic-primary-deep";
+  const sizeStyles = size === "sm" ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm";
+
+  if (asChild) {
+    return <span className={`inline-flex items-center justify-center rounded-control font-semibold transition-all ${variantStyles} ${sizeStyles} ${className}`}>{children}</span>;
+  }
+
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={`inline-flex items-center justify-center rounded-control font-semibold transition-all disabled:opacity-50 ${variantStyles} ${sizeStyles} ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+import {
+  User,
+  CreditCard,
+  HeartPulse,
+  MapPin,
+  Users,
+  Phone,
+  ArrowLeft,
+  Globe,
+  Sparkles,
+} from "lucide-react";
 
 const PROVINCES = [
-  "กรุงเทพมหานคร",
+  "แม่ฮ่องสอน",
   "เชียงใหม่",
+  "เชียงราย",
+  "ลำพูน",
+  "ลำปาง",
+  "พะเยา",
+  "แพร่",
+  "น่าน",
+  "กรุงเทพมหานคร",
   "นนทบุรี",
   "ปทุมธานี",
   "สมุทรปราการ",
@@ -31,31 +115,53 @@ export default function EditPatientPage({
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Section 1: Basic Information
+  // Patient Intake Mode
+  const [idType, setIdType] = useState<IdType>("THAI_ID");
+
+  // Section 1: Identification & Basic Details
   const [fullname, setFullname] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [idNumber, setIdNumber] = useState("");
+  const [nationalId, setNationalId] = useState("");
+  const [passportNo, setPassportNo] = useState("");
+  const [gender, setGender] = useState<Gender>("MALE");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [occupation, setOccupation] = useState("");
+  const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>("SINGLE");
 
-  // Section 2: Status & History
-  const [marital, setMarital] = useState("Single");
-  const [nationality, setNationality] = useState("Thai");
-  const [ethnic, setEthnic] = useState("Thai");
-  const [religion, setReligion] = useState("Buddhism");
+  // Section 2: Nationality, Ethnicity & Religion
+  const [citizenship, setCitizenship] = useState("ไทย");
+  const [ethnicity, setEthnicity] = useState("ไทย");
+  const [religion, setReligion] = useState("พุทธ");
 
-  // Section 3: Health Information
-  const [bloodType, setBloodType] = useState("A");
-  const [rhFactor, setRhFactor] = useState("Rh+");
+  // Section 3: Health Rights & Blood Group
+  const [bloodGroupAbo, setBloodGroupAbo] = useState<BloodGroupAbo>("UNKNOWN");
+  const [bloodGroupRh, setBloodGroupRh] = useState<BloodGroupRh>("UNKNOWN");
+  const [treatmentRights, setTreatmentRights] = useState<TreatmentRights>("PAY_DIRECT");
   const [allergyOption, setAllergyOption] = useState<"Unknown" | "No" | "Yes">("No");
   const [drugAllergyDetail, setDrugAllergyDetail] = useState("");
 
-  // Section 4: Contact Address
-  const [fullAddress, setFullAddress] = useState("");
+  // Section 4: Structured Address
+  const [houseNo, setHouseNo] = useState("");
+  const [moo, setMoo] = useState("");
+  const [soi, setSoi] = useState("");
+  const [road, setRoad] = useState("");
+  const [subDistrict, setSubDistrict] = useState("");
+  const [district, setDistrict] = useState("");
+  const [province, setProvince] = useState("แม่ฮ่องสอน");
+  const [zipCode, setZipCode] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");
 
-  // Section 5: Emergency Contacts
+  // Section 5: Thai-Specific Master Data
+  const [originalDomicile, setOriginalDomicile] = useState("");
+  const [birthPlace, setBirthPlace] = useState("");
+  const [education, setEducation] = useState("");
+  const [householdStatus, setHouseholdStatus] = useState<HouseholdStatus | "">("");
+  const [fatherName, setFatherName] = useState("");
+  const [motherName, setMotherName] = useState("");
+  const [spouseName, setSpouseName] = useState("");
+  const [thaiCalendarBirthDate, setThaiCalendarBirthDate] = useState("");
+
+  // Section 6: Emergency Contacts
   const [emergencyContacts, setEmergencyContacts] = useState<ContactPersonRequestDTO[]>([]);
 
   // Fetch patient data on mount
@@ -71,8 +177,10 @@ export default function EditPatientPage({
         const data: PatientResponseDTO = await res.json();
 
         setFullname(data.fullname || "");
-        setGender(data.gender || "Male");
-        setIdNumber(data.idNumber || "");
+        setIdType(data.idType || "THAI_ID");
+        setNationalId(data.nationalId || "");
+        setPassportNo(data.passportNo || "");
+        setGender(data.gender || "MALE");
 
         if (data.dateOfBirth) {
           const dobDate = new Date(data.dateOfBirth);
@@ -82,42 +190,54 @@ export default function EditPatientPage({
         }
 
         setOccupation(data.occupation || "");
-        setMarital(data.marital || "Single");
-        setNationality(data.nationality || "Thai");
-        setEthnic(data.ethnic || "Thai");
-        setReligion(data.religion || "Buddhism");
+        setMaritalStatus(data.maritalStatus || "SINGLE");
+        setCitizenship(data.citizenship || (data.idType === "THAI_ID" ? "ไทย" : ""));
+        setEthnicity(data.ethnicity || (data.idType === "THAI_ID" ? "ไทย" : ""));
+        setReligion(data.religion || "พุทธ");
 
-        // Parse blood group
-        if (data.bloodGroup) {
-          const bg = data.bloodGroup.trim();
-          if (bg.includes("-")) {
-            setRhFactor("Rh-");
-            setBloodType(bg.replace("-", "").trim());
-          } else {
-            setRhFactor("Rh+");
-            setBloodType(bg.replace("+", "").trim());
-          }
-        }
+        setBloodGroupAbo(data.bloodGroupAbo || "UNKNOWN");
+        setBloodGroupRh(data.bloodGroupRh || "UNKNOWN");
+        setTreatmentRights(data.treatmentRights || "PAY_DIRECT");
 
-        // Parse drug allergy
-        const allergyStr = data.healthProfile?.drugAllergy || "";
-        if (allergyStr.includes("ไม่ทราบ")) {
-          setAllergyOption("Unknown");
-        } else if (allergyStr.includes("ไม่มี") || allergyStr === "") {
-          setAllergyOption("No");
-        } else {
-          setAllergyOption("Yes");
-          setDrugAllergyDetail(allergyStr);
-        }
+        // Structured address
+        setHouseNo(data.houseNo || "");
+        setMoo(data.moo || "");
+        setSoi(data.soi || "");
+        setRoad(data.road || "");
+        setSubDistrict(data.subDistrict || "");
+        setDistrict(data.district || "");
+        setProvince(data.province || "แม่ฮ่องสอน");
+        setZipCode(data.zipCode || "");
 
-        setFullAddress(data.address || "");
+        // Thai-specific
+        setOriginalDomicile(data.originalDomicile || "");
+        setBirthPlace(data.birthPlace || "");
+        setEducation(data.education || "");
+        setHouseholdStatus(data.householdStatus || "");
+        setFatherName(data.fatherName || "");
+        setMotherName(data.motherName || "");
+        setSpouseName(data.spouseName || "");
+        setThaiCalendarBirthDate(data.thaiCalendarBirthDate || "");
+
         setMobileNumber(data.mobileNumber || "");
         setEmail(data.email || "");
+
+        if (data.healthProfile?.drugAllergy) {
+          const allergy = data.healthProfile.drugAllergy;
+          if (allergy === "ไม่มีประวัติแพ้ยา" || allergy === "No" || allergy === "ไม่มี") {
+            setAllergyOption("No");
+          } else if (allergy === "ไม่ทราบประวัติแพ้ยา" || allergy === "Unknown" || allergy === "ไม่ทราบ") {
+            setAllergyOption("Unknown");
+          } else {
+            setAllergyOption("Yes");
+            setDrugAllergyDetail(allergy);
+          }
+        }
 
         if (data.contactPersons && data.contactPersons.length > 0) {
           setEmergencyContacts(
             data.contactPersons.map((c) => ({
-              contactName: c.contactName,
+              contactName: c.contactName || "",
               relationship: c.relationship || "",
               contactAddress: c.contactAddress || "",
               mobileNumber: c.mobileNumber || "",
@@ -128,24 +248,15 @@ export default function EditPatientPage({
             { contactName: "", relationship: "", contactAddress: "", mobileNumber: "" },
           ]);
         }
-
-        setIsLoading(false);
       } catch {
-        setErrorMessage("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        setErrorMessage("เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ป่วย");
+      } finally {
         setIsLoading(false);
       }
     }
 
     loadPatient();
   }, [patientId]);
-
-  // Age calculation
-  const calculatedAge = dateOfBirth
-    ? Math.floor(
-        (new Date().getTime() - new Date(dateOfBirth).getTime()) /
-          (365.25 * 24 * 60 * 60 * 1000)
-      )
-    : "";
 
   const addEmergencyContact = () => {
     setEmergencyContacts((prev) => [
@@ -168,40 +279,76 @@ export default function EditPatientPage({
     );
   };
 
-  // Submit Handler
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!idNumber || idNumber.length !== 13) {
-      setErrorMessage("เลขบัตรประชาชน/พาสปอร์ต ต้องมี 13 หลัก");
+    // Validate ID based on Discriminator
+    if (idType === "THAI_ID") {
+      if (!nationalId || nationalId.trim().length !== 13) {
+        setErrorMessage("เลขประจำตัวประชาชนต้องมี 13 หลักพอดี");
+        return;
+      }
+    } else {
+      if (!passportNo || passportNo.trim().length === 0 || passportNo.trim().length > 15) {
+        setErrorMessage("กรุณาระบุเลขหนังสือเดินทาง (Passport No.) ความยาวไม่เกิน 15 ตัวอักษร");
+        return;
+      }
+    }
+
+    if (!dateOfBirth) {
+      setErrorMessage("กรุณาระบุวันเดือนปีเกิด");
       return;
     }
 
-    // Format Date of Birth Thai
-    const dobObj = dateOfBirth ? new Date(dateOfBirth) : new Date();
+    const dobObj = new Date(dateOfBirth);
     const dobThaiStr = `${dobObj.getDate()}/${dobObj.getMonth() + 1}/${dobObj.getFullYear() + 543}`;
 
-    // Format Drug Allergy
     let drugAllergyStr = "ไม่มีประวัติแพ้ยา";
     if (allergyOption === "Unknown") drugAllergyStr = "ไม่ทราบประวัติแพ้ยา";
     else if (allergyOption === "Yes") drugAllergyStr = drugAllergyDetail || "มีประวัติแพ้ยา";
 
-    const payload = {
-      fullname,
+    const payload: PatientRequestDTO = {
+      fullname: fullname.trim(),
+      idType,
+      nationalId: idType === "THAI_ID" ? nationalId.trim() : undefined,
+      passportNo: idType === "PASSPORT" ? passportNo.trim() : undefined,
       gender,
-      idNumber,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : new Date().toISOString(),
+      dateOfBirth: new Date(dateOfBirth).toISOString(),
       dateOfBirthThai: dobThaiStr,
-      occupation: occupation || "ค้าขาย/รับจ้าง",
-      marital,
-      nationality,
-      ethnic,
-      religion,
-      bloodGroup: `${bloodType}${rhFactor === "Rh+" ? "+" : "-"}`,
-      address: fullAddress,
-      mobileNumber,
-      email: email || undefined,
+      thaiCalendarBirthDate: thaiCalendarBirthDate.trim() || undefined,
+      occupation: occupation.trim() || undefined,
+      maritalStatus,
+      citizenship: citizenship.trim() || (idType === "THAI_ID" ? "ไทย" : undefined),
+      ethnicity: ethnicity.trim() || (idType === "THAI_ID" ? "ไทย" : undefined),
+      religion: religion.trim() || undefined,
+      bloodGroupAbo,
+      bloodGroupRh,
+      treatmentRights,
+
+      // Structured Address
+      houseNo: houseNo.trim() || undefined,
+      moo: moo.trim() || undefined,
+      soi: soi.trim() || undefined,
+      road: road.trim() || undefined,
+      subDistrict: subDistrict.trim() || undefined,
+      district: district.trim() || undefined,
+      province: province.trim() || undefined,
+      zipCode: zipCode.trim() || undefined,
+
+      // Thai-Specific
+      birthPlace: idType === "THAI_ID" ? birthPlace.trim() || undefined : undefined,
+      originalDomicile: idType === "THAI_ID" ? originalDomicile.trim() || undefined : undefined,
+      fatherName: idType === "THAI_ID" ? fatherName.trim() || undefined : undefined,
+      motherName: idType === "THAI_ID" ? motherName.trim() || undefined : undefined,
+      spouseName: idType === "THAI_ID" ? spouseName.trim() || undefined : undefined,
+      householdStatus: idType === "THAI_ID" && householdStatus ? householdStatus : undefined,
+      education: idType === "THAI_ID" ? education.trim() || undefined : undefined,
+
+      // Contact
+      mobileNumber: mobileNumber.trim(),
+      email: email.trim() || undefined,
+
       contactPersons: emergencyContacts.filter((c) => c.contactName.trim() !== ""),
       healthProfile: {
         drugAllergy: drugAllergyStr,
@@ -217,9 +364,10 @@ export default function EditPatientPage({
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => null);
-        const detailMsg = errBody?.errors && errBody.errors.length > 0
-          ? errBody.errors.join(", ")
-          : errBody?.message || "ไม่สามารถบันทึกแก้ไขข้อมูลผู้ป่วยได้";
+        const detailMsg =
+          errBody?.errors && errBody.errors.length > 0
+            ? errBody.errors.join(", ")
+            : errBody?.message || "ไม่สามารถอัปเดตข้อมูลผู้ป่วยได้";
         setErrorMessage(detailMsg);
         return;
       }
@@ -235,9 +383,8 @@ export default function EditPatientPage({
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto py-12 text-center text-clinic-ink-soft space-y-3">
-        <div className="inline-block w-8 h-8 border-4 border-clinic-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium">กำลังโหลดข้อมูลผู้ป่วย…</p>
+      <div className="max-w-4xl mx-auto py-16 text-center text-clinic-ink-soft text-sm">
+        กำลังโหลดข้อมูลผู้ป่วย...
       </div>
     );
   }
@@ -245,517 +392,618 @@ export default function EditPatientPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-16 font-body text-clinic-ink">
       {/* Header Banner */}
-      <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-clinic-bg border border-clinic-line flex items-center justify-center text-clinic-primary shrink-0 shadow-xs">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
+      <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/doctor/patients/${patientId}`}
+              className="text-xs font-semibold text-clinic-ink-soft hover:text-clinic-primary flex items-center gap-1"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>ย้อนกลับไปข้อมูลผู้ป่วย</span>
+            </Link>
           </div>
-          <div>
-            <h1 className="text-2xl font-display font-bold text-clinic-primary-deep flex items-center gap-2">
-              Edit Patient Details
-            </h1>
-            <p className="text-xs text-clinic-ink-soft mt-0.5">
-              แก้ไขข้อมูลเวชระเบียนผู้ป่วย (ID: {patientId})
-            </p>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-clinic-primary-deep flex items-center gap-2">
+            <User className="w-6 h-6 text-clinic-primary" />
+            <span>แก้ไขข้อมูลผู้ป่วย: {fullname || `HN-${patientId}`}</span>
+          </h1>
+          <p className="text-xs text-clinic-ink-soft">
+            อัปเดตข้อมูลเวชระเบียน ที่อยู่ สิทธิการรักษา และข้อมูลระบุตัวตน
+          </p>
         </div>
 
-        <Link
-          href={`/doctor/patients/${patientId}`}
-          className="px-3.5 py-1.5 rounded-control text-xs font-semibold text-clinic-ink bg-clinic-bg border border-clinic-line hover:bg-white transition-colors"
-        >
-          Cancel
-        </Link>
+        {/* Nationality Mode Toggle */}
+        <div className="flex items-center bg-clinic-bg p-1 rounded-control border border-clinic-line shadow-2xs shrink-0">
+          <button
+            type="button"
+            onClick={() => setIdType("THAI_ID")}
+            className={`px-3.5 py-1.5 rounded-control text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              idType === "THAI_ID"
+                ? "bg-clinic-primary text-white shadow-xs"
+                : "text-clinic-ink-soft hover:text-clinic-ink"
+            }`}
+          >
+            <span>🇹🇭 สัญชาติไทย (Thai)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIdType("PASSPORT")}
+            className={`px-3.5 py-1.5 rounded-control text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              idType === "PASSPORT"
+                ? "bg-clinic-primary text-white shadow-xs"
+                : "text-clinic-ink-soft hover:text-clinic-ink"
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>🌍 ต่างชาติ (Foreigner)</span>
+          </button>
+        </div>
       </div>
 
+      {/* Error Alert */}
       {errorMessage && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium animate-in fade-in">
-          {errorMessage}
+        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center gap-2 shadow-2xs">
+          <span>⚠️ {errorMessage}</span>
         </div>
       )}
 
+      {/* Edit Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section 1: Basic Information */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Basic Information <span className="text-xs font-normal text-clinic-ink-soft">(ข้อมูลพื้นฐาน)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                Full Name (ชื่อ-นามสกุล) <span className="text-clinic-danger">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Enter full name"
-                value={fullname}
-                onChange={(e) => setFullname(e.target.value)}
-                className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                  Gender (เพศ) <span className="text-clinic-danger">*</span>
-                </label>
-                <div className="flex items-center gap-6 pt-1">
-                  {["Male", "Female", "Other"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value={item}
-                        checked={gender === item}
-                        onChange={(e) => setGender(e.target.value)}
-                        className="accent-clinic-primary"
-                      />
-                      <span>{item === "Male" ? "Male" : item === "Female" ? "Female" : "Other"}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  ID/Passport No. (เลขบัตรประชาชน/พาสปอร์ต) <span className="text-clinic-danger">*</span>
+        {/* Section 1: Identification & Basic Details */}
+        <Card className="border-clinic-line shadow-xs">
+          <CardHeader className="pb-3 border-b border-clinic-line bg-clinic-bg/40">
+            <CardTitle className="text-sm font-bold text-clinic-primary-deep flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-clinic-primary" />
+              <span>1. ข้อมูลระบุตัวตนและข้อมูลพื้นฐาน (Identification & Basic Info)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-6 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  ชื่อ - นามสกุล (Full Name) <span className="text-clinic-danger">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  maxLength={13}
-                  placeholder="13-digit ID or Passport"
-                  value={idNumber}
-                  onChange={(e) => setIdNumber(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all font-mono"
+                  value={fullname}
+                  onChange={(e) => setFullname(e.target.value)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Date of Birth (วันเดือนปีเกิด) <span className="text-clinic-danger">*</span>
+              <div className="md:col-span-6 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  {idType === "THAI_ID" ? (
+                    <span>
+                      เลขประจำตัวประชาชน (National ID - 13 หลัก){" "}
+                      <span className="text-clinic-danger">*</span>
+                    </span>
+                  ) : (
+                    <span>
+                      เลขหนังสือเดินทาง (Passport No. - ไม่เกิน 15 ตัว){" "}
+                      <span className="text-clinic-danger">*</span>
+                    </span>
+                  )}
+                </label>
+                {idType === "THAI_ID" ? (
+                  <input
+                    type="text"
+                    required
+                    maxLength={13}
+                    value={nationalId}
+                    onChange={(e) => setNationalId(e.target.value.replace(/\D/g, ""))}
+                    className="w-full h-9 px-3 text-xs font-mono bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    maxLength={15}
+                    value={passportNo}
+                    onChange={(e) => setPassportNo(e.target.value.toUpperCase())}
+                    className="w-full h-9 px-3 text-xs font-mono uppercase bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                )}
+              </div>
+
+              <div className="md:col-span-3 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  เพศ (Gender) <span className="text-clinic-danger">*</span>
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as Gender)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                >
+                  <option value="MALE">ชาย (Male)</option>
+                  <option value="FEMALE">หญิง (Female)</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-5 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  วัน/เดือน/ปีเกิด (Date of Birth) <span className="text-clinic-danger">*</span>
                 </label>
                 <input
                   type="date"
                   required
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all"
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Age (อายุ)
+              <div className="md:col-span-4 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  อาชีพ (Occupation)
                 </label>
                 <input
                   type="text"
-                  readOnly
-                  placeholder="Yrs"
-                  value={calculatedAge !== "" ? `${calculatedAge} ปี` : ""}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg/60 text-sm text-clinic-ink-soft cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Occupation (อาชีพ)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Job title"
                   value={occupation}
                   onChange={(e) => setOccupation(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary focus:ring-2 focus:ring-clinic-primary/20 transition-all"
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 />
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Section 2: Status & History */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Status & History <span className="text-xs font-normal text-clinic-ink-soft">(สถานภาพและประวัติ)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                Marital Status (สถานภาพสมรส)
-              </label>
-              <div className="flex flex-wrap items-center gap-3">
-                {["Single", "Married", "Divorced", "Widowed"].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setMarital(item)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                      marital === item
-                        ? "bg-clinic-primary text-white border-clinic-primary shadow-xs"
-                        : "bg-clinic-bg text-clinic-ink border-clinic-line hover:border-clinic-primary"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
+              <div className="md:col-span-6 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  สถานภาพสมรส (Marital Status) <span className="text-clinic-danger">*</span>
+                </label>
+                <select
+                  value={maritalStatus}
+                  onChange={(e) => setMaritalStatus(e.target.value as MaritalStatus)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                >
+                  <option value="SINGLE">โสด (Single)</option>
+                  <option value="IN_RELATIONSHIP">มีคู่ / อยู่ด้วยกัน (In a relationship)</option>
+                  <option value="MARRIED">สมรส (Married)</option>
+                  <option value="WIDOWED">หม้าย (Widowed)</option>
+                  <option value="SEPARATED">แยกกันอยู่ (Separated)</option>
+                  <option value="DIVORCED">หย่า (Divorced)</option>
+                  <option value="MONK">สมณะ / นักบวช (Monk / Clergy)</option>
+                </select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Nationality (สัญชาติ)
+              <div className="md:col-span-6 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  สัญชาติ (Citizenship)
                 </label>
                 <input
                   type="text"
-                  value={nationality}
-                  onChange={(e) => setNationality(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Ethnicity (เชื้อชาติ)
-                </label>
-                <input
-                  type="text"
-                  value={ethnic}
-                  onChange={(e) => setEthnic(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Religion (ศาสนา)
-                </label>
-                <input
-                  type="text"
-                  value={religion}
-                  onChange={(e) => setReligion(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
+                  value={citizenship}
+                  onChange={(e) => setCitizenship(e.target.value)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 />
               </div>
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        {/* Section 3: Health Information */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Health Information <span className="text-xs font-normal text-clinic-ink-soft">(ข้อมูลสุขภาพ)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                Blood Group (กรุ๊ปเลือด)
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                {["A", "B", "AB", "O"].map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setBloodType(type)}
-                    className={`w-10 h-9 rounded-control text-xs font-bold border transition-all cursor-pointer ${
-                      bloodType === type
-                        ? "bg-clinic-primary text-white border-clinic-primary shadow-xs"
-                        : "bg-clinic-bg text-clinic-ink border-clinic-line hover:border-clinic-primary"
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-
-                <div className="h-6 w-px bg-clinic-line mx-1" />
-
-                {["Rh+", "Rh-"].map((rh) => (
-                  <button
-                    key={rh}
-                    type="button"
-                    onClick={() => setRhFactor(rh)}
-                    className={`px-3 h-9 rounded-control text-xs font-bold border transition-all cursor-pointer ${
-                      rhFactor === rh
-                        ? "bg-clinic-primary/10 text-clinic-primary-deep border-clinic-primary shadow-xs"
-                        : "bg-clinic-bg text-clinic-ink border-clinic-line hover:border-clinic-primary"
-                    }`}
-                  >
-                    {rh}
-                  </button>
-                ))}
+        {/* Section 2: Health Rights, Blood Group */}
+        <Card className="border-clinic-line shadow-xs">
+          <CardHeader className="pb-3 border-b border-clinic-line bg-clinic-bg/40">
+            <CardTitle className="text-sm font-bold text-clinic-primary-deep flex items-center gap-2">
+              <HeartPulse className="w-4 h-4 text-clinic-terracotta" />
+              <span>2. สิทธิการรักษา กรุ๊ปเลือด และประวัติแพ้ยา (Treatment Rights & Blood Group)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-6 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  สิทธิการรักษา (Treatment Rights)
+                </label>
+                <select
+                  value={treatmentRights}
+                  onChange={(e) => setTreatmentRights(e.target.value as TreatmentRights)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary font-medium"
+                >
+                  <option value="PAY_DIRECT">ชำระเงินเอง (Pay Direct / Self-pay)</option>
+                  <option value="ELDERLY">สิทธิผู้สูงอายุ (Elderly)</option>
+                  <option value="MONK">สิทธินักบวช / สมณะ (Monk)</option>
+                  <option value="DISABLED">สิทธิผู้พิการ (Disabled)</option>
+                  <option value="OTHER">สิทธิอื่นๆ (Other)</option>
+                </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-2">
-                Drug Allergy (แพ้ยา)
-              </label>
-              <div className="flex flex-wrap items-center gap-6">
-                <label className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                  <input
-                    type="radio"
-                    name="allergy"
-                    checked={allergyOption === "Unknown"}
-                    onChange={() => setAllergyOption("Unknown")}
-                    className="accent-clinic-primary"
-                  />
-                  <span>Unknown (ไม่ทราบ)</span>
+              <div className="md:col-span-3 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">กรุ๊ปเลือด ABO</label>
+                <select
+                  value={bloodGroupAbo}
+                  onChange={(e) => setBloodGroupAbo(e.target.value as BloodGroupAbo)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary font-bold text-clinic-primary"
+                >
+                  <option value="UNKNOWN">ไม่ระบุ (Unknown)</option>
+                  <option value="A">Group A</option>
+                  <option value="B">Group B</option>
+                  <option value="AB">Group AB</option>
+                  <option value="O">Group O</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-3 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">ปัจจัย Rh Factor</label>
+                <select
+                  value={bloodGroupRh}
+                  onChange={(e) => setBloodGroupRh(e.target.value as BloodGroupRh)}
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary font-medium"
+                >
+                  <option value="UNKNOWN">ไม่ระบุ / ไม่ทราบ (Unknown)</option>
+                  <option value="POSITIVE">Rh+ (Positive)</option>
+                  <option value="NEGATIVE">Rh- (Negative)</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-6 space-y-1.5">
+                <label className="text-xs font-semibold text-clinic-ink block">
+                  ประวัติการแพ้ยา (Drug Allergy)
                 </label>
+                <div className="flex items-center gap-3 pt-1">
+                  <label className="flex items-center gap-1.5 text-xs text-clinic-ink cursor-pointer">
+                    <input
+                      type="radio"
+                      name="allergy"
+                      value="No"
+                      checked={allergyOption === "No"}
+                      onChange={() => setAllergyOption("No")}
+                      className="text-clinic-primary focus:ring-clinic-primary"
+                    />
+                    <span>ไม่มีประวัติแพ้ยา</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs text-clinic-ink cursor-pointer">
+                    <input
+                      type="radio"
+                      name="allergy"
+                      value="Yes"
+                      checked={allergyOption === "Yes"}
+                      onChange={() => setAllergyOption("Yes")}
+                      className="text-clinic-primary focus:ring-clinic-primary"
+                    />
+                    <span className="text-clinic-danger font-semibold">มีประวัติแพ้ยา</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs text-clinic-ink cursor-pointer">
+                    <input
+                      type="radio"
+                      name="allergy"
+                      value="Unknown"
+                      checked={allergyOption === "Unknown"}
+                      onChange={() => setAllergyOption("Unknown")}
+                      className="text-clinic-primary focus:ring-clinic-primary"
+                    />
+                    <span>ไม่ทราบ</span>
+                  </label>
+                </div>
+              </div>
 
-                <label className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                  <input
-                    type="radio"
-                    name="allergy"
-                    checked={allergyOption === "No"}
-                    onChange={() => setAllergyOption("No")}
-                    className="accent-clinic-primary"
-                  />
-                  <span>No (ไม่มี)</span>
-                </label>
-
-                <label className="inline-flex items-center gap-2 text-sm text-clinic-ink cursor-pointer">
-                  <input
-                    type="radio"
-                    name="allergy"
-                    checked={allergyOption === "Yes"}
-                    onChange={() => setAllergyOption("Yes")}
-                    className="accent-clinic-primary"
-                  />
-                  <span>Yes (มี)</span>
-                </label>
-
-                {allergyOption === "Yes" && (
+              {allergyOption === "Yes" && (
+                <div className="md:col-span-6 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-danger block">
+                    ระบุชื่อยาและอาการแพ้ (Allergy Details)
+                  </label>
                   <input
                     type="text"
                     required
-                    placeholder="Specify drug allergy (ระบุชื่อยาที่แพ้)"
                     value={drugAllergyDetail}
                     onChange={(e) => setDrugAllergyDetail(e.target.value)}
-                    className="flex-1 min-w-[240px] px-3.5 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all animate-in fade-in"
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-danger rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-danger"
                   />
-                )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Section 3: Structured Address */}
+        <Card className="border-clinic-line shadow-xs">
+          <CardHeader className="pb-3 border-b border-clinic-line bg-clinic-bg/40">
+            <CardTitle className="text-sm font-bold text-clinic-primary-deep flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-clinic-primary" />
+              <span>3. ที่อยู่และข้อมูลติดต่อ (Structured Address & Contact)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5">
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">บ้านเลขที่</label>
+                <input
+                  type="text"
+                  value={houseNo}
+                  onChange={(e) => setHouseNo(e.target.value)}
+                  className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                />
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Section 4: Contact Address */}
-        <section className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-clinic-line pb-3">
-            <div className="w-7 h-7 rounded-md bg-clinic-bg text-clinic-primary flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </div>
-            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-              Contact Address <span className="text-xs font-normal text-clinic-ink-soft">(ที่อยู่อาศัยตามสำเนา)</span>
-            </h2>
-          </div>
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">หมู่ที่</label>
+                <input
+                  type="text"
+                  value={moo}
+                  onChange={(e) => setMoo(e.target.value)}
+                  className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                />
+              </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                Full Address (ที่อยู่เต็ม)
-              </label>
-              <textarea
-                rows={2}
-                placeholder="Address line"
-                value={fullAddress}
-                onChange={(e) => setFullAddress(e.target.value)}
-                className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-              />
-            </div>
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">ซอย</label>
+                <input
+                  type="text"
+                  value={soi}
+                  onChange={(e) => setSoi(e.target.value)}
+                  className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                />
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Mobile (เบอร์โทรศัพท์) <span className="text-clinic-danger">*</span>
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">ถนน</label>
+                <input
+                  type="text"
+                  value={road}
+                  onChange={(e) => setRoad(e.target.value)}
+                  className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                />
+              </div>
+
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">ตำบล / แขวง</label>
+                <input
+                  type="text"
+                  value={subDistrict}
+                  onChange={(e) => setSubDistrict(e.target.value)}
+                  className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                />
+              </div>
+
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">อำเภอ / เขต</label>
+                <input
+                  type="text"
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                />
+              </div>
+
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">จังหวัด</label>
+                <select
+                  value={province}
+                  onChange={(e) => setProvince(e.target.value)}
+                  className="w-full h-8 px-2 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                >
+                  {PROVINCES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">รหัสไปรษณีย์</label>
+                <input
+                  type="text"
+                  maxLength={10}
+                  value={zipCode}
+                  onChange={(e) => setZipCode(e.target.value)}
+                  className="w-full h-8 px-2.5 text-xs font-mono bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                />
+              </div>
+
+              <div className="md:col-span-6 space-y-1 pt-1">
+                <label className="text-[11px] font-semibold text-clinic-ink flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-clinic-primary" />
+                  <span>เบอร์โทรศัพท์มือถือ (Mobile Phone)</span>
+                  <span className="text-clinic-danger">*</span>
                 </label>
                 <input
                   type="tel"
                   required
-                  placeholder="08X-XXX-XXXX"
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all font-mono"
+                  className="w-full h-9 px-3 text-xs font-mono bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                  Email (อีเมล)
-                </label>
+              <div className="md:col-span-6 space-y-1 pt-1">
+                <label className="text-[11px] font-semibold text-clinic-ink">อีเมล (Email Address)</label>
                 <input
                   type="email"
-                  placeholder="patient@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
+                  className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 />
               </div>
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        {/* Section 5: Emergency Contact */}
-        <section className="bg-clinic-primary/5 border border-clinic-primary/20 rounded-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-clinic-primary/20 pb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-clinic-danger-bg text-clinic-danger flex items-center justify-center font-bold text-sm">
-                ✱
+        {/* Section 4: Thai-Specific Details */}
+        {idType === "THAI_ID" && (
+          <Card className="border-clinic-line shadow-xs">
+            <CardHeader className="pb-3 border-b border-clinic-line bg-clinic-bg/40">
+              <CardTitle className="text-sm font-bold text-clinic-primary-deep flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-clinic-terracotta" />
+                <span>4. ข้อมูลประวัติเฉพาะผู้ป่วยไทย & โหราศาสตร์แผนไทย (Thai Master Data)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="md:col-span-6 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-ink block">ภูมิลำเนาเดิม</label>
+                  <input
+                    type="text"
+                    value={originalDomicile}
+                    onChange={(e) => setOriginalDomicile(e.target.value)}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-6 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-ink block">สถานที่เกิด</label>
+                  <input
+                    type="text"
+                    value={birthPlace}
+                    onChange={(e) => setBirthPlace(e.target.value)}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-6 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-ink block">วุฒิการศึกษา</label>
+                  <input
+                    type="text"
+                    value={education}
+                    onChange={(e) => setEducation(e.target.value)}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-6 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-ink block">สถานภาพในบ้าน</label>
+                  <select
+                    value={householdStatus}
+                    onChange={(e) => setHouseholdStatus(e.target.value as HouseholdStatus | "")}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  >
+                    <option value="">-- ไม่ระบุ --</option>
+                    <option value="HEAD_OF_HOUSEHOLD">เจ้าบ้าน (Head of Household)</option>
+                    <option value="RESIDENT">ผู้อาศัย (Resident)</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-4 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-ink block">ชื่อบิดา</label>
+                  <input
+                    type="text"
+                    value={fatherName}
+                    onChange={(e) => setFatherName(e.target.value)}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-4 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-ink block">ชื่อมารดา</label>
+                  <input
+                    type="text"
+                    value={motherName}
+                    onChange={(e) => setMotherName(e.target.value)}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-4 space-y-1.5">
+                  <label className="text-xs font-semibold text-clinic-ink block">ชื่อคู่สมรส</label>
+                  <input
+                    type="text"
+                    value={spouseName}
+                    onChange={(e) => setSpouseName(e.target.value)}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-12 space-y-1.5 pt-2 border-t border-clinic-line">
+                  <label className="text-xs font-semibold text-clinic-ink block">
+                    วันเดือนปีเกิดทางจันทรคติ / ฤกษ์กำเนิดแผนไทย (Thai Calendar Birth Date)
+                  </label>
+                  <input
+                    type="text"
+                    value={thaiCalendarBirthDate}
+                    onChange={(e) => setThaiCalendarBirthDate(e.target.value)}
+                    className="w-full h-9 px-3 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary font-serif"
+                  />
+                </div>
               </div>
-              <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
-                Emergency Contact <span className="text-xs font-normal text-clinic-ink-soft">(ผู้ติดต่อกรณีฉุกเฉิน)</span>
-              </h2>
-            </div>
+            </CardContent>
+          </Card>
+        )}
 
-            <button
+        {/* Section 5: Emergency Contacts */}
+        <Card className="border-clinic-line shadow-xs">
+          <CardHeader className="pb-3 border-b border-clinic-line bg-clinic-bg/40 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-bold text-clinic-primary-deep flex items-center gap-2">
+              <Users className="w-4 h-4 text-clinic-primary" />
+              <span>5. บุคคลที่ติดต่อได้ในกรณีฉุกเฉิน (Emergency Contact Persons)</span>
+            </CardTitle>
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={addEmergencyContact}
-              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-clinic-primary text-clinic-primary hover:bg-clinic-primary hover:text-white rounded-control text-xs font-semibold transition-all shadow-xs cursor-pointer"
+              className="h-7 text-xs bg-white"
             >
-              + Add Contact
-            </button>
-          </div>
-
-          <div className="space-y-4">
+              + เพิ่มผู้ติดต่อ
+            </Button>
+          </CardHeader>
+          <CardContent className="p-6 space-y-3">
             {emergencyContacts.map((contact, index) => (
               <div
                 key={index}
-                className="bg-white border border-clinic-line rounded-control p-4 shadow-xs relative space-y-3"
+                className="p-3.5 rounded-control bg-clinic-bg/50 border border-clinic-line relative grid grid-cols-1 md:grid-cols-12 gap-3"
               >
+                <div className="md:col-span-4 space-y-1">
+                  <label className="text-[11px] font-semibold text-clinic-ink">
+                    ชื่อ-นามสกุล ผู้ติดต่อ #{index + 1}
+                  </label>
+                  <input
+                    type="text"
+                    value={contact.contactName}
+                    onChange={(e) => updateEmergencyContact(index, "contactName", e.target.value)}
+                    className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-3 space-y-1">
+                  <label className="text-[11px] font-semibold text-clinic-ink">ความสัมพันธ์</label>
+                  <input
+                    type="text"
+                    value={contact.relationship}
+                    onChange={(e) => updateEmergencyContact(index, "relationship", e.target.value)}
+                    className="w-full h-8 px-2.5 text-xs bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
+                <div className="md:col-span-4 space-y-1">
+                  <label className="text-[11px] font-semibold text-clinic-ink">เบอร์โทรศัพท์</label>
+                  <input
+                    type="tel"
+                    value={contact.mobileNumber}
+                    onChange={(e) => updateEmergencyContact(index, "mobileNumber", e.target.value)}
+                    className="w-full h-8 px-2.5 text-xs font-mono bg-white border border-clinic-line rounded-control focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                  />
+                </div>
+
                 {emergencyContacts.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeEmergencyContact(index)}
-                    className="absolute top-3 right-3 text-clinic-ink-soft hover:text-clinic-danger text-sm p-1 rounded-md transition-colors"
-                    title="Remove Contact"
-                  >
-                    ✕
-                  </button>
+                  <div className="md:col-span-1 flex items-end justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeEmergencyContact(index)}
+                      className="h-8 px-2 text-xs text-clinic-danger hover:bg-clinic-danger-bg rounded-control"
+                      title="ลบผู้ติดต่อนี้"
+                    >
+                      ลบ
+                    </button>
+                  </div>
                 )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Name (ชื่อ-นามสกุล)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contact person name"
-                      value={contact.contactName}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "contactName", e.target.value)
-                      }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Relationship (ความสัมพันธ์)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Spouse, Parent"
-                      value={contact.relationship || ""}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "relationship", e.target.value)
-                      }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Address (ที่อยู่)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contact address"
-                      value={contact.contactAddress || ""}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "contactAddress", e.target.value)
-                      }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-clinic-ink mb-1">
-                      Telephone (เบอร์โทรศัพท์)
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="08X-XXX-XXXX"
-                      value={contact.mobileNumber || ""}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "mobileNumber", e.target.value)
-                      }
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control bg-clinic-bg text-sm text-clinic-ink focus:outline-none focus:border-clinic-primary transition-all font-mono"
-                    />
-                  </div>
-                </div>
               </div>
             ))}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link
-            href={`/doctor/patients/${patientId}`}
-            className="px-6 py-2.5 rounded-control text-sm font-semibold text-clinic-ink bg-white border border-clinic-line hover:bg-clinic-bg transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-clinic-line">
+          <Button asChild variant="outline" size="sm" className="bg-white">
+            <Link href={`/doctor/patients/${patientId}`}>ยกเลิก</Link>
+          </Button>
+          <Button
             type="submit"
+            variant="terracotta"
+            size="sm"
             disabled={isPending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-control text-sm font-semibold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-md hover:shadow-lg disabled:opacity-60 cursor-pointer"
+            className="font-semibold shadow-sm px-6"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            {isPending ? "Updating Record…" : "Save Changes"}
-          </button>
+            {isPending ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
+          </Button>
         </div>
       </form>
     </div>

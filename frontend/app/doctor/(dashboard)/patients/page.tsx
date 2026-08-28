@@ -67,9 +67,9 @@ export default async function DoctorPatientsPage({
                   <tr key={patient.patientId} className="hover:bg-clinic-bg/50 transition-colors">
                     <td className="px-4 py-3.5 font-mono text-xs">{patient.patientId}</td>
                     <td className="px-4 py-3.5 font-medium">{patient.fullname}</td>
-                    <td className="px-4 py-3.5">{patient.gender}</td>
-                    <td className="px-4 py-3.5">{patient.mobileNumber}</td>
-                    <td className="px-4 py-3.5">{patient.bloodGroup}</td>
+                    <td className="px-4 py-3.5">{patient.gender === "MALE" ? "ชาย" : patient.gender === "FEMALE" ? "หญิง" : patient.gender}</td>
+                    <td className="px-4 py-3.5 font-mono">{patient.mobileNumber}</td>
+                    <td className="px-4 py-3.5 font-bold text-clinic-primary-deep">{patient.bloodGroup || "-"}</td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-3">
                         <Link
