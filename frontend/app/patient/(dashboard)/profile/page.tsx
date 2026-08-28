@@ -12,6 +12,8 @@ import {
   AlertTriangle,
   ShieldCheck,
   Sparkles,
+  MapPin,
+  CreditCard,
 } from "lucide-react";
 
 export default async function PatientProfilePage() {
@@ -60,7 +62,7 @@ export default async function PatientProfilePage() {
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3 border-b border-clinic-line">
             <CardTitle className="text-sm flex items-center gap-2">
-              <User className="w-4 h-4 text-clinic-primary" />
+              <CreditCard className="w-4 h-4 text-clinic-primary" />
               <span>ข้อมูลทั่วไป (General Info)</span>
             </CardTitle>
           </CardHeader>
@@ -304,7 +306,9 @@ export default async function PatientProfilePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-clinic-ink-soft italic">ไม่มีข้อมูลผู้ติดต่อฉุกเฉิน</p>
+                <p className="text-xs text-clinic-ink-soft italic text-center py-2">
+                  ไม่มีข้อมูลผู้ติดต่อฉุกเฉิน
+                </p>
               )}
             </CardContent>
           </Card>
