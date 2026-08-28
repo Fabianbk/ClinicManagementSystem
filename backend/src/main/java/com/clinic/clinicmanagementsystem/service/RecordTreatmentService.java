@@ -1,5 +1,6 @@
 package com.clinic.clinicmanagementsystem.service;
 
+import com.clinic.clinicmanagementsystem.dto.HealthProfileResponseDTO;
 import com.clinic.clinicmanagementsystem.dto.RecordTreatmentRequestDTO;
 import com.clinic.clinicmanagementsystem.dto.RecordTreatmentResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.Appointment;
@@ -130,21 +131,16 @@ public class RecordTreatmentService {
             patientRepository.save(patient);
         }
 
-        // Update Patient's Health Profile if provided
-        if (dto.getHealthProfile() != null) {
-            if (patient.getHealthProfile() == null) {
-                patient.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
-            } else {
-                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), patient.getHealthProfile());
-            }
-            patientRepository.save(patient);
-        }
-
         RecordTreatment recordTreatment = recordTreatmentMapper.toEntity(dto);
         recordTreatment.setAppointment(appointment);
         recordTreatment.setDoctor(doctor);
         if (recordTreatment.getRecordDate() == null) {
             recordTreatment.setRecordDate(new Date());
+        }
+
+        // Attach new HealthProfile specific to this treatment visit
+        if (dto.getHealthProfile() != null) {
+            recordTreatment.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
         }
 
         return recordTreatmentMapper.toResponseDTO(recordTreatmentRepository.save(recordTreatment));
@@ -167,6 +163,18 @@ public class RecordTreatmentService {
 
         return recordTreatmentRepository.findByAppointment_Patient_PatientId(patientId, pageable)
                 .map(recordTreatmentMapper::toResponseDTO);
+    }
+
+    /** Fetch most recent HealthProfile for pre-filling treatment forms. */
+    @Transactional(readOnly = true)
+    public HealthProfileResponseDTO getLatestHealthProfileByPatientId(int patientId) {
+        currentUser.requireSelfOrDoctor(patientId);
+
+        return recordTreatmentRepository
+                .findFirstByAppointment_Patient_PatientIdAndHealthProfileIsNotNullOrderByRecordDateDescRecordTreatmentIdDesc(patientId)
+                .map(RecordTreatment::getHealthProfile)
+                .map(healthProfileMapper::toResponseDTO)
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -192,13 +200,13 @@ public class RecordTreatmentService {
             patientRepository.save(patient);
         }
 
-        if (dto.getHealthProfile() != null && patient != null) {
-            if (patient.getHealthProfile() == null) {
-                patient.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
+        // Update visit's HealthProfile
+        if (dto.getHealthProfile() != null) {
+            if (existing.getHealthProfile() == null) {
+                existing.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
             } else {
-                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), patient.getHealthProfile());
+                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), existing.getHealthProfile());
             }
-            patientRepository.save(patient);
         }
 
         return recordTreatmentMapper.toResponseDTO(recordTreatmentRepository.save(existing));

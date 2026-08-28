@@ -97,7 +97,9 @@ export default async function DoctorPatientsPage({
                     {patient.fullname}
                   </TableCell>
                   <TableCell>
-                    <span className="text-xs text-clinic-ink-soft">{patient.gender || "-"}</span>
+                    <span className="text-xs text-clinic-ink-soft">
+                      {patient.gender === "MALE" ? "ชาย" : patient.gender === "FEMALE" ? "หญิง" : patient.gender || "-"}
+                    </span>
                   </TableCell>
                   <TableCell className="font-mono text-xs">
                     {patient.mobileNumber || "-"}

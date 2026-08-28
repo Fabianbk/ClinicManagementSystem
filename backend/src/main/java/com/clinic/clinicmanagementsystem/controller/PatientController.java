@@ -74,13 +74,6 @@ public class PatientController {
         return ResponseEntity.ok(ApiResponse.success(patientService.updatePrinciple(id, dto)));
     }
 
-    @PutMapping("/{id}/health-profile")
-    @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<ApiResponse<HealthProfileResponseDTO>> updateHealthProfile(
-            @PathVariable int id, @Valid @RequestBody HealthProfileRequestDTO dto) {
-        return ResponseEntity.ok(ApiResponse.success(patientService.updateHealthProfile(id, dto)));
-    }
-
     @PostMapping("/{id}/contact-persons")
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<ContactPersonResponseDTO>> addContactPerson(

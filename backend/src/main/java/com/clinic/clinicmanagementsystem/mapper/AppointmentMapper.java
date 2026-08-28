@@ -13,6 +13,7 @@ public interface AppointmentMapper {
     @Mapping(target = "appointmentSlot", ignore = true)
     @Mapping(target = "patient", ignore = true)
     @Mapping(target = "recordTreatment", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Appointment toEntity(AppointmentRequestDTO dto);
 
     @Mapping(target = "patientId", source = "patient.patientId")

@@ -1,6 +1,5 @@
 package com.clinic.clinicmanagementsystem.dto;
 
-import com.clinic.clinicmanagementsystem.enums.AppointmentStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

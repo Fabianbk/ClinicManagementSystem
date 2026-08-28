@@ -324,8 +324,12 @@ export default async function PatientDashboardPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-clinic-ink-soft">ธาตุเจ้าเรือนกำเนิด:</span>
-                <span className="font-bold text-clinic-terracotta-deep text-right">
-                  {patient.principle?.principleDhatu || "รอตรวจประเมิน"}
+                <span className="font-bold text-clinic-primary-deep text-right">
+                  {patient.principle?.principalDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                   patient.principle?.principalDhatu === "APO" ? "อาโป (น้ำ)" :
+                   patient.principle?.principalDhatu === "VAYO" ? "วาโย (ลม)" :
+                   patient.principle?.principalDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                   patient.principle?.principalDhatu || "รอตรวจประเมิน"}
                 </span>
               </div>
               <div className="flex justify-between">

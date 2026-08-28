@@ -9,7 +9,7 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(
         componentModel = "spring",
-        uses = {RecordTreatmentMedicineMapper.class, ReceiptMapper.class}
+        uses = {RecordTreatmentMedicineMapper.class, ReceiptMapper.class, HealthProfileMapper.class}
 )
 public interface RecordTreatmentMapper {
 
@@ -33,5 +33,6 @@ public interface RecordTreatmentMapper {
     @Mapping(target = "appointment", ignore = true)
     @Mapping(target = "recordTreatmentMedicines", ignore = true)
     @Mapping(target = "receipt", ignore = true)
+    @Mapping(target = "healthProfile", ignore = true)
     void updateEntityFromDto(RecordTreatmentRequestDTO dto, @MappingTarget RecordTreatment entity);
 }

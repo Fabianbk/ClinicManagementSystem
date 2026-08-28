@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PrincipleRequestDTO {
+public class DhatuPrincipleRequestDTO {
 
     private Dhatu principalDhatu;
     private Dhatu secondaryDhatu;

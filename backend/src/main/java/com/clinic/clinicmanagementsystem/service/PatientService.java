@@ -11,6 +11,7 @@ import com.clinic.clinicmanagementsystem.dto.PrincipleResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.ContactPerson;
 import com.clinic.clinicmanagementsystem.entity.Patient;
 import com.clinic.clinicmanagementsystem.entity.PatientAccount;
+import com.clinic.clinicmanagementsystem.enums.IdType;
 import com.clinic.clinicmanagementsystem.exception.DuplicateResourceException;
 import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
 import com.clinic.clinicmanagementsystem.mapper.ContactPersonMapper;
@@ -44,7 +45,6 @@ public class PatientService {
 
     private final PatientMapper patientMapper;
     private final PrincipleMapper principleMapper;
-    private final HealthProfileMapper healthProfileMapper;
     private final ContactPersonMapper contactPersonMapper;
 
     /**
@@ -56,10 +56,7 @@ public class PatientService {
      * formatted birthday (ddMMyyyy) as password.
      */
     public PatientResponseDTO create(PatientRequestDTO dto) {
-        if (patientRepository.existsByIdNumber(dto.getIdNumber())) {
-            throw new DuplicateResourceException(
-                    "A patient with ID number " + dto.getIdNumber() + " already exists");
-        }
+        validateIdUniquenessOnCreate(dto);
 
         String username = dto.getMobileNumber() != null ? dto.getMobileNumber().trim() : "";
         if (patientAccountRepository.existsById(username)) {
@@ -98,32 +95,13 @@ public class PatientService {
      * Updates Patient's own scalar fields only (name, contact info, etc).
      * Does NOT touch contactPersons / principle / healthProfile — use the
      * dedicated methods below for those.
-     *
-     * Why: Patient.principle and Patient.healthProfile are
-     * @OneToOne(cascade = CascadeType.ALL) with NO orphanRemoval. If we mapped
-     * a fresh PrincipleRequestDTO straight onto patient.setPrinciple(...),
-     * MapStruct would build a brand-new Principle row and Hibernate would
-     * just repoint the FK at it — the old row never gets deleted and quietly
-     * piles up in the database. Same risk applies to contactPersons.
      */
     public PatientResponseDTO updateBasicInfo(int patientId, PatientRequestDTO dto) {
         Patient existing = findPatientOrThrow(patientId);
 
-        boolean idNumberChanged = !existing.getIdNumber().equals(dto.getIdNumber());
-        if (idNumberChanged && patientRepository.existsByIdNumber(dto.getIdNumber())) {
-            throw new DuplicateResourceException(
-                    "A patient with ID number " + dto.getIdNumber() + " already exists");
-        }
+        validateIdUniquenessOnUpdate(dto, existing);
 
         patientMapper.updateBasicInfo(dto, existing);
-
-        if (dto.getHealthProfile() != null) {
-            if (existing.getHealthProfile() == null) {
-                existing.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
-            } else {
-                healthProfileMapper.updateEntityFromDto(dto.getHealthProfile(), existing.getHealthProfile());
-            }
-        }
 
         if (dto.getPrinciple() != null) {
             if (existing.getPrinciple() == null) {
@@ -161,20 +139,6 @@ public class PatientService {
         return principleMapper.toResponseDTO(saved.getPrinciple());
     }
 
-    /** Updates the patient's health profile in place; creates one if none exists yet. */
-    public HealthProfileResponseDTO updateHealthProfile(int patientId, HealthProfileRequestDTO dto) {
-        Patient patient = findPatientOrThrow(patientId);
-
-        if (patient.getHealthProfile() == null) {
-            patient.setHealthProfile(healthProfileMapper.toEntity(dto));
-        } else {
-            healthProfileMapper.updateEntityFromDto(dto, patient.getHealthProfile());
-        }
-
-        Patient saved = patientRepository.save(patient);
-        return healthProfileMapper.toResponseDTO(saved.getHealthProfile());
-    }
-
     /** Adds one emergency contact to the patient. */
     public ContactPersonResponseDTO addContactPerson(int patientId, ContactPersonRequestDTO dto) {
         Patient patient = findPatientOrThrow(patientId);
@@ -187,16 +151,11 @@ public class PatientService {
         patient.getContactPersons().add(contactPerson);
         patientRepository.save(patient);
 
-        // contactPerson is the same object reference Hibernate just inserted,
-        // so its generated ID is already populated here.
         return contactPersonMapper.toResponseDTO(contactPerson);
     }
 
     /**
-     * Removes one emergency contact. Patient.contactPersons has no
-     * orphanRemoval, so just taking it out of the in-memory list and saving
-     * the patient would NOT delete the row in the database — it has to be
-     * deleted explicitly here.
+     * Removes one emergency contact.
      */
     public void removeContactPerson(int patientId, int contactId) {
         Patient patient = findPatientOrThrow(patientId);
@@ -212,15 +171,7 @@ public class PatientService {
     }
 
     /**
-     * Deletes the patient. IMPORTANT: Patient.appointments has
-     * cascade = CascadeType.ALL, so this also deletes every Appointment,
-     * RecordTreatment, Receipt, and RecordTreatmentMedicine tied to this
-     * patient — their entire medical history disappears with them. For a
-     * clinic, that's almost certainly not what you want (medical records
-     * usually need to be retained for legal/audit reasons even after a
-     * patient leaves). Before wiring this up to a real DELETE endpoint,
-     * consider a soft-delete instead (e.g. an `active` boolean on Patient
-     * that you filter on, rather than an actual row deletion).
+     * Deletes the patient.
      */
     public void delete(int patientId) {
         Patient existing = findPatientOrThrow(patientId);
@@ -230,5 +181,35 @@ public class PatientService {
     private Patient findPatientOrThrow(int patientId) {
         return patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", patientId));
+    }
+
+    private void validateIdUniquenessOnCreate(PatientRequestDTO dto) {
+        if (dto.getIdType() == IdType.THAI_ID && dto.getNationalId() != null) {
+            if (patientRepository.existsByNationalId(dto.getNationalId().trim())) {
+                throw new DuplicateResourceException(
+                        "A patient with Thai National ID " + dto.getNationalId() + " already exists");
+            }
+        } else if (dto.getIdType() == IdType.PASSPORT && dto.getPassportNo() != null) {
+            if (patientRepository.existsByPassportNo(dto.getPassportNo().trim())) {
+                throw new DuplicateResourceException(
+                        "A patient with Passport number " + dto.getPassportNo() + " already exists");
+            }
+        }
+    }
+
+    private void validateIdUniquenessOnUpdate(PatientRequestDTO dto, Patient existing) {
+        if (dto.getIdType() == IdType.THAI_ID && dto.getNationalId() != null) {
+            boolean changed = existing.getNationalId() == null || !existing.getNationalId().equals(dto.getNationalId().trim());
+            if (changed && patientRepository.existsByNationalId(dto.getNationalId().trim())) {
+                throw new DuplicateResourceException(
+                        "A patient with Thai National ID " + dto.getNationalId() + " already exists");
+            }
+        } else if (dto.getIdType() == IdType.PASSPORT && dto.getPassportNo() != null) {
+            boolean changed = existing.getPassportNo() == null || !existing.getPassportNo().equals(dto.getPassportNo().trim());
+            if (changed && patientRepository.existsByPassportNo(dto.getPassportNo().trim())) {
+                throw new DuplicateResourceException(
+                        "A patient with Passport number " + dto.getPassportNo() + " already exists");
+            }
+        }
     }
 }

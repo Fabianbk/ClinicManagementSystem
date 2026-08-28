@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface RecordTreatmentRepository extends JpaRepository<RecordTreatment, Integer> {
     Optional<RecordTreatment> findByAppointment_AppointmentId(int appointmentId);
     Page<RecordTreatment> findByAppointment_Patient_PatientId(int patientId, Pageable pageable);
+    Optional<RecordTreatment> findFirstByAppointment_Patient_PatientIdAndHealthProfileIsNotNullOrderByRecordDateDescRecordTreatmentIdDesc(int patientId);
 }
