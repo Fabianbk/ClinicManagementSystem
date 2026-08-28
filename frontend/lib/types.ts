@@ -78,19 +78,42 @@ export interface ContactPersonResponseDTO {
   mobileNumber: string | null;
 }
 
-export interface PrincipleRequestDTO {
-  principleDhatu?: string;
-  secondaryDhatu?: string;
-  elementaryPrinciples?: string;
-  seasonalPrinciples?: string;
-  agePrinciples?: string;
-  timePrinciples?: string;
-  geographicPrinciples?: string;
+export type Dhatu = "PATHAVI" | "APO" | "VAYO" | "TECHO";
+export type TriDosha = "SEMHA" | "VATA" | "PITTA";
+export type AgePrinciple = "CHILD" | "ADULT" | "AGING";
+
+export interface DhatuPrincipleRequestDTO {
+  principalDhatu?: Dhatu;
+  secondaryDhatu?: Dhatu;
+  conceptionDhatu?: Dhatu;
+  conceptionCharacteristic?: TriDosha;
+  seasonalOnset?: TriDosha;
+  seasonalCurrent?: TriDosha;
+  timeOnset?: TriDosha;
+  timeCurrent?: TriDosha;
+  geoBirthplace?: Dhatu;
+  geoCurrent?: Dhatu;
+  agePrinciple?: AgePrinciple;
 }
 
-export interface PrincipleResponseDTO extends Required<PrincipleRequestDTO> {
+export type PrincipleRequestDTO = DhatuPrincipleRequestDTO;
+
+export interface DhatuPrincipleResponseDTO {
   principleId: number;
+  principalDhatu: Dhatu | null;
+  secondaryDhatu: Dhatu | null;
+  conceptionDhatu: Dhatu | null;
+  conceptionCharacteristic: TriDosha | null;
+  seasonalOnset: TriDosha | null;
+  seasonalCurrent: TriDosha | null;
+  timeOnset: TriDosha | null;
+  timeCurrent: TriDosha | null;
+  geoBirthplace: Dhatu | null;
+  geoCurrent: Dhatu | null;
+  agePrinciple: AgePrinciple | null;
 }
+
+export type PrincipleResponseDTO = DhatuPrincipleResponseDTO;
 
 export interface HealthProfileRequestDTO {
   presentHistory?: string;

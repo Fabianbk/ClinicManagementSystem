@@ -134,11 +134,23 @@ export function TreatmentDetailClient({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-clinic-bg/30 rounded-control border border-clinic-line">
               <div>
                 <span className="text-clinic-ink-soft font-semibold">ธาตุเจ้าเรือนหลัก:</span>{" "}
-                <strong className="text-clinic-primary">{patient?.principle?.principleDhatu || "ปถวี ดิน"}</strong>
+                <strong className="text-clinic-primary">
+                  {patient?.principle?.principalDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                   patient?.principle?.principalDhatu === "APO" ? "อาโป (น้ำ)" :
+                   patient?.principle?.principalDhatu === "VAYO" ? "วาโย (ลม)" :
+                   patient?.principle?.principalDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                   patient?.principle?.principalDhatu || "-"}
+                </strong>
               </div>
               <div>
                 <span className="text-clinic-ink-soft font-semibold">ธาตุเจ้าเรือนรอง:</span>{" "}
-                <strong className="text-clinic-primary">{patient?.principle?.secondaryDhatu || "วาโย ลม"}</strong>
+                <strong className="text-clinic-primary">
+                  {patient?.principle?.secondaryDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                   patient?.principle?.secondaryDhatu === "APO" ? "อาโป (น้ำ)" :
+                   patient?.principle?.secondaryDhatu === "VAYO" ? "วาโย (ลม)" :
+                   patient?.principle?.secondaryDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                   patient?.principle?.secondaryDhatu || "-"}
+                </strong>
               </div>
             </div>
 

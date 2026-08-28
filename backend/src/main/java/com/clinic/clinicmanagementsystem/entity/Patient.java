@@ -140,7 +140,8 @@ public class Patient {
     private List<Appointment> appointments;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    private Principle principle;
+    @JoinColumn(name = "principle_principle_id")
+    private DhatuPrinciple principle;
 
     /** Returns national ID if set, otherwise passport number. */
     public String getIdNumber() {

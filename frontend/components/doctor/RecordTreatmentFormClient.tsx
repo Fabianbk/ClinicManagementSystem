@@ -9,7 +9,29 @@ import type {
   MedicineResponseDTO,
   RecordTreatmentRequestDTO,
   RecordTreatmentResponseDTO,
+  Dhatu,
+  TriDosha,
+  AgePrinciple,
 } from "@/lib/types";
+
+export const DHATU_OPTIONS: { value: Dhatu; label: string; sub: string }[] = [
+  { value: "PATHAVI", label: "ปถวี (ดิน)", sub: "Pathavi" },
+  { value: "APO", label: "อาโป (น้ำ)", sub: "Apo" },
+  { value: "VAYO", label: "วาโย (ลม)", sub: "Vayo" },
+  { value: "TECHO", label: "เตโช (ไฟ)", sub: "Techo" },
+];
+
+export const TRIDOSHA_OPTIONS: { value: TriDosha; label: string; sub: string }[] = [
+  { value: "SEMHA", label: "เสมหะ", sub: "Semha (Kapha)" },
+  { value: "VATA", label: "วาตะ", sub: "Vata" },
+  { value: "PITTA", label: "ปิตตะ", sub: "Pitta" },
+];
+
+export const AGE_OPTIONS: { value: AgePrinciple; label: string; sub: string }[] = [
+  { value: "CHILD", label: "ปฐมวัย", sub: "วัยเด็ก (0-16 ปี)" },
+  { value: "ADULT", label: "มัชฌิมวัย", sub: "วัยผู้ใหญ่ (16-32 ปี)" },
+  { value: "AGING", label: "ปัจฉิมวัย", sub: "วัยสูงอายุ (32 ปีขึ้นไป)" },
+];
 
 interface RecordTreatmentFormClientProps {
   doctorId: number;
@@ -113,10 +135,6 @@ export function RecordTreatmentFormClient({
     return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   });
 
-  // PART 2: Elementary principles (ธาตุสมุฏฐาน)
-  const [principalDhatu, setPrincipalDhatu] = useState<string>("ปถวี ดิน Pathavi Dhatu");
-  const [secondaryDhatu, setSecondaryDhatu] = useState<string>("วาโย ลม Vayo Dhatu");
-
   // Symptoms & Present History
   const [symptoms, setSymptoms] = useState("");
   const [presentHistory, setPresentHistory] = useState("");
@@ -166,21 +184,18 @@ export function RecordTreatmentFormClient({
   // Menstruation History
   const [menstruationHistory, setMenstruationHistory] = useState("ปกติ ไม่ปวดประจำเดือน");
 
-  // PART 4: Principles for diagnosis (ผลการวิเคราะห์สมุฏฐาน)
-  // ธาตุสมุฏฐาน
-  const [dhatuBirth, setDhatuBirth] = useState("ปถวี Pathavi");
-  const [dhatuTrait, setDhatuTrait] = useState("วาตะ Vata");
-  // อุตุสมุฏฐาน
-  const [utuIllness, setUtuIllness] = useState("เสมหะ Semha");
-  const [utuVisit, setUtuVisit] = useState("วาตะ Vata");
-  // อายุสมุฏฐาน
-  const [agePrinciple, setAgePrinciple] = useState("มัชฌิมวัย (Adult)");
-  // กาลสมุฏฐาน
-  const [kalaAggravate, setKalaAggravate] = useState("ปิตตะ Pitta");
-  const [kalaVisit, setKalaVisit] = useState("วาตะ Vata");
-  // ประเทศสมุฏฐาน
-  const [prathetBirth, setPrathetBirth] = useState("ปถวี Pathavi");
-  const [prathetPresent, setPrathetPresent] = useState("วาโย Vayo");
+  // PART 2 & PART 4: DhatuPrinciple (ธาตุสมุฏฐาน 5 ด้าน & ธาตุเจ้าเรือน)
+  const [principalDhatu, setPrincipalDhatu] = useState<Dhatu>("PATHAVI");
+  const [secondaryDhatu, setSecondaryDhatu] = useState<Dhatu>("VAYO");
+  const [conceptionDhatu, setConceptionDhatu] = useState<Dhatu>("PATHAVI");
+  const [conceptionCharacteristic, setConceptionCharacteristic] = useState<TriDosha>("VATA");
+  const [seasonalOnset, setSeasonalOnset] = useState<TriDosha>("SEMHA");
+  const [seasonalCurrent, setSeasonalCurrent] = useState<TriDosha>("VATA");
+  const [agePrinciple, setAgePrinciple] = useState<AgePrinciple>("ADULT");
+  const [timeOnset, setTimeOnset] = useState<TriDosha>("PITTA");
+  const [timeCurrent, setTimeCurrent] = useState<TriDosha>("VATA");
+  const [geoBirthplace, setGeoBirthplace] = useState<Dhatu>("PATHAVI");
+  const [geoCurrent, setGeoCurrent] = useState<Dhatu>("VAYO");
 
   // มูลเหตุการเกิดโรค (Cause of symptoms Checkboxes)
   const [causeFood, setCauseFood] = useState(false);
@@ -356,15 +371,30 @@ export function RecordTreatmentFormClient({
     };
   }, [selectedPatientId]);
 
+  // Check if patient already has an established DhatuPrinciple
+  const hasExistingDhatuPrinciple = useMemo(() => {
+    return Boolean(
+      currentPatient?.principle?.principalDhatu ||
+      currentPatient?.principle?.conceptionDhatu ||
+      currentPatient?.principle?.seasonalOnset
+    );
+  }, [currentPatient]);
+
   // Auto-fill from patient principle if available
   useEffect(() => {
-    if (!currentPatient) return;
-    if (currentPatient.principle?.principleDhatu) {
-      setPrincipalDhatu(currentPatient.principle.principleDhatu);
-    }
-    if (currentPatient.principle?.secondaryDhatu) {
-      setSecondaryDhatu(currentPatient.principle.secondaryDhatu);
-    }
+    if (!currentPatient?.principle) return;
+    const p = currentPatient.principle;
+    if (p.principalDhatu) setPrincipalDhatu(p.principalDhatu);
+    if (p.secondaryDhatu) setSecondaryDhatu(p.secondaryDhatu);
+    if (p.conceptionDhatu) setConceptionDhatu(p.conceptionDhatu);
+    if (p.conceptionCharacteristic) setConceptionCharacteristic(p.conceptionCharacteristic);
+    if (p.seasonalOnset) setSeasonalOnset(p.seasonalOnset);
+    if (p.seasonalCurrent) setSeasonalCurrent(p.seasonalCurrent);
+    if (p.agePrinciple) setAgePrinciple(p.agePrinciple);
+    if (p.timeOnset) setTimeOnset(p.timeOnset);
+    if (p.timeCurrent) setTimeCurrent(p.timeCurrent);
+    if (p.geoBirthplace) setGeoBirthplace(p.geoBirthplace);
+    if (p.geoCurrent) setGeoCurrent(p.geoCurrent);
   }, [currentPatient]);
 
   // Medicine add / remove
@@ -440,26 +470,30 @@ export function RecordTreatmentFormClient({
   ]);
 
   const composedDiagnosisElements = useMemo(() => {
+    const formatDhatu = (d?: Dhatu | null) => DHATU_OPTIONS.find((o) => o.value === d)?.label || d || "-";
+    const formatDosha = (t?: TriDosha | null) => TRIDOSHA_OPTIONS.find((o) => o.value === t)?.label || t || "-";
+    const formatAge = (a?: AgePrinciple | null) => AGE_OPTIONS.find((o) => o.value === a)?.label || a || "-";
+
     return [
-      `ธาตุสมุฏฐาน: ปฏิสนธิตอนเกิด [${dhatuBirth}], ปฏิสนธิลักษณะ [${dhatuTrait}]`,
-      `อุตุสมุฏฐาน: เริ่มป่วย [${utuIllness}], เมื่อพบแพทย์ [${utuVisit}]`,
-      `อายุสมุฏฐาน: [${agePrinciple}]`,
-      `กาลสมุฏฐาน: กำเริบ [${kalaAggravate}], เมื่อพบแพทย์ [${kalaVisit}]`,
-      `ประเทศสมุฏฐาน: ภูมิลำเนา [${prathetBirth}], ปัจจุบัน [${prathetPresent}]`,
+      `ธาตุสมุฏฐาน: กำเนิด [${formatDhatu(conceptionDhatu)}], ลักษณะ [${formatDosha(conceptionCharacteristic)}]`,
+      `อุตุสมุฏฐาน: เริ่มป่วย [${formatDosha(seasonalOnset)}], พบแพทย์ [${formatDosha(seasonalCurrent)}]`,
+      `อายุสมุฏฐาน: [${formatAge(agePrinciple)}]`,
+      `กาลสมุฏฐาน: กำเริบ [${formatDosha(timeOnset)}], พบแพทย์ [${formatDosha(timeCurrent)}]`,
+      `ประเทศสมุฏฐาน: ภูมิลำเนา [${formatDhatu(geoBirthplace)}], ปัจจุบัน [${formatDhatu(geoCurrent)}]`,
       diagnosisElements ? `สมุฏฐานธาตุพิการ: ${diagnosisElements}` : "",
     ]
       .filter(Boolean)
       .join(" | ");
   }, [
-    dhatuBirth,
-    dhatuTrait,
-    utuIllness,
-    utuVisit,
+    conceptionDhatu,
+    conceptionCharacteristic,
+    seasonalOnset,
+    seasonalCurrent,
     agePrinciple,
-    kalaAggravate,
-    kalaVisit,
-    prathetBirth,
-    prathetPresent,
+    timeOnset,
+    timeCurrent,
+    geoBirthplace,
+    geoCurrent,
     diagnosisElements,
   ]);
 
@@ -553,15 +587,19 @@ export function RecordTreatmentFormClient({
         followup: followup.trim() || undefined,
         painScoreBefore: painScoreBefore,
         painScoreAfter: painScoreAfter,
-        principle: {
-          principleDhatu: principalDhatu,
-          secondaryDhatu: secondaryDhatu,
-          elementaryPrinciples: `ปฏิสนธิ/ตอนเกิด: ${dhatuBirth}, ปฏิสนธิลักษณะ: ${dhatuTrait}`,
-          seasonalPrinciples: `เมื่อเริ่มเจ็บป่วย: ${utuIllness}, เมื่อมาพบแพทย์: ${utuVisit}`,
-          agePrinciples: agePrinciple,
-          timePrinciples: `เมื่ออาการกำเริบ: ${kalaAggravate}, เมื่อมาพบแพทย์: ${kalaVisit}`,
-          geographicPrinciples: `ภูมิลำเนา: ${prathetBirth}, ปัจจุบัน: ${prathetPresent}`,
-        },
+        principle: (!hasExistingDhatuPrinciple || formMode === "FIRST_VISIT") ? {
+          principalDhatu,
+          secondaryDhatu,
+          conceptionDhatu,
+          conceptionCharacteristic,
+          seasonalOnset,
+          seasonalCurrent,
+          agePrinciple,
+          timeOnset,
+          timeCurrent,
+          geoBirthplace,
+          geoCurrent,
+        } : undefined,
         healthProfile: {
           presentHistory: presentHistory.trim() || undefined,
           underlyingDisease: hasUnderlyingDisease ? underlyingDiseaseDetails : "ปฏิเสธโรคประจำตัว",
@@ -844,73 +882,93 @@ export function RecordTreatmentFormClient({
 
         {/* ธาตุสมุฏฐาน (Elementary principles) Checkboxes / Radios */}
         <div className="bg-clinic-bg/40 p-4 rounded-control border border-clinic-line space-y-3">
-          <h3 className="font-bold text-xs text-clinic-primary-deep">
-            ธาตุสมุฏฐาน (Elementary principles)
-          </h3>
-
-          {/* ธาตุเจ้าเรือนหลัก */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-clinic-ink">
-              ธาตุเจ้าเรือนหลัก A Principal Dhatu - chao - ruan:
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              {[
-                "ปถวี ดิน Pathavi Dhatu",
-                "อาโป น้ำ Apo Dhatu",
-                "วาโย ลม Vayo Dhatu",
-                "เตโช ไฟ Techo Dhatu",
-              ].map((item) => (
-                <label
-                  key={item}
-                  className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${principalDhatu === item
-                      ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
-                      : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="principalDhatu"
-                    checked={principalDhatu === item}
-                    onChange={() => setPrincipalDhatu(item)}
-                    className="accent-clinic-primary"
-                  />
-                  <span>{item}</span>
-                </label>
-              ))}
-            </div>
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-xs text-clinic-primary-deep">
+              ธาตุสมุฏฐาน (Elementary principles)
+            </h3>
+            {hasExistingDhatuPrinciple && (
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                ✓ บันทึกธาตุประจำตัวแล้ว (อ้างอิงจากเวชระเบียน)
+              </span>
+            )}
           </div>
 
-          {/* ธาตุเจ้าเรือนรอง */}
-          <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
-            <label className="block text-xs font-semibold text-clinic-ink">
-              ธาตุเจ้าเรือนรอง A secondary Dhatu - chao - ruan:
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              {[
-                "ปถวี ดิน Pathavi Dhatu",
-                "อาโป น้ำ Apo Dhatu",
-                "วาโย ลม Vayo Dhatu",
-                "เตโช ไฟ Techo Dhatu",
-              ].map((item) => (
-                <label
-                  key={item}
-                  className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${secondaryDhatu === item
-                      ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
-                      : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="secondaryDhatu"
-                    checked={secondaryDhatu === item}
-                    onChange={() => setSecondaryDhatu(item)}
-                    className="accent-clinic-primary"
-                  />
-                  <span>{item}</span>
-                </label>
-              ))}
+          {hasExistingDhatuPrinciple && formMode === "CONTINUED_VISIT" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white rounded border border-clinic-line text-xs">
+              <div>
+                <span className="text-clinic-ink-soft block text-[11px]">ธาตุเจ้าเรือนหลัก (Principal Dhatu):</span>
+                <strong className="text-sm text-clinic-primary-deep">
+                  {DHATU_OPTIONS.find((o) => o.value === principalDhatu)?.label || principalDhatu}
+                </strong>
+              </div>
+              <div>
+                <span className="text-clinic-ink-soft block text-[11px]">ธาตุเจ้าเรือนรอง (Secondary Dhatu):</span>
+                <strong className="text-sm text-clinic-primary-deep">
+                  {DHATU_OPTIONS.find((o) => o.value === secondaryDhatu)?.label || secondaryDhatu}
+                </strong>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* ธาตุเจ้าเรือนหลัก */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-clinic-ink">
+                  ธาตุเจ้าเรือนหลัก (Principal Dhatu - chao - ruan):
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  {DHATU_OPTIONS.map((item) => (
+                    <label
+                      key={item.value}
+                      className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
+                        principalDhatu === item.value
+                          ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
+                          : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="principalDhatu"
+                        value={item.value}
+                        checked={principalDhatu === item.value}
+                        onChange={() => setPrincipalDhatu(item.value)}
+                        className="accent-clinic-primary"
+                      />
+                      <span>{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* ธาตุเจ้าเรือนรอง */}
+              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
+                <label className="block text-xs font-semibold text-clinic-ink">
+                  ธาตุเจ้าเรือนรอง (Secondary Dhatu - chao - ruan):
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  {DHATU_OPTIONS.map((item) => (
+                    <label
+                      key={item.value}
+                      className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
+                        secondaryDhatu === item.value
+                          ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
+                          : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="secondaryDhatu"
+                        value={item.value}
+                        checked={secondaryDhatu === item.value}
+                        onChange={() => setSecondaryDhatu(item.value)}
+                        className="accent-clinic-primary"
+                      />
+                      <span>{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* อาการสำคัญ (Chief Complaint) */}
@@ -1445,187 +1503,261 @@ export function RecordTreatmentFormClient({
 
         {/* ผลการวิเคราะห์สมุฏฐาน (Principles for diagnosis) */}
         <div className="bg-clinic-bg/40 p-4 rounded-control border border-clinic-line space-y-4 text-xs">
-          <h3 className="font-bold text-xs text-clinic-primary-deep">
-            ผลการวิเคราะห์สมุฏฐาน (Principles for diagnosis)
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-xs text-clinic-primary-deep">
+              ผลการวิเคราะห์สมุฏฐาน (Principles for diagnosis)
+            </h3>
+            {hasExistingDhatuPrinciple && (
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                ✓ มีข้อมูลธาตุสมุฏฐานประจำตัวแล้ว (ไม่ต้องเลือกซ้ำ)
+              </span>
+            )}
+          </div>
 
-          {/* 1. ธาตุสมุฏฐาน */}
-          <div className="space-y-2">
-            <span className="font-bold text-clinic-ink block">● ธาตุสมุฏฐาน (Elementary principles)</span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิ/ตอนเกิด:</span>
-                <div className="flex flex-wrap gap-2">
-                  {["ปถวี Pathavi", "อาโป Apo", "วาโย Vayo", "เตโช Techo"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="dhatuBirth"
-                        checked={dhatuBirth === item}
-                        onChange={() => setDhatuBirth(item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
+          {hasExistingDhatuPrinciple && formMode === "CONTINUED_VISIT" ? (
+            <div className="bg-white p-4 rounded border border-clinic-line space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
+                  <span className="font-bold text-clinic-primary-deep block mb-1">● ธาตุสมุฏฐาน (Elementary):</span>
+                  <div className="text-[11px] text-clinic-ink space-y-0.5">
+                    <div>กำเนิด/ตอนเกิด: <strong>{DHATU_OPTIONS.find((o) => o.value === conceptionDhatu)?.label || conceptionDhatu}</strong></div>
+                    <div>ปฏิสนธิลักษณะ: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === conceptionCharacteristic)?.label || conceptionCharacteristic}</strong></div>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
+                  <span className="font-bold text-clinic-primary-deep block mb-1">● อุตุสมุฏฐาน (Seasonal):</span>
+                  <div className="text-[11px] text-clinic-ink space-y-0.5">
+                    <div>เมื่อเริ่มเจ็บป่วย: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === seasonalOnset)?.label || seasonalOnset}</strong></div>
+                    <div>เมื่อมาพบแพทย์: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === seasonalCurrent)?.label || seasonalCurrent}</strong></div>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
+                  <span className="font-bold text-clinic-primary-deep block mb-1">● อายุสมุฏฐาน (Age):</span>
+                  <div className="text-[11px] text-clinic-ink">
+                    ช่วงวัย: <strong>{AGE_OPTIONS.find((o) => o.value === agePrinciple)?.label || agePrinciple}</strong>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิลักษณะ:</span>
-                <div className="flex flex-wrap gap-3">
-                  {["เสมหะ Semha", "วาตะ Vata", "ปิตตะ Pitta"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="dhatuTrait"
-                        checked={dhatuTrait === item}
-                        onChange={() => setDhatuTrait(item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
+                  <span className="font-bold text-clinic-primary-deep block mb-1">● กาลสมุฏฐาน (Time):</span>
+                  <div className="text-[11px] text-clinic-ink space-y-0.5">
+                    <div>เมื่ออาการกำเริบ: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === timeOnset)?.label || timeOnset}</strong></div>
+                    <div>เมื่อมาพบแพทย์: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === timeCurrent)?.label || timeCurrent}</strong></div>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
+                  <span className="font-bold text-clinic-primary-deep block mb-1">● ประเทศสมุฏฐาน (Geographical):</span>
+                  <div className="text-[11px] text-clinic-ink space-y-0.5">
+                    <div>ภูมิลำเนาเกิด: <strong>{DHATU_OPTIONS.find((o) => o.value === geoBirthplace)?.label || geoBirthplace}</strong></div>
+                    <div>ที่อยู่ปัจจุบัน: <strong>{DHATU_OPTIONS.find((o) => o.value === geoCurrent)?.label || geoCurrent}</strong></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* 1. ธาตุสมุฏฐาน */}
+              <div className="space-y-2">
+                <span className="font-bold text-clinic-ink block">● ธาตุสมุฏฐาน (Elementary principles)</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิ/ตอนเกิด (Dhatu):</span>
+                    <div className="flex flex-wrap gap-2">
+                      {DHATU_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="conceptionDhatu"
+                            value={item.value}
+                            checked={conceptionDhatu === item.value}
+                            onChange={() => setConceptionDhatu(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
 
-          {/* 2. อุตุสมุฏฐาน */}
-          <div className="space-y-2 pt-2 border-t border-clinic-line/60">
-            <span className="font-bold text-clinic-ink block">● อุตุสมุฏฐาน (Seasonal principles)</span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อเริ่มเจ็บป่วย:</span>
-                <div className="flex flex-wrap gap-3">
-                  {["เสมหะ Semha", "วาตะ Vata", "ปิตตะ Pitta"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิลักษณะ (TriDosha):</span>
+                    <div className="flex flex-wrap gap-3">
+                      {TRIDOSHA_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="conceptionCharacteristic"
+                            value={item.value}
+                            checked={conceptionCharacteristic === item.value}
+                            onChange={() => setConceptionCharacteristic(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. อุตุสมุฏฐาน */}
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+                <span className="font-bold text-clinic-ink block">● อุตุสมุฏฐาน (Seasonal principles)</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อเริ่มเจ็บป่วย:</span>
+                    <div className="flex flex-wrap gap-3">
+                      {TRIDOSHA_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="seasonalOnset"
+                            value={item.value}
+                            checked={seasonalOnset === item.value}
+                            onChange={() => setSeasonalOnset(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</span>
+                    <div className="flex flex-wrap gap-3">
+                      {TRIDOSHA_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="seasonalCurrent"
+                            value={item.value}
+                            checked={seasonalCurrent === item.value}
+                            onChange={() => setSeasonalCurrent(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. อายุสมุฏฐาน */}
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+                <span className="font-bold text-clinic-ink block">● อายุสมุฏฐาน (Age principles)</span>
+                <div className="flex flex-wrap gap-4 pl-3">
+                  {AGE_OPTIONS.map((item) => (
+                    <label key={item.value} className="inline-flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="radio"
-                        name="utuIllness"
-                        checked={utuIllness === item}
-                        onChange={() => setUtuIllness(item)}
+                        name="agePrinciple"
+                        value={item.value}
+                        checked={agePrinciple === item.value}
+                        onChange={() => setAgePrinciple(item.value)}
+                        className="accent-clinic-primary"
                       />
-                      <span>{item}</span>
+                      <span>{item.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</span>
-                <div className="flex flex-wrap gap-3">
-                  {["เสมหะ Semha", "วาตะ Vata", "ปิตตะ Pitta"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="utuVisit"
-                        checked={utuVisit === item}
-                        onChange={() => setUtuVisit(item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+              {/* 4. กาลสมุฏฐาน */}
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+                <span className="font-bold text-clinic-ink block">● กาลสมุฏฐาน (Time principles)</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่ออาการกำเริบ:</span>
+                    <div className="flex flex-wrap gap-3">
+                      {TRIDOSHA_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="timeOnset"
+                            value={item.value}
+                            checked={timeOnset === item.value}
+                            onChange={() => setTimeOnset(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
 
-          {/* 3. อายุสมุฏฐาน */}
-          <div className="space-y-2 pt-2 border-t border-clinic-line/60">
-            <span className="font-bold text-clinic-ink block">● อายุสมุฏฐาน (Age principles)</span>
-            <div className="flex flex-wrap gap-4 pl-3">
-              {["ปฐมวัย Child", "มัชฌิมวัย (Adult)", "ปัจฉิมวัย (Aging)"].map((item) => (
-                <label key={item} className="inline-flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="agePrinciple"
-                    checked={agePrinciple === item}
-                    onChange={() => setAgePrinciple(item)}
-                  />
-                  <span>{item}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* 4. กาลสมุฏฐาน */}
-          <div className="space-y-2 pt-2 border-t border-clinic-line/60">
-            <span className="font-bold text-clinic-ink block">● กาลสมุฏฐาน (Time principles)</span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่ออาการกำเริบ:</span>
-                <div className="flex flex-wrap gap-3">
-                  {["เสมหะ Semha", "วาตะ Vata", "ปิตตะ Pitta"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="kalaAggravate"
-                        checked={kalaAggravate === item}
-                        onChange={() => setKalaAggravate(item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</span>
+                    <div className="flex flex-wrap gap-3">
+                      {TRIDOSHA_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="timeCurrent"
+                            value={item.value}
+                            checked={timeCurrent === item.value}
+                            onChange={() => setTimeCurrent(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</span>
-                <div className="flex flex-wrap gap-3">
-                  {["เสมหะ Semha", "วาตะ Vata", "ปิตตะ Pitta"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="kalaVisit"
-                        checked={kalaVisit === item}
-                        onChange={() => setKalaVisit(item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+              {/* 5. ประเทศสมุฏฐาน */}
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+                <span className="font-bold text-clinic-ink block">● ประเทศสมุฏฐาน (Geographical principles)</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ภูมิลำเนา (Place of birth):</span>
+                    <div className="flex flex-wrap gap-2">
+                      {DHATU_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="geoBirthplace"
+                            value={item.value}
+                            checked={geoBirthplace === item.value}
+                            onChange={() => setGeoBirthplace(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
 
-          {/* 5. ประเทศสมุฏฐาน */}
-          <div className="space-y-2 pt-2 border-t border-clinic-line/60">
-            <span className="font-bold text-clinic-ink block">● ประเทศสมุฏฐาน (Geographical principles)</span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">ภูมิลำเนา (Place of birth):</span>
-                <div className="flex flex-wrap gap-2">
-                  {["ปถวี Pathavi", "อาโป Apo", "วาโย Vayo", "เตโช Techo"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="prathetBirth"
-                        checked={prathetBirth === item}
-                        onChange={() => setPrathetBirth(item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
+                  <div>
+                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ปัจจุบัน (Present address):</span>
+                    <div className="flex flex-wrap gap-2">
+                      {DHATU_OPTIONS.map((item) => (
+                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="geoCurrent"
+                            value={item.value}
+                            checked={geoCurrent === item.value}
+                            onChange={() => setGeoCurrent(item.value)}
+                            className="accent-clinic-primary"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <span className="text-[11px] text-clinic-ink-soft block mb-1">ปัจจุบัน (Present address):</span>
-                <div className="flex flex-wrap gap-2">
-                  {["ปถวี Pathavi", "อาโป Apo", "วาโย Vayo", "เตโช Techo"].map((item) => (
-                    <label key={item} className="inline-flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="prathetPresent"
-                        checked={prathetPresent === item}
-                        onChange={() => setPrathetPresent(item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* มูลเหตุการเกิดโรค (Cause of symptoms Checkboxes) */}

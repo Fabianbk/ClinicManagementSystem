@@ -392,6 +392,115 @@ export default async function PatientDetailPage({
             </div>
           </dl>
         </div>
+
+        {/* Dhatu Principle Card */}
+        <div className="bg-white border border-clinic-line rounded-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-clinic-line pb-2.5">
+            <h2 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-clinic-primary" />
+              <span>ธาตุสมุฏฐานประจำตัวผู้ป่วย (Dhatu Principle)</span>
+            </h2>
+            {patient.principle ? (
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                ประเมินแล้ว
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-clinic-ink-soft bg-slate-100 px-2.5 py-0.5 rounded-full">
+                ยังไม่มีข้อมูลการประเมิน
+              </span>
+            )}
+          </div>
+
+          {patient.principle ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-2">
+                <span className="font-bold text-clinic-primary-deep block">ธาตุเจ้าเรือน (Dhatu Chao Ruan)</span>
+                <div>
+                  <span className="text-clinic-ink-soft">ธาตุเจ้าเรือนหลัก:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {patient.principle.principalDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                     patient.principle.principalDhatu === "APO" ? "อาโป (น้ำ)" :
+                     patient.principle.principalDhatu === "VAYO" ? "วาโย (ลม)" :
+                     patient.principle.principalDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                     patient.principle.principalDhatu || "-"}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-clinic-ink-soft">ธาตุเจ้าเรือนรอง:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {patient.principle.secondaryDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                     patient.principle.secondaryDhatu === "APO" ? "อาโป (น้ำ)" :
+                     patient.principle.secondaryDhatu === "VAYO" ? "วาโย (ลม)" :
+                     patient.principle.secondaryDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                     patient.principle.secondaryDhatu || "-"}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-2">
+                <span className="font-bold text-clinic-primary-deep block">ธาตุสมุฏฐาน (Conception)</span>
+                <div>
+                  <span className="text-clinic-ink-soft">ปฏิสนธิตอนเกิด:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {patient.principle.conceptionDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                     patient.principle.conceptionDhatu === "APO" ? "อาโป (น้ำ)" :
+                     patient.principle.conceptionDhatu === "VAYO" ? "วาโย (ลม)" :
+                     patient.principle.conceptionDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                     patient.principle.conceptionDhatu || "-"}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-clinic-ink-soft">ปฏิสนธิลักษณะ:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {patient.principle.conceptionCharacteristic === "SEMHA" ? "เสมหะ" :
+                     patient.principle.conceptionCharacteristic === "VATA" ? "วาตะ" :
+                     patient.principle.conceptionCharacteristic === "PITTA" ? "ปิตตะ" :
+                     patient.principle.conceptionCharacteristic || "-"}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-2">
+                <span className="font-bold text-clinic-primary-deep block">อุตุสมุฏฐาน & อายุสมุฏฐาน</span>
+                <div>
+                  <span className="text-clinic-ink-soft">เริ่มป่วย / พบแพทย์:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {(patient.principle.seasonalOnset === "SEMHA" ? "เสมหะ" : patient.principle.seasonalOnset === "VATA" ? "วาตะ" : patient.principle.seasonalOnset === "PITTA" ? "ปิตตะ" : "-")} → {(patient.principle.seasonalCurrent === "SEMHA" ? "เสมหะ" : patient.principle.seasonalCurrent === "VATA" ? "วาตะ" : patient.principle.seasonalCurrent === "PITTA" ? "ปิตตะ" : "-")}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-clinic-ink-soft">ช่วงวัย:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {patient.principle.agePrinciple === "CHILD" ? "ปฐมวัย (วัยเด็ก)" :
+                     patient.principle.agePrinciple === "ADULT" ? "มัชฌิมวัย (วัยผู้ใหญ่)" :
+                     patient.principle.agePrinciple === "AGING" ? "ปัจฉิมวัย (วัยสูงอายุ)" :
+                     patient.principle.agePrinciple || "-"}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-2">
+                <span className="font-bold text-clinic-primary-deep block">กาลสมุฏฐาน & ประเทศสมุฏฐาน</span>
+                <div>
+                  <span className="text-clinic-ink-soft">กำเริบ / พบแพทย์:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {(patient.principle.timeOnset === "SEMHA" ? "เสมหะ" : patient.principle.timeOnset === "VATA" ? "วาตะ" : patient.principle.timeOnset === "PITTA" ? "ปิตตะ" : "-")} → {(patient.principle.timeCurrent === "SEMHA" ? "เสมหะ" : patient.principle.timeCurrent === "VATA" ? "วาตะ" : patient.principle.timeCurrent === "PITTA" ? "ปิตตะ" : "-")}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-clinic-ink-soft">ภูมิลำเนา / ปัจจุบัน:</span>{" "}
+                  <strong className="text-clinic-ink">
+                    {(patient.principle.geoBirthplace === "PATHAVI" ? "ปถวี (ดิน)" : patient.principle.geoBirthplace === "APO" ? "อาโป (น้ำ)" : patient.principle.geoBirthplace === "VAYO" ? "วาโย (ลม)" : patient.principle.geoBirthplace === "TECHO" ? "เตโช (ไฟ)" : "-")} → {(patient.principle.geoCurrent === "PATHAVI" ? "ปถวี (ดิน)" : patient.principle.geoCurrent === "APO" ? "อาโป (น้ำ)" : patient.principle.geoCurrent === "VAYO" ? "วาโย (ลม)" : patient.principle.geoCurrent === "TECHO" ? "เตโช (ไฟ)" : "-")}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-clinic-ink-soft italic">
+              จะถูกประเมินและบันทึกอัตโนมัติเมื่อแพทย์ทำการบันทึกเวชระเบียนการรักษาครั้งแรก (First Visit)
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Emergency Contacts List */}

@@ -206,25 +206,49 @@ export default async function PatientProfilePage() {
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">ธาตุเจ้าเรือนหลัก</dt>
                 <dd className="font-bold text-clinic-primary-deep text-right">
-                  {patient.principle?.principleDhatu || "รอการตรวจวิเคราะห์"}
+                  {patient.principle?.principalDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                   patient.principle?.principalDhatu === "APO" ? "อาโป (น้ำ)" :
+                   patient.principle?.principalDhatu === "VAYO" ? "วาโย (ลม)" :
+                   patient.principle?.principalDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                   patient.principle?.principalDhatu || "รอการตรวจวิเคราะห์"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">ธาตุเจ้าเรือนรอง</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.principle?.secondaryDhatu || "-"}
+                  {patient.principle?.secondaryDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                   patient.principle?.secondaryDhatu === "APO" ? "อาโป (น้ำ)" :
+                   patient.principle?.secondaryDhatu === "VAYO" ? "วาโย (ลม)" :
+                   patient.principle?.secondaryDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                   patient.principle?.secondaryDhatu || "-"}
+                </dd>
+              </div>
+              <div className="py-2.5 flex justify-between">
+                <dt className="text-clinic-ink-soft">ธาตุสมุฏฐาน (ตอนเกิด)</dt>
+                <dd className="font-semibold text-clinic-ink text-right">
+                  {patient.principle?.conceptionDhatu === "PATHAVI" ? "ปถวี (ดิน)" :
+                   patient.principle?.conceptionDhatu === "APO" ? "อาโป (น้ำ)" :
+                   patient.principle?.conceptionDhatu === "VAYO" ? "วาโย (ลม)" :
+                   patient.principle?.conceptionDhatu === "TECHO" ? "เตโช (ไฟ)" :
+                   patient.principle?.conceptionDhatu || "-"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
                 <dt className="text-clinic-ink-soft">สมุฏฐานอายุ</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.principle?.agePrinciples || "-"}
+                  {patient.principle?.agePrinciple === "CHILD" ? "ปฐมวัย (เด็ก)" :
+                   patient.principle?.agePrinciple === "ADULT" ? "มัชฌิมวัย (ผู้ใหญ่)" :
+                   patient.principle?.agePrinciple === "AGING" ? "ปัจฉิมวัย (สูงอายุ)" :
+                   patient.principle?.agePrinciple || "-"}
                 </dd>
               </div>
               <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">สมุฏฐานกาล</dt>
+                <dt className="text-clinic-ink-soft">สมุฏฐานกาล (พบแพทย์)</dt>
                 <dd className="font-semibold text-clinic-ink text-right">
-                  {patient.principle?.timePrinciples || "-"}
+                  {patient.principle?.timeCurrent === "SEMHA" ? "เสมหะ" :
+                   patient.principle?.timeCurrent === "VATA" ? "วาตะ" :
+                   patient.principle?.timeCurrent === "PITTA" ? "ปิตตะ" :
+                   patient.principle?.timeCurrent || "-"}
                 </dd>
               </div>
             </dl>
