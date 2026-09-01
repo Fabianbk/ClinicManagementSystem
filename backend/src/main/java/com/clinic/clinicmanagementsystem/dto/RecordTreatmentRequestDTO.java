@@ -1,5 +1,6 @@
 package com.clinic.clinicmanagementsystem.dto;
 
+import com.clinic.clinicmanagementsystem.enums.SymptomCause;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -39,8 +41,10 @@ public class RecordTreatmentRequestDTO {
     private Double weight;
     private Double bmi;
 
+    private Set<SymptomCause> causesOfSymptoms;
+
     @Size(max = 65535)
-    private String causeOfSymptoms;
+    private String causeOfSymptomsOther;
 
     @Size(max = 65535)
     private String summaryOfSickness;

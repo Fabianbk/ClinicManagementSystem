@@ -12,6 +12,7 @@ import type {
   Dhatu,
   TriDosha,
   AgePrinciple,
+  SymptomCause,
 } from "@/lib/types";
 
 export const DHATU_OPTIONS: { value: Dhatu; label: string; sub: string }[] = [
@@ -31,6 +32,18 @@ export const AGE_OPTIONS: { value: AgePrinciple; label: string; sub: string }[] 
   { value: "CHILD", label: "ปฐมวัย", sub: "วัยเด็ก (0-16 ปี)" },
   { value: "ADULT", label: "มัชฌิมวัย", sub: "วัยผู้ใหญ่ (16-32 ปี)" },
   { value: "AGING", label: "ปัจฉิมวัย", sub: "วัยสูงอายุ (32 ปีขึ้นไป)" },
+];
+
+export const SYMPTOM_CAUSE_OPTIONS: { value: SymptomCause; label: string; sub: string }[] = [
+  { value: "FOOD", label: "อาหาร", sub: "Food" },
+  { value: "POSTURE", label: "อิริยาบถ", sub: "Position/Posture" },
+  { value: "WEATHER", label: "ความร้อน-ความเย็น", sub: "Weather/Temperature" },
+  { value: "FASTING_LACK_SLEEP", label: "อดนอน อดข้าว อดน้ำ", sub: "Fasting & lack of sleep" },
+  { value: "SUPPRESS_URGES", label: "กลั้นอุจจาระปัสสาวะ", sub: "Incontinence feces & urinary" },
+  { value: "OVEREXERTION", label: "ทำงานเกินกำลัง", sub: "Work hard/Overexertion" },
+  { value: "SADNESS", label: "ความเศร้าโศกเสียใจ", sub: "Sadness" },
+  { value: "ANGER", label: "ความโกรธ", sub: "Wrath/Anger" },
+  { value: "OTHER", label: "อื่นๆ", sub: "Other" },
 ];
 
 interface RecordTreatmentFormClientProps {
@@ -574,7 +587,18 @@ export function RecordTreatmentFormClient({
         height: height ? Number(height) : undefined,
         weight: weight ? Number(weight) : undefined,
         bmi: bmiValue ? Number(bmiValue) : undefined,
-        causeOfSymptoms: composedCauseOfSymptoms || undefined,
+        causesOfSymptoms: [
+          ...(causeFood ? ["FOOD" as SymptomCause] : []),
+          ...(causePosition ? ["POSTURE" as SymptomCause] : []),
+          ...(causeWeather ? ["WEATHER" as SymptomCause] : []),
+          ...(causeFastingSleep ? ["FASTING_LACK_SLEEP" as SymptomCause] : []),
+          ...(causeIncontinence ? ["SUPPRESS_URGES" as SymptomCause] : []),
+          ...(causeWorkHard ? ["OVEREXERTION" as SymptomCause] : []),
+          ...(causeSadness ? ["SADNESS" as SymptomCause] : []),
+          ...(causeWrath ? ["ANGER" as SymptomCause] : []),
+          ...(causeOther.trim() ? ["OTHER" as SymptomCause] : []),
+        ],
+        causeOfSymptomsOther: causeOther.trim() || undefined,
         summaryOfSickness: summaryOfSickness.trim() || undefined,
         diagnosisElements: diagnosisElements.trim() || undefined,
         ttmDiagnosis: ttmDiagnosis.trim() || undefined,

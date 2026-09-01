@@ -9,7 +9,20 @@ import type {
   MedicineResponseDTO,
   RecordTreatmentRequestDTO,
   RecordTreatmentMedicineResponseDTO,
+  SymptomCause,
 } from "@/lib/types";
+
+export const SYMPTOM_CAUSE_OPTIONS: { value: SymptomCause; label: string; sub: string }[] = [
+  { value: "FOOD", label: "อาหาร", sub: "Food" },
+  { value: "POSTURE", label: "อิริยาบถ", sub: "Position/Posture" },
+  { value: "WEATHER", label: "ความร้อน-ความเย็น", sub: "Weather/Temperature" },
+  { value: "FASTING_LACK_SLEEP", label: "อดนอน อดข้าว อดน้ำ", sub: "Fasting & lack of sleep" },
+  { value: "SUPPRESS_URGES", label: "กลั้นอุจจาระปัสสาวะ", sub: "Incontinence feces & urinary" },
+  { value: "OVEREXERTION", label: "ทำงานเกินกำลัง", sub: "Work hard/Overexertion" },
+  { value: "SADNESS", label: "ความเศร้าโศกเสียใจ", sub: "Sadness" },
+  { value: "ANGER", label: "ความโกรธ", sub: "Wrath/Anger" },
+  { value: "OTHER", label: "อื่นๆ", sub: "Other" },
+];
 
 interface RecordTreatmentEditClientProps {
   treatment: RecordTreatmentResponseDTO;
@@ -50,8 +63,23 @@ export function RecordTreatmentEditClient({
   const [ttmDiagnosis, setTtmDiagnosis] = useState(treatment.ttmDiagnosis || "");
   const [modernDiagnosis, setModernDiagnosis] = useState(treatment.modernDiagnosis || "");
   const [diagnosisElements, setDiagnosisElements] = useState(treatment.diagnosisElements || "");
-  const [causeOfSymptoms, setCauseOfSymptoms] = useState(treatment.causeOfSymptoms || "");
+  const [selectedCauses, setSelectedCauses] = useState<Set<SymptomCause>>(() => {
+    return new Set(treatment.causesOfSymptoms || []);
+  });
+  const [causeOther, setCauseOther] = useState(treatment.causeOfSymptomsOther || "");
   const [summaryOfSickness, setSummaryOfSickness] = useState(treatment.summaryOfSickness || "");
+
+  const toggleCause = (cause: SymptomCause) => {
+    setSelectedCauses((prev) => {
+      const next = new Set(prev);
+      if (next.has(cause)) {
+        next.delete(cause);
+      } else {
+        next.add(cause);
+      }
+      return next;
+    });
+  };
 
   const [treatmentPlan, setTreatmentPlan] = useState(treatment.treatmentPlan || "");
   const [treatmentProgram, setTreatmentProgram] = useState(treatment.treatmentProgram || "");
@@ -159,7 +187,8 @@ export function RecordTreatmentEditClient({
         height: height ? Number(height) : undefined,
         weight: weight ? Number(weight) : undefined,
         bmi: bmiValue ? Number(bmiValue) : undefined,
-        causeOfSymptoms: causeOfSymptoms.trim() || undefined,
+        causesOfSymptoms: Array.from(selectedCauses),
+        causeOfSymptomsOther: selectedCauses.has("OTHER") ? causeOther.trim() || undefined : undefined,
         summaryOfSickness: summaryOfSickness.trim() || undefined,
         diagnosisElements: diagnosisElements.trim() || undefined,
         ttmDiagnosis: ttmDiagnosis.trim() || undefined,
@@ -391,6 +420,66 @@ export function RecordTreatmentEditClient({
               onChange={(e) => setModernDiagnosis(e.target.value)}
               className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
             />
+          </div>
+        </div>
+
+        {/* Cause of Symptoms Checkboxes */}
+        <div className="pt-3 border-t border-clinic-line space-y-2">
+          <label className="block text-xs font-bold text-clinic-ink">
+            มูลเหตุการเกิดโรค 8 ประการ (Cause of Symptoms)
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {SYMPTOM_CAUSE_OPTIONS.filter((opt) => opt.value !== "OTHER").map((opt) => (
+              <label
+                key={opt.value}
+                className={`flex items-start gap-2 p-2.5 rounded-control border text-xs cursor-pointer transition-colors ${
+                  selectedCauses.has(opt.value)
+                    ? "bg-clinic-primary/10 border-clinic-primary font-semibold text-clinic-primary-deep"
+                    : "bg-clinic-bg/40 border-clinic-line text-clinic-ink hover:bg-clinic-bg"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedCauses.has(opt.value)}
+                  onChange={() => toggleCause(opt.value)}
+                  className="mt-0.5 rounded text-clinic-primary focus:ring-clinic-primary"
+                />
+                <div>
+                  <div>{opt.label}</div>
+                  <div className="text-[10px] text-clinic-ink-soft">{opt.sub}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {/* Other Cause Checkbox & Input */}
+          <div className="pt-2">
+            <label
+              className={`flex items-start gap-2 p-2.5 rounded-control border text-xs cursor-pointer transition-colors ${
+                selectedCauses.has("OTHER")
+                  ? "bg-clinic-primary/10 border-clinic-primary font-semibold text-clinic-primary-deep"
+                  : "bg-clinic-bg/40 border-clinic-line text-clinic-ink hover:bg-clinic-bg"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={selectedCauses.has("OTHER")}
+                onChange={() => toggleCause("OTHER")}
+                className="mt-0.5 rounded text-clinic-primary focus:ring-clinic-primary"
+              />
+              <span className="font-semibold">สาเหตุอื่นๆ (Other causes)</span>
+            </label>
+            {selectedCauses.has("OTHER") && (
+              <div className="mt-2 pl-6">
+                <input
+                  type="text"
+                  value={causeOther}
+                  onChange={(e) => setCauseOther(e.target.value)}
+                  placeholder="ระบุสาเหตุอื่นๆ เช่น อุบัติเหตุ..."
+                  className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-white"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

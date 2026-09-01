@@ -82,6 +82,17 @@ export type Dhatu = "PATHAVI" | "APO" | "VAYO" | "TECHO";
 export type TriDosha = "SEMHA" | "VATA" | "PITTA";
 export type AgePrinciple = "CHILD" | "ADULT" | "AGING";
 
+export type SymptomCause =
+  | "FOOD"
+  | "POSTURE"
+  | "WEATHER"
+  | "FASTING_LACK_SLEEP"
+  | "SUPPRESS_URGES"
+  | "OVEREXERTION"
+  | "SADNESS"
+  | "ANGER"
+  | "OTHER";
+
 export interface DhatuPrincipleRequestDTO {
   principalDhatu?: Dhatu;
   secondaryDhatu?: Dhatu;
@@ -332,7 +343,8 @@ export interface RecordTreatmentRequestDTO {
   height?: number;
   weight?: number;
   bmi?: number;
-  causeOfSymptoms?: string;
+  causesOfSymptoms?: SymptomCause[];
+  causeOfSymptomsOther?: string;
   summaryOfSickness?: string;
   diagnosisElements?: string;
   ttmDiagnosis?: string;
@@ -389,7 +401,8 @@ export interface RecordTreatmentResponseDTO {
   height: number | null;
   weight: number | null;
   bmi: number | null;
-  causeOfSymptoms: string | null;
+  causesOfSymptoms?: SymptomCause[] | null;
+  causeOfSymptomsOther?: string | null;
   summaryOfSickness: string | null;
   diagnosisElements: string | null;
   ttmDiagnosis: string | null;

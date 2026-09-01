@@ -23,6 +23,18 @@ function formatDateThaiFull(dateInput: string | Date | undefined): string {
   });
 }
 
+const SYMPTOM_CAUSE_MAP: Record<string, string> = {
+  FOOD: "อาหาร (Food)",
+  POSTURE: "อิริยาบถ (Position/Posture)",
+  WEATHER: "ความร้อน-ความเย็น (Weather/Temperature)",
+  FASTING_LACK_SLEEP: "อดนอน อดข้าว อดน้ำ (Fasting & lack of sleep)",
+  SUPPRESS_URGES: "กลั้นอุจจาระปัสสาวะ (Incontinence)",
+  OVEREXERTION: "ทำงานเกินกำลัง (Overexertion)",
+  SADNESS: "ความเศร้าโศกเสียใจ (Sadness)",
+  ANGER: "ความโกรธ (Wrath/Anger)",
+  OTHER: "อื่นๆ (Other)",
+};
+
 export function TreatmentDetailClient({
   treatment,
   patient,
@@ -269,10 +281,21 @@ export function TreatmentDetailClient({
               </div>
             )}
 
-            {treatment.causeOfSymptoms && (
-              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line">
-                <span className="font-bold text-clinic-ink">มูลเหตุการเกิดโรค (Cause of symptoms):</span>
-                <p className="text-clinic-ink mt-0.5">{treatment.causeOfSymptoms}</p>
+            {((treatment.causesOfSymptoms && treatment.causesOfSymptoms.length > 0) || treatment.causeOfSymptomsOther) && (
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-2">
+                <span className="font-bold text-clinic-ink block">มูลเหตุการเกิดโรค (Cause of symptoms):</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {treatment.causesOfSymptoms?.map((cause) => (
+                    <Badge key={cause} variant="default" className="text-xs bg-white border border-clinic-line text-clinic-primary-deep font-semibold">
+                      {SYMPTOM_CAUSE_MAP[cause] || cause}
+                    </Badge>
+                  ))}
+                </div>
+                {treatment.causeOfSymptomsOther && (
+                  <p className="text-xs text-clinic-ink-soft italic pt-0.5">
+                    หมายเหตุเพิ่มเติม: {treatment.causeOfSymptomsOther}
+                  </p>
+                )}
               </div>
             )}
           </div>

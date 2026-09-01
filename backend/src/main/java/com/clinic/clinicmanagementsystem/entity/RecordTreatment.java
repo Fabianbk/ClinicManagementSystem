@@ -1,5 +1,6 @@
 package com.clinic.clinicmanagementsystem.entity;
 
+import com.clinic.clinicmanagementsystem.enums.SymptomCause;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,7 +8,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -47,8 +50,17 @@ public class RecordTreatment {
     @Column(name = "bmi")
     private Double bmi;
 
-    @Column(name = "cause_of_symptoms", columnDefinition = "TEXT")
-    private String causeOfSymptoms;
+    @ElementCollection(targetClass = SymptomCause.class, fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "record_treatment_causes",
+            joinColumns = @JoinColumn(name = "record_treatment_id")
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cause", nullable = false, length = 50)
+    private Set<SymptomCause> causesOfSymptoms = new HashSet<>();
+
+    @Column(name = "cause_of_symptoms_other", columnDefinition = "TEXT")
+    private String causeOfSymptomsOther;
 
     @Column(name = "summary_of_sickness", columnDefinition = "TEXT")
     private String summaryOfSickness;

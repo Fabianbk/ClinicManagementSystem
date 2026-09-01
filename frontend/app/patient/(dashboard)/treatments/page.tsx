@@ -19,6 +19,18 @@ import {
   Star,
 } from "lucide-react";
 
+const SYMPTOM_CAUSE_MAP: Record<string, string> = {
+  FOOD: "อาหาร (Food)",
+  POSTURE: "อิริยาบถ (Position/Posture)",
+  WEATHER: "ความร้อน-ความเย็น (Weather/Temperature)",
+  FASTING_LACK_SLEEP: "อดนอน อดข้าว อดน้ำ (Fasting & lack of sleep)",
+  SUPPRESS_URGES: "กลั้นอุจจาระปัสสาวะ (Incontinence)",
+  OVEREXERTION: "ทำงานเกินกำลัง (Overexertion)",
+  SADNESS: "ความเศร้าโศกเสียใจ (Sadness)",
+  ANGER: "ความโกรธ (Wrath/Anger)",
+  OTHER: "อื่นๆ (Other)",
+};
+
 export default async function PatientTreatmentsPage() {
   const session = await getSession();
   if (!session || session.role !== "PATIENT") {
@@ -133,6 +145,23 @@ export default async function PatientTreatmentsPage() {
                             <strong className="text-clinic-primary">การวินิจฉัยแผนไทย:</strong>{" "}
                             <span className="text-clinic-ink font-semibold">{treatment.ttmDiagnosis}</span>
                           </p>
+                        )}
+                        {((treatment.causesOfSymptoms && treatment.causesOfSymptoms.length > 0) || treatment.causeOfSymptomsOther) && (
+                          <div className="pt-1 space-y-1">
+                            <span className="text-xs font-semibold text-clinic-ink-soft block">มูลเหตุเกิดโรค:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {treatment.causesOfSymptoms?.map((cause) => (
+                                <Badge key={cause} variant="outline" className="text-[10px] py-0 bg-white">
+                                  {SYMPTOM_CAUSE_MAP[cause] || cause}
+                                </Badge>
+                              ))}
+                            </div>
+                            {treatment.causeOfSymptomsOther && (
+                              <p className="text-[11px] text-clinic-ink-soft italic">
+                                ({treatment.causeOfSymptomsOther})
+                              </p>
+                            )}
+                          </div>
                         )}
                         {treatment.modernDiagnosis && (
                           <p className="text-xs">

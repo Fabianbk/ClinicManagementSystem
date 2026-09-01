@@ -1,5 +1,6 @@
 package com.clinic.clinicmanagementsystem.dto;
 
+import com.clinic.clinicmanagementsystem.enums.SymptomCause;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -23,7 +25,8 @@ public class RecordTreatmentResponseDTO {
     private Integer height;
     private Double weight;
     private Double bmi;
-    private String causeOfSymptoms;
+    private Set<SymptomCause> causesOfSymptoms;
+    private String causeOfSymptomsOther;
     private String summaryOfSickness;
     private String diagnosisElements;
     private String ttmDiagnosis;
