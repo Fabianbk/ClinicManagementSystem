@@ -60,6 +60,16 @@ export function RecordTreatmentEditClient({
   const [painScoreBefore, setPainScoreBefore] = useState<number>(treatment.painScoreBefore ?? 4);
   const [painScoreAfter, setPainScoreAfter] = useState<number>(treatment.painScoreAfter ?? 2);
 
+  // Reflexes (Bicep, Triceps, Knee, Ankle RT/LT)
+  const [bicepRT, setBicepRT] = useState(treatment.bicepRt || "2+");
+  const [bicepLT, setBicepLT] = useState(treatment.bicepLt || "2+");
+  const [tricepsRT, setTricepsRT] = useState(treatment.tricepsRt || "2+");
+  const [tricepsLT, setTricepsLT] = useState(treatment.tricepsLt || "2+");
+  const [kneeRT, setKneeRT] = useState(treatment.kneeRt || "2+");
+  const [kneeLT, setKneeLT] = useState(treatment.kneeLt || "2+");
+  const [ankleRT, setAnkleRT] = useState(treatment.ankleRt || "2+");
+  const [ankleLT, setAnkleLT] = useState(treatment.ankleLt || "2+");
+
   const [ttmDiagnosis, setTtmDiagnosis] = useState(treatment.ttmDiagnosis || "");
   const [modernDiagnosis, setModernDiagnosis] = useState(treatment.modernDiagnosis || "");
   const [diagnosisElements, setDiagnosisElements] = useState(treatment.diagnosisElements || "");
@@ -187,6 +197,14 @@ export function RecordTreatmentEditClient({
         height: height ? Number(height) : undefined,
         weight: weight ? Number(weight) : undefined,
         bmi: bmiValue ? Number(bmiValue) : undefined,
+        bicepRt: bicepRT.trim() || undefined,
+        bicepLt: bicepLT.trim() || undefined,
+        tricepsRt: tricepsRT.trim() || undefined,
+        tricepsLt: tricepsLT.trim() || undefined,
+        kneeRt: kneeRT.trim() || undefined,
+        kneeLt: kneeLT.trim() || undefined,
+        ankleRt: ankleRT.trim() || undefined,
+        ankleLt: ankleLT.trim() || undefined,
         causesOfSymptoms: Array.from(selectedCauses),
         causeOfSymptomsOther: selectedCauses.has("OTHER") ? causeOther.trim() || undefined : undefined,
         summaryOfSickness: summaryOfSickness.trim() || undefined,
@@ -337,6 +355,110 @@ export function RecordTreatmentEditClient({
               onChange={(e) => setWeight(e.target.value === "" ? "" : Number(e.target.value))}
               className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30 font-mono"
             />
+          </div>
+        </div>
+
+        {/* Deep Tendon Reflexes */}
+        <div className="pt-3 border-t border-clinic-line space-y-2">
+          <label className="block text-xs font-bold text-clinic-ink">
+            การตรวจระบบประสาทและรีเฟล็กซ์ (Deep Tendon Reflexes: 0, 1+, 2+, 3+, 4+)
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-2.5 bg-clinic-bg/40 border border-clinic-line rounded-control space-y-1.5">
+              <span className="font-semibold text-clinic-primary-deep block">Bicep Jerk</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">RT:</span>
+                  <input
+                    type="text"
+                    value={bicepRT}
+                    onChange={(e) => setBicepRT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">LT:</span>
+                  <input
+                    type="text"
+                    value={bicepLT}
+                    onChange={(e) => setBicepLT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-2.5 bg-clinic-bg/40 border border-clinic-line rounded-control space-y-1.5">
+              <span className="font-semibold text-clinic-primary-deep block">Triceps Jerk</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">RT:</span>
+                  <input
+                    type="text"
+                    value={tricepsRT}
+                    onChange={(e) => setTricepsRT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">LT:</span>
+                  <input
+                    type="text"
+                    value={tricepsLT}
+                    onChange={(e) => setTricepsLT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-2.5 bg-clinic-bg/40 border border-clinic-line rounded-control space-y-1.5">
+              <span className="font-semibold text-clinic-primary-deep block">Knee Jerk</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">RT:</span>
+                  <input
+                    type="text"
+                    value={kneeRT}
+                    onChange={(e) => setKneeRT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">LT:</span>
+                  <input
+                    type="text"
+                    value={kneeLT}
+                    onChange={(e) => setKneeLT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-2.5 bg-clinic-bg/40 border border-clinic-line rounded-control space-y-1.5">
+              <span className="font-semibold text-clinic-primary-deep block">Ankle Jerk</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">RT:</span>
+                  <input
+                    type="text"
+                    value={ankleRT}
+                    onChange={(e) => setAnkleRT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-clinic-ink-soft">LT:</span>
+                  <input
+                    type="text"
+                    value={ankleLT}
+                    onChange={(e) => setAnkleLT(e.target.value)}
+                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded text-center bg-white font-mono"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

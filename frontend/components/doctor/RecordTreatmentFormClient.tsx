@@ -527,30 +527,12 @@ export function RecordTreatmentFormClient({
     programConsult,
   ]);
 
-  const composedModernDiagnosisWithReflexes = useMemo(() => {
+  const composedModernDiagnosis = useMemo(() => {
     const parts: string[] = [];
     if (modernDiagnosis.trim()) parts.push(modernDiagnosis.trim());
     if (additionalSymptoms.trim()) parts.push(`อาการเพิ่มเติม: ${additionalSymptoms.trim()}`);
-    parts.push(
-      `Reflexes: Bicep RT ${bicepRT}/LT ${bicepLT}, Triceps RT ${tricepsRT}/LT ${tricepsLT}, Knee RT ${kneeRT}/LT ${kneeLT}, Ankle RT ${ankleRT}/LT ${ankleLT}`
-    );
-    if (menstruationHistory.trim()) {
-      parts.push(`ประวัติประจำเดือน: ${menstruationHistory.trim()}`);
-    }
     return parts.join(" | ");
-  }, [
-    modernDiagnosis,
-    additionalSymptoms,
-    bicepRT,
-    bicepLT,
-    tricepsRT,
-    tricepsLT,
-    kneeRT,
-    kneeLT,
-    ankleRT,
-    ankleLT,
-    menstruationHistory,
-  ]);
+  }, [modernDiagnosis, additionalSymptoms]);
 
   // Form Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
@@ -587,6 +569,14 @@ export function RecordTreatmentFormClient({
         height: height ? Number(height) : undefined,
         weight: weight ? Number(weight) : undefined,
         bmi: bmiValue ? Number(bmiValue) : undefined,
+        bicepRt: bicepRT.trim() || undefined,
+        bicepLt: bicepLT.trim() || undefined,
+        tricepsRt: tricepsRT.trim() || undefined,
+        tricepsLt: tricepsLT.trim() || undefined,
+        kneeRt: kneeRT.trim() || undefined,
+        kneeLt: kneeLT.trim() || undefined,
+        ankleRt: ankleRT.trim() || undefined,
+        ankleLt: ankleLT.trim() || undefined,
         causesOfSymptoms: [
           ...(causeFood ? ["FOOD" as SymptomCause] : []),
           ...(causePosition ? ["POSTURE" as SymptomCause] : []),
@@ -602,7 +592,7 @@ export function RecordTreatmentFormClient({
         summaryOfSickness: summaryOfSickness.trim() || undefined,
         diagnosisElements: diagnosisElements.trim() || undefined,
         ttmDiagnosis: ttmDiagnosis.trim() || undefined,
-        modernDiagnosis: composedModernDiagnosisWithReflexes || undefined,
+        modernDiagnosis: composedModernDiagnosis || undefined,
         treatmentPlan: treatmentPlan.trim() || undefined,
         treatmentProgram: composedTreatmentProgram || undefined,
         suggestions: evalAfterTreatment.trim()

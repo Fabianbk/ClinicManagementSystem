@@ -25,6 +25,14 @@ public class RecordTreatmentResponseDTO {
     private Integer height;
     private Double weight;
     private Double bmi;
+    private String bicepRt;
+    private String bicepLt;
+    private String tricepsRt;
+    private String tricepsLt;
+    private String kneeRt;
+    private String kneeLt;
+    private String ankleRt;
+    private String ankleLt;
     private Set<SymptomCause> causesOfSymptoms;
     private String causeOfSymptomsOther;
     private String summaryOfSickness;

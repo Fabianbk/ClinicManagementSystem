@@ -41,6 +41,30 @@ public class RecordTreatmentRequestDTO {
     private Double weight;
     private Double bmi;
 
+    @Size(max = 20)
+    private String bicepRt;
+
+    @Size(max = 20)
+    private String bicepLt;
+
+    @Size(max = 20)
+    private String tricepsRt;
+
+    @Size(max = 20)
+    private String tricepsLt;
+
+    @Size(max = 20)
+    private String kneeRt;
+
+    @Size(max = 20)
+    private String kneeLt;
+
+    @Size(max = 20)
+    private String ankleRt;
+
+    @Size(max = 20)
+    private String ankleLt;
+
     private Set<SymptomCause> causesOfSymptoms;
 
     @Size(max = 65535)

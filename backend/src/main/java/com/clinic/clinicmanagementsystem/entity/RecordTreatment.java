@@ -50,6 +50,31 @@ public class RecordTreatment {
     @Column(name = "bmi")
     private Double bmi;
 
+    // Deep Tendon Reflexes (Bicep, Triceps, Knee, Ankle RT/LT)
+    @Column(name = "bicep_rt", length = 20)
+    private String bicepRt;
+
+    @Column(name = "bicep_lt", length = 20)
+    private String bicepLt;
+
+    @Column(name = "triceps_rt", length = 20)
+    private String tricepsRt;
+
+    @Column(name = "triceps_lt", length = 20)
+    private String tricepsLt;
+
+    @Column(name = "knee_rt", length = 20)
+    private String kneeRt;
+
+    @Column(name = "knee_lt", length = 20)
+    private String kneeLt;
+
+    @Column(name = "ankle_rt", length = 20)
+    private String ankleRt;
+
+    @Column(name = "ankle_lt", length = 20)
+    private String ankleLt;
+
     @ElementCollection(targetClass = SymptomCause.class, fetch = FetchType.EAGER)
     @CollectionTable(
             name = "record_treatment_causes",

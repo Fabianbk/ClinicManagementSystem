@@ -131,6 +131,12 @@ export default async function PatientTreatmentsPage() {
                           </span>
                         )}
                       </div>
+
+                      {(treatment.bicepRt || treatment.kneeRt) && (
+                        <p className="text-[11px] text-clinic-ink-soft pt-1 font-mono">
+                          Reflexes: Bicep RT {treatment.bicepRt || "-"}/LT {treatment.bicepLt || "-"} · Knee RT {treatment.kneeRt || "-"}/LT {treatment.kneeLt || "-"}
+                        </p>
+                      )}
                     </div>
 
                     {/* Diagnoses & Treatment Plan */}

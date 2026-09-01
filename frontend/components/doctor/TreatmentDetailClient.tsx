@@ -260,9 +260,42 @@ export function TreatmentDetailClient({
             )}
           </div>
 
+          {/* Deep Tendon Reflexes */}
+          {(treatment.bicepRt || treatment.bicepLt || treatment.tricepsRt || treatment.tricepsLt || treatment.kneeRt || treatment.kneeLt || treatment.ankleRt || treatment.ankleLt) && (
+            <div className="bg-clinic-bg/40 p-3 rounded-control border border-clinic-line space-y-2 text-xs">
+              <span className="font-bold text-clinic-ink block">ผลการตรวจระบบประสาทและรีเฟล็กซ์ (Deep Tendon Reflexes):</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                <div className="bg-white p-2 rounded border border-clinic-line">
+                  <span className="text-[10px] text-clinic-ink-soft block font-medium">Bicep Jerk</span>
+                  <div className="font-mono text-xs font-bold text-clinic-primary-deep mt-0.5">
+                    RT: {treatment.bicepRt || "-"} | LT: {treatment.bicepLt || "-"}
+                  </div>
+                </div>
+                <div className="bg-white p-2 rounded border border-clinic-line">
+                  <span className="text-[10px] text-clinic-ink-soft block font-medium">Triceps Jerk</span>
+                  <div className="font-mono text-xs font-bold text-clinic-primary-deep mt-0.5">
+                    RT: {treatment.tricepsRt || "-"} | LT: {treatment.tricepsLt || "-"}
+                  </div>
+                </div>
+                <div className="bg-white p-2 rounded border border-clinic-line">
+                  <span className="text-[10px] text-clinic-ink-soft block font-medium">Knee Jerk</span>
+                  <div className="font-mono text-xs font-bold text-clinic-primary-deep mt-0.5">
+                    RT: {treatment.kneeRt || "-"} | LT: {treatment.kneeLt || "-"}
+                  </div>
+                </div>
+                <div className="bg-white p-2 rounded border border-clinic-line">
+                  <span className="text-[10px] text-clinic-ink-soft block font-medium">Ankle Jerk</span>
+                  <div className="font-mono text-xs font-bold text-clinic-primary-deep mt-0.5">
+                    RT: {treatment.ankleRt || "-"} | LT: {treatment.ankleLt || "-"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {treatment.modernDiagnosis && (
             <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line text-xs">
-              <span className="font-bold text-clinic-ink-soft">การวินิจฉัยแผนปัจจุบัน & รีเฟล็กซ์:</span>
+              <span className="font-bold text-clinic-ink-soft">การวินิจฉัยแผนปัจจุบัน:</span>
               <p className="text-clinic-ink mt-0.5 whitespace-pre-line">{treatment.modernDiagnosis}</p>
             </div>
           )}

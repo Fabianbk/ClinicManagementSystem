@@ -93,6 +93,14 @@ class RecordTreatmentServiceTest {
                 .doctorId(1)
                 .recordDate(new Date())
                 .symptoms("Back pain")
+                .bicepRt("2+")
+                .bicepLt("2+")
+                .tricepsRt("2+")
+                .tricepsLt("2+")
+                .kneeRt("2+")
+                .kneeLt("2+")
+                .ankleRt("2+")
+                .ankleLt("2+")
                 .causesOfSymptoms(causes)
                 .causeOfSymptomsOther("Lift heavy box")
                 .healthProfile(hpDto)
@@ -100,6 +108,14 @@ class RecordTreatmentServiceTest {
 
         RecordTreatment entity = new RecordTreatment();
         entity.setSymptoms("Back pain");
+        entity.setBicepRt("2+");
+        entity.setBicepLt("2+");
+        entity.setTricepsRt("2+");
+        entity.setTricepsLt("2+");
+        entity.setKneeRt("2+");
+        entity.setKneeLt("2+");
+        entity.setAnkleRt("2+");
+        entity.setAnkleLt("2+");
         entity.setCausesOfSymptoms(causes);
         entity.setCauseOfSymptomsOther("Lift heavy box");
 
@@ -113,6 +129,14 @@ class RecordTreatmentServiceTest {
         RecordTreatmentResponseDTO expectedResponse = RecordTreatmentResponseDTO.builder()
                 .recordTreatmentId(1)
                 .symptoms("Back pain")
+                .bicepRt("2+")
+                .bicepLt("2+")
+                .tricepsRt("2+")
+                .tricepsLt("2+")
+                .kneeRt("2+")
+                .kneeLt("2+")
+                .ankleRt("2+")
+                .ankleLt("2+")
                 .causesOfSymptoms(causes)
                 .causeOfSymptomsOther("Lift heavy box")
                 .build();
@@ -121,6 +145,8 @@ class RecordTreatmentServiceTest {
         RecordTreatmentResponseDTO result = recordTreatmentService.create(requestDTO);
 
         assertThat(result).isNotNull();
+        assertThat(result.getBicepRt()).isEqualTo("2+");
+        assertThat(result.getKneeRt()).isEqualTo("2+");
         assertThat(result.getCausesOfSymptoms()).containsExactlyInAnyOrder(SymptomCause.FOOD, SymptomCause.POSTURE);
         assertThat(result.getCauseOfSymptomsOther()).isEqualTo("Lift heavy box");
         assertThat(entity.getHealthProfile()).isEqualTo(healthProfile);
