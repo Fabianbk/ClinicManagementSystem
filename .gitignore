@@ -37,3 +37,4 @@ node_modules/
 .env.local
 
 SRS_ระบบบริหารจัดการคลินิก.md
+backend/src/main/java/com/clinic/clinicmanagementsystem/config/DoctorDataSeeder.java
