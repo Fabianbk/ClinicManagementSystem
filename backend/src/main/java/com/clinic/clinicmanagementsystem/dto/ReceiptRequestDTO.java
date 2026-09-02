@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -29,4 +30,8 @@ public class ReceiptRequestDTO {
     @Size(max = 50)
     private String paymentMethod;
 
+    private List<ReceiptItemDTO> additionalItems;
+
+    @Size(max = 255)
+    private String note;
 }

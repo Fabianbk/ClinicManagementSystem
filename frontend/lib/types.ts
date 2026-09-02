@@ -382,11 +382,18 @@ export interface RecordTreatmentMedicineResponseDTO {
   medicineName: string;
 }
 
+export interface ReceiptItemDTO {
+  itemName: string;
+  amount: number;
+}
+
 export interface ReceiptRequestDTO {
   recordTreatmentId: number;
   receiptDate: string;
   paymentStatus: string;
   paymentMethod?: string;
+  additionalItems?: ReceiptItemDTO[];
+  note?: string;
 }
 
 export interface ReceiptResponseDTO {
@@ -394,8 +401,12 @@ export interface ReceiptResponseDTO {
   receiptDate: string;
   paymentStatus: string;
   paymentMethod: string | null;
+  medicineTotal?: number | null;
+  additionalItems?: ReceiptItemDTO[] | null;
   totalPrice: number;
+  note?: string | null;
   recordTreatmentId: number;
+  medicines?: RecordTreatmentMedicineResponseDTO[] | null;
 }
 
 export interface RecordTreatmentResponseDTO {

@@ -225,6 +225,22 @@ export default async function PatientTreatmentsPage() {
                     </div>
                   )}
 
+                  {/* Additional Fee Items */}
+                  {treatment.receipt?.additionalItems && treatment.receipt.additionalItems.length > 0 && (
+                    <div className="space-y-1.5 pt-2 border-t border-clinic-line text-xs">
+                      <h4 className="font-bold text-clinic-primary-deep text-[11px]">
+                        รายการค่าบริการและค่าใช้จ่ายเพิ่มเติม:
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {treatment.receipt.additionalItems.map((item, idx) => (
+                          <span key={idx} className="px-2.5 py-1 rounded bg-clinic-bg/70 border border-clinic-line text-[11px] text-clinic-ink">
+                            {item.itemName}: <strong className="font-mono text-clinic-primary">฿{item.amount.toLocaleString()}</strong>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Receipt & Review Footer */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-clinic-line text-xs">
                     {treatment.receipt ? (

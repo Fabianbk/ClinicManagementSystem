@@ -9,6 +9,8 @@ import type {
   MedicineResponseDTO,
   RecordTreatmentRequestDTO,
   RecordTreatmentResponseDTO,
+  ReceiptRequestDTO,
+  ReceiptItemDTO,
   Dhatu,
   TriDosha,
   AgePrinciple,
@@ -242,7 +244,10 @@ export function RecordTreatmentFormClient({
   // PART 6: Billing & Prescriptions
   const [medicalRights, setMedicalRights] = useState<"PAY" | "FREE_ELDER" | "FREE_OTHER">("PAY");
   const [medicalRightsOther, setMedicalRightsOther] = useState("");
-  const [procedureFee, setProcedureFee] = useState<number>(300);
+  const [additionalItems, setAdditionalItems] = useState<{ id: string; itemName: string; amount: number }[]>([
+    { id: "1", itemName: "ค่าหัตถการทางการแพทย์แผนไทย (Procedure Fee)", amount: 300 },
+  ]);
+  const [billingNote, setBillingNote] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<"PAID" | "PENDING">("PAID");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
 
@@ -447,15 +452,37 @@ export function RecordTreatmentFormClient({
     setPrescribedMedicines((prev) => prev.filter((p) => p.medicineId !== medId));
   };
 
+  // Custom Fee Items Handlers
+  const handleAddCustomItem = (itemName = "", amount = 0) => {
+    setAdditionalItems((prev) => [
+      ...prev,
+      { id: Date.now().toString() + Math.random().toString(36).substring(2, 5), itemName, amount },
+    ]);
+  };
+
+  const handleRemoveCustomItem = (id: string) => {
+    setAdditionalItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleCustomItemChange = (id: string, field: "itemName" | "amount", value: string | number) => {
+    setAdditionalItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
   // Grand Total Calculation
   const medicinesTotal = useMemo(() => {
     return prescribedMedicines.reduce((sum, item) => sum + item.subTotal, 0);
   }, [prescribedMedicines]);
 
+  const additionalItemsTotal = useMemo(() => {
+    return additionalItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  }, [additionalItems]);
+
   const grandTotal = useMemo(() => {
     if (medicalRights !== "PAY") return 0;
-    return medicinesTotal + Number(procedureFee || 0);
-  }, [medicinesTotal, procedureFee, medicalRights]);
+    return medicinesTotal + additionalItemsTotal;
+  }, [medicinesTotal, additionalItemsTotal, medicalRights]);
 
   // Compose Full Clinical Form Fields into DB Columns
   const composedCauseOfSymptoms = useMemo(() => {
@@ -656,16 +683,25 @@ export function RecordTreatmentFormClient({
       }
 
       // 3. Issue Receipt & Billing
-      if (grandTotal > 0 || medicalRights !== "PAY") {
+      if (grandTotal > 0 || medicalRights !== "PAY" || additionalItems.length > 0 || prescribedMedicines.length > 0) {
+        const receiptPayload: ReceiptRequestDTO = {
+          recordTreatmentId: recordTreatmentId,
+          receiptDate: visitDate ? `${visitDate}T${visitTime || "00:00"}:00` : new Date().toISOString(),
+          paymentStatus: medicalRights !== "PAY" ? "PAID" : paymentStatus,
+          paymentMethod: paymentMethod,
+          additionalItems: additionalItems
+            .filter((item) => item.itemName.trim() !== "")
+            .map((item) => ({
+              itemName: item.itemName.trim(),
+              amount: Number(item.amount) || 0,
+            })),
+          note: billingNote.trim() || undefined,
+        };
+
         await fetch("/api/receipts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recordTreatmentId: recordTreatmentId,
-            receiptDate: visitDate ? `${visitDate}T${visitTime}:00` : new Date().toISOString(),
-            paymentStatus: medicalRights !== "PAY" ? "PAID" : paymentStatus,
-            paymentMethod: paymentMethod,
-          }),
+          body: JSON.stringify(receiptPayload),
         }).catch((err) => console.error("Receipt error:", err));
       }
 
@@ -2261,21 +2297,107 @@ export function RecordTreatmentFormClient({
           </p>
         )}
 
-        {/* Procedure Fee & Payment details */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-clinic-line">
-          <div>
-            <label className="block text-xs font-semibold text-clinic-ink-soft mb-1">
-              ค่าบริการตรวจ/หัตถการ (บาท)
-            </label>
-            <input
-              type="number"
-              value={procedureFee}
-              onChange={(e) => setProcedureFee(Number(e.target.value))}
-              placeholder="300"
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/30 font-mono"
-            />
+        {/* Dynamic Additional Items (Custom Fees / Services) */}
+        <div className="pt-4 border-t border-clinic-line space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span className="font-bold text-xs text-clinic-primary-deep block">
+                ➕ รายการค่าบริการและค่าใช้จ่ายเพิ่มเติม (Custom Fee Items)
+              </span>
+              <p className="text-[11px] text-clinic-ink-soft">
+                แพทย์สามารถกดเพิ่มรายการ ระบุชื่อค่าบริการ และใส่ราคาได้เองตามความเหมาะสม
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleAddCustomItem("", 100)}
+              className="px-3 py-1.5 rounded-control text-xs font-bold text-clinic-primary bg-clinic-primary-soft hover:bg-clinic-primary/20 transition-all border border-clinic-primary/30 cursor-pointer self-start sm:self-auto"
+            >
+              + เพิ่มรายการค่าบริการ (Add Item)
+            </button>
           </div>
 
+          {/* Quick Presets */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs pt-1">
+            <span className="text-[11px] text-clinic-ink-soft font-semibold">ปุ่มลัดช่วยกรอก:</span>
+            <button
+              type="button"
+              onClick={() => handleAddCustomItem("ค่าบริการทางการแพทย์ (Doctor's Fee)", 100)}
+              className="px-2 py-0.5 rounded bg-clinic-bg border border-clinic-line text-clinic-ink hover:bg-clinic-primary-soft hover:text-clinic-primary text-[11px] transition-colors cursor-pointer"
+            >
+              + ค่าตรวจ (Doctor Fee 100.-)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddCustomItem("ค่าจัดส่งพัสดุยา (Registered Mail)", 35)}
+              className="px-2 py-0.5 rounded bg-clinic-bg border border-clinic-line text-clinic-ink hover:bg-clinic-primary-soft hover:text-clinic-primary text-[11px] transition-colors cursor-pointer"
+            >
+              + ค่าส่งยา (Mail 35.-)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddCustomItem("ค่าหัตถการนวดรักษา (Procedure Fee)", 300)}
+              className="px-2 py-0.5 rounded bg-clinic-bg border border-clinic-line text-clinic-ink hover:bg-clinic-primary-soft hover:text-clinic-primary text-[11px] transition-colors cursor-pointer"
+            >
+              + ค่านวดรักษา (300.-)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddCustomItem("ค่าประคบสมุนไพร (Herbal Compress)", 150)}
+              className="px-2 py-0.5 rounded bg-clinic-bg border border-clinic-line text-clinic-ink hover:bg-clinic-primary-soft hover:text-clinic-primary text-[11px] transition-colors cursor-pointer"
+            >
+              + ค่าประคบสมุนไพร (150.-)
+            </button>
+          </div>
+
+          {/* Additional Items List */}
+          {additionalItems.length > 0 ? (
+            <div className="space-y-2 pt-1">
+              {additionalItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-2 p-2 rounded-control bg-clinic-bg/40 border border-clinic-line"
+                >
+                  <span className="text-xs font-mono text-clinic-ink-soft w-6 text-center">{idx + 1}.</span>
+                  <input
+                    type="text"
+                    value={item.itemName}
+                    onChange={(e) => handleCustomItemChange(item.id, "itemName", e.target.value)}
+                    placeholder="ระบุชื่อรายการ เช่น ค่าบริการตรวจ, ค่าส่งไปรษณีย์..."
+                    className="flex-1 px-3 py-1.5 border border-clinic-line rounded-control text-xs text-clinic-ink bg-white"
+                  />
+                  <div className="flex items-center gap-1 w-36">
+                    <span className="text-xs text-clinic-ink-soft">฿</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={item.amount}
+                      onChange={(e) => handleCustomItemChange(item.id, "amount", Number(e.target.value))}
+                      placeholder="0.00"
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs text-clinic-ink bg-white font-mono text-right"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCustomItem(item.id)}
+                    className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                    title="ลบรายการ"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <div className="text-right text-xs font-semibold text-clinic-ink-soft pt-1">
+                รวมค่าบริการเพิ่มเติม: <span className="font-mono text-clinic-primary-deep font-bold">฿{additionalItemsTotal.toLocaleString()}</span> บาท
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-clinic-ink-soft italic py-2">ไม่มีรายการค่าบริการเพิ่มเติม</p>
+          )}
+        </div>
+
+        {/* Payment details & Notes */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-clinic-line">
           <div>
             <label className="block text-xs font-semibold text-clinic-ink-soft mb-1">
               วิธีการชำระเงิน
@@ -2305,22 +2427,40 @@ export function RecordTreatmentFormClient({
               <option value="PENDING">⏳ รอดำเนินการชำระเงิน (PENDING)</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-clinic-ink-soft mb-1">
+              หมายเหตุการเงิน (Billing Note)
+            </label>
+            <input
+              type="text"
+              value={billingNote}
+              onChange={(e) => setBillingNote(e.target.value)}
+              placeholder="หมายเหตุเพิ่มเติม เช่น จัดส่งยาทางไปรษณีย์..."
+              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/30"
+            />
+          </div>
         </div>
       </div>
 
       {/* Sticky Bottom Submit Bar */}
       <div className="bg-white border border-clinic-line rounded-card p-5 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
-        <div className="text-xs text-clinic-ink-soft">
-          <p className="font-semibold text-clinic-ink">
-            ยอดรวมค่ารักษาและยาสมุนไพร:{" "}
-            <span className="font-mono text-lg font-bold text-clinic-primary-deep ml-1">
+        <div className="text-xs text-clinic-ink-soft space-y-1">
+          <p className="font-semibold text-clinic-ink flex flex-wrap items-center gap-1.5">
+            <span>ยอดรวมค่ารักษาและยาสมุนไพร:</span>
+            <span className="font-mono text-lg font-bold text-clinic-primary-deep">
               ฿{grandTotal.toLocaleString()}
-            </span>{" "}
-            บาท
+            </span>
+            <span>บาท</span>
             {medicalRights !== "PAY" && (
-              <span className="text-emerald-700 font-bold ml-2">(ยกเว้นค่ารักษาพยาบาล)</span>
+              <span className="text-emerald-700 font-bold ml-1 text-xs">(ยกเว้นค่ารักษาพยาบาล)</span>
             )}
           </p>
+          <div className="flex flex-wrap items-center gap-3 text-[11px] text-clinic-ink-soft">
+            <span>💊 ค่ายาสมุนไพร: <strong className="font-mono text-clinic-ink">฿{medicinesTotal.toLocaleString()}</strong></span>
+            <span>•</span>
+            <span>➕ ค่าบริการ/อื่นๆ: <strong className="font-mono text-clinic-ink">฿{additionalItemsTotal.toLocaleString()}</strong></span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">

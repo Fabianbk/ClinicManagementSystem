@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -28,8 +30,21 @@ public class Receipt {
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
+    @Column(name = "medicine_total")
+    private Double medicineTotal;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "receipt_items",
+            joinColumns = @JoinColumn(name = "receipt_id")
+    )
+    private List<ReceiptItem> additionalItems = new ArrayList<>();
+
     @Column(name = "total_price", nullable = false)
     private Double totalPrice;
+
+    @Column(name = "note", length = 255)
+    private String note;
 
     @OneToOne
     @JoinColumn(name = "record_treatment_id", nullable = false, unique = true)

@@ -389,22 +389,98 @@ export function TreatmentDetailClient({
           </div>
         </div>
 
-        {/* Section 6: ใบเสร็จรับเงินและการชำระเงิน */}
+        {/* Section 6: ใบเสร็จรับเงินและการชำระเงิน (Itemized Billing & Receipt) */}
         {receipt && (
-          <div className="p-4 bg-clinic-primary-soft/40 border border-clinic-primary/20 rounded-control space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-clinic-primary-deep text-sm">
-                สรุปยอดค่ารักษาและใบเสร็จรับเงิน (Receipt #{receipt.receiptId})
-              </span>
-              <Badge variant="success" className="font-bold">
-                {receipt.paymentStatus === "PAID" ? "ชำระเงินเรียบร้อย" : receipt.paymentStatus}
+          <div className="p-5 bg-white border border-clinic-line rounded-control shadow-2xs space-y-4 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-clinic-line pb-3">
+              <div>
+                <span className="font-bold text-clinic-primary-deep text-sm block">
+                  🧾 ใบเสร็จรับเงิน / ใบแจ้งหนี้ (Receipt #{receipt.receiptId})
+                </span>
+                <span className="text-[11px] text-clinic-ink-soft">
+                  วันที่ออกใบเสร็จ: {formatDateThaiFull(receipt.receiptDate)} · วิธีชำระเงิน: {receipt.paymentMethod || "เงินสด (CASH)"}
+                </span>
+              </div>
+              <Badge variant="success" className="font-bold self-start sm:self-auto">
+                {receipt.paymentStatus === "PAID" ? "✓ ชำระเงินเรียบร้อยแล้ว (PAID)" : receipt.paymentStatus}
               </Badge>
             </div>
-            <div className="flex justify-between items-center pt-2 border-t border-clinic-line text-sm">
-              <span className="text-clinic-ink-soft">ยอดชำระสุทธิ (Total Amount):</span>
-              <span className="font-mono font-bold text-lg text-clinic-primary-deep">
-                ฿{(receipt.totalPrice ?? 0).toLocaleString()} บาท
-              </span>
+
+            {/* Itemized Breakdown Table */}
+            <div className="space-y-3">
+              <span className="font-bold text-clinic-ink block">รายการแจกแจงค่าใช้จ่าย (Itemized Charges):</span>
+              
+              <div className="overflow-x-auto border border-clinic-line rounded-control">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-clinic-bg text-clinic-ink-soft uppercase text-[10px] tracking-wider border-b border-clinic-line">
+                    <tr>
+                      <th className="p-2.5">รายการ</th>
+                      <th className="p-2.5 text-center">ประเภท</th>
+                      <th className="p-2.5 text-center">จำนวน</th>
+                      <th className="p-2.5 text-right">จำนวนเงิน (บาท)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-clinic-line bg-white">
+                    {/* Medicines */}
+                    {medicines.map((m) => (
+                      <tr key={m.recordTreatmentMedicineId} className="hover:bg-clinic-bg/20">
+                        <td className="p-2.5 font-medium text-clinic-ink">
+                          💊 {m.medicineName}
+                        </td>
+                        <td className="p-2.5 text-center text-clinic-ink-soft">ยาสมุนไพร</td>
+                        <td className="p-2.5 text-center font-mono">{m.quantity}</td>
+                        <td className="p-2.5 text-right font-mono text-clinic-ink">
+                          ฿{(m.subTotal ?? 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+
+                    {/* Custom Additional Items */}
+                    {receipt.additionalItems?.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-clinic-bg/20">
+                        <td className="p-2.5 font-medium text-clinic-ink">
+                          ➕ {item.itemName}
+                        </td>
+                        <td className="p-2.5 text-center text-clinic-ink-soft">บริการ/อื่นๆ</td>
+                        <td className="p-2.5 text-center font-mono">1</td>
+                        <td className="p-2.5 text-right font-mono text-clinic-ink">
+                          ฿{(item.amount ?? 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-clinic-bg/40 font-semibold border-t-2 border-clinic-line">
+                    {receipt.medicineTotal !== undefined && receipt.medicineTotal !== null && (
+                      <tr>
+                        <td colSpan={3} className="p-2.5 text-right text-clinic-ink-soft">รวมค่ายาสมุนไพร:</td>
+                        <td className="p-2.5 text-right font-mono text-clinic-ink">฿{receipt.medicineTotal.toLocaleString()}</td>
+                      </tr>
+                    )}
+                    {receipt.additionalItems && receipt.additionalItems.length > 0 && (
+                      <tr>
+                        <td colSpan={3} className="p-2.5 text-right text-clinic-ink-soft">รวมค่าบริการและอื่นๆ:</td>
+                        <td className="p-2.5 text-right font-mono text-clinic-ink">
+                          ฿{receipt.additionalItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="bg-clinic-primary-soft/30 border-t border-clinic-line">
+                      <td colSpan={3} className="p-3 text-right text-clinic-primary-deep text-sm font-bold">
+                        ยอดชำระสุทธิ (Grand Total):
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-base text-clinic-primary-deep">
+                        ฿{(receipt.totalPrice ?? 0).toLocaleString()} บาท
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {receipt.note && (
+                <p className="text-xs text-clinic-ink-soft italic pt-1">
+                  หมายเหตุ: {receipt.note}
+                </p>
+              )}
             </div>
           </div>
         )}

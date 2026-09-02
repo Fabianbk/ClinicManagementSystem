@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,7 +17,11 @@ public class ReceiptResponseDTO {
     private Date receiptDate;
     private String paymentStatus;
     private String paymentMethod;
+    private Double medicineTotal;
+    private List<ReceiptItemDTO> additionalItems;
     private Double totalPrice;
+    private String note;
 
     private int recordTreatmentId;
+    private List<RecordTreatmentMedicineResponseDTO> medicines;
 }

@@ -39,13 +39,29 @@ public class ReceiptService {
             throw new BadRequestException("A receipt has already been issued for this treatment");
         }
 
-        double totalPrice = recordTreatmentMedicineRepository
+        double medicineTotal = recordTreatmentMedicineRepository
                 .findByRecordTreatment_RecordTreatmentId(dto.getRecordTreatmentId()).stream()
                 .mapToDouble(RecordTreatmentMedicine::getSubTotal)
                 .sum();
 
+        double additionalTotal = 0.0;
+        java.util.List<com.clinic.clinicmanagementsystem.entity.ReceiptItem> items = new java.util.ArrayList<>();
+        if (dto.getAdditionalItems() != null) {
+            for (com.clinic.clinicmanagementsystem.dto.ReceiptItemDTO itemDto : dto.getAdditionalItems()) {
+                if (itemDto != null && itemDto.getItemName() != null && !itemDto.getItemName().isBlank()) {
+                    double amt = itemDto.getAmount() != null ? Math.max(0.0, itemDto.getAmount()) : 0.0;
+                    additionalTotal += amt;
+                    items.add(new com.clinic.clinicmanagementsystem.entity.ReceiptItem(itemDto.getItemName().trim(), amt));
+                }
+            }
+        }
+
+        double totalPrice = medicineTotal + additionalTotal;
+
         Receipt receipt = receiptMapper.toEntity(dto);
         receipt.setRecordTreatment(recordTreatment);
+        receipt.setMedicineTotal(medicineTotal);
+        receipt.setAdditionalItems(items);
         receipt.setTotalPrice(totalPrice);
 
         return receiptMapper.toResponseDTO(receiptRepository.save(receipt));
