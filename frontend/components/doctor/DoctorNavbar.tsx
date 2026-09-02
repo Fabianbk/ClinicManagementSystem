@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LeafIcon } from "@/components/site/icons";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Users, Calendar, Clock, FileText, Pill, Star } from "lucide-react";
 
@@ -34,8 +34,14 @@ export function DoctorNavbar({ username }: { username?: string }) {
               href="/doctor/patients"
               className="flex items-center gap-2.5 font-display font-bold text-lg text-white hover:opacity-90 transition-opacity"
             >
-              <div className="w-8 h-8 rounded-control bg-white/10 flex items-center justify-center border border-white/15 shadow-inner">
-                <LeafIcon width={18} height={18} className="text-clinic-terracotta-soft text-emerald-300" />
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-white border border-white/20 shadow-inner flex items-center justify-center shrink-0">
+                <Image
+                  src="/logo.png"
+                  alt="โลโก้คลินิกพิมพ์วิมาน"
+                  width={32}
+                  height={32}
+                  className="object-cover w-full h-full"
+                />
               </div>
               <span className="hidden sm:inline-block tracking-tight font-display">
                 พิมพ์วิมานคลินิก

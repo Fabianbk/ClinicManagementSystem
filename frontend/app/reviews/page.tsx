@@ -117,13 +117,24 @@ export default async function PublicReviewsPage({
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-clinic-line bg-white py-6 text-center text-xs text-clinic-ink-soft">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© {new Date().getFullYear()} พิมพ์วิมานคลินิกการแพทย์แผนไทย. สงวนลิขสิทธิ์.</p>
+      <footer className="border-t border-clinic-line bg-white py-6 text-xs text-clinic-ink-soft">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-7 h-7 rounded-full overflow-hidden border border-clinic-line bg-white shrink-0 shadow-2xs">
+              {/* Logo */}
+              <img
+                src="/logo.png"
+                alt="พิมพ์วิมานคลินิก"
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <p>© {new Date().getFullYear()} พิมพ์วิมานคลินิกการแพทย์แผนไทย. สงวนลิขสิทธิ์.</p>
+          </div>
           <div className="flex items-center gap-4 text-xs">
             <Link href="/" className="hover:text-clinic-primary-deep">หน้าหลัก</Link>
             <Link href="/#schedule" className="hover:text-clinic-primary-deep">เวลาทำงานของแพทย์</Link>
             <Link href="/reviews" className="hover:text-clinic-primary-deep font-semibold text-clinic-primary">รีวิวทั้งหมด</Link>
+            <Link href="/#contact" className="hover:text-clinic-primary-deep">แผนที่และติดต่อ</Link>
             <Link href="/patient/login" className="hover:text-clinic-primary-deep">เข้าสู่ระบบ</Link>
           </div>
         </div>

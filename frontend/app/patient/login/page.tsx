@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { LoginForm } from "@/components/auth/LoginForm";
 import Link from "next/link";
+import Image from "next/image";
 import { User } from "lucide-react";
 
 export default async function PatientLoginPage({
@@ -25,9 +26,25 @@ export default async function PatientLoginPage({
           <span>ผู้รับบริการ</span>
         </div>
         <div className="flex-1 p-6 sm:p-8 flex flex-col gap-1">
-          <p className="text-xs font-semibold tracking-wider text-clinic-terracotta-deep uppercase">
-            พิมพ์วิมาน · คลินิกการแพทย์แผนไทย
-          </p>
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="relative w-9 h-9 rounded-full overflow-hidden border border-clinic-primary/20 shadow-xs shrink-0 bg-white">
+              <Image
+                src="/logo.png"
+                alt="โลโก้คลินิกพิมพ์วิมาน"
+                width={36}
+                height={36}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold tracking-wider text-clinic-terracotta uppercase leading-none">
+                พิมพ์วิมานคลินิก
+              </p>
+              <p className="text-[10px] text-clinic-ink-soft leading-tight">
+                การแพทย์แผนไทย
+              </p>
+            </div>
+          </div>
           <h1 className="text-2xl font-display font-bold text-clinic-primary-deep mt-1">
             เข้าสู่ระบบผู้รับบริการ
           </h1>
