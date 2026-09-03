@@ -6,6 +6,8 @@ import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
 import com.clinic.clinicmanagementsystem.repository.RecordTreatmentRepository;
 import com.deepoove.poi.XWPFTemplate;
+import com.deepoove.poi.config.Configure;
+import com.deepoove.poi.plugin.table.LoopRowTableRenderPolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
@@ -34,10 +36,11 @@ public class DocumentExportService {
     private static final String UNCHECKED = "☐";
 
     /**
-     * Export complete Client Intake Form & Treatment Record (Pages 1-6 or Pages 1-4)
+     * Export complete Client Intake Form & Treatment Record (Pages 1-6 or Pages
+     * 1-4)
      * as Word document (.docx).
      *
-     * @param patientId ID of the patient
+     * @param patientId         ID of the patient
      * @param recordTreatmentId optional ID of a specific treatment record visit
      */
     public byte[] exportClientIntakeForm(Integer patientId, Integer recordTreatmentId) {
@@ -79,8 +82,10 @@ public class DocumentExportService {
     }
 
     /**
-     * Maps Patient, DhatuPrinciple, HealthProfile, and RecordTreatment into a comprehensive data map
-     * with tag names matching Word placeholders like {{patientName}}, {{cb_male}}, etc.
+     * Maps Patient, DhatuPrinciple, HealthProfile, and RecordTreatment into a
+     * comprehensive data map
+     * with tag names matching Word placeholders like {{patientName}}, {{cb_male}},
+     * etc.
      */
     public Map<String, Object> buildTemplateData(Patient patient, RecordTreatment treatment) {
         Map<String, Object> data = new HashMap<>();
@@ -88,7 +93,8 @@ public class DocumentExportService {
         // ==========================================
         // 1. ข้อมูลทั่วไป (Part 1: Personal Information)
         // ==========================================
-        data.put("opdCardNo", defaultStr(patient.getPatientId() > 0 ? String.format("OPD-%05d", patient.getPatientId()) : ""));
+        data.put("opdCardNo",
+                defaultStr(patient.getPatientId() > 0 ? String.format("OPD-%05d", patient.getPatientId()) : ""));
         data.put("patientName", defaultStr(patient.getFullname()));
         data.put("idCard", defaultStr(patient.getIdNumber()));
         data.put("occupation", defaultStr(patient.getOccupation()));
@@ -274,7 +280,8 @@ public class DocumentExportService {
             // สัญญาณชีพ & ร่างกาย
             data.put("temp", treatment.getTemp() != null ? String.valueOf(treatment.getTemp()) : "");
             data.put("pulse", treatment.getPulse() != null ? String.valueOf(treatment.getPulse()) : "");
-            data.put("respirationRate", treatment.getRespirationRate() != null ? String.valueOf(treatment.getRespirationRate()) : "");
+            data.put("respirationRate",
+                    treatment.getRespirationRate() != null ? String.valueOf(treatment.getRespirationRate()) : "");
             data.put("bp", defaultStr(treatment.getBp()));
             data.put("height", treatment.getHeight() != null ? String.valueOf(treatment.getHeight()) : "");
             data.put("weight", treatment.getWeight() != null ? String.valueOf(treatment.getWeight()) : "");
@@ -313,8 +320,10 @@ public class DocumentExportService {
             data.put("treatmentProgram", defaultStr(treatment.getTreatmentProgram()));
             data.put("suggestions", defaultStr(treatment.getSuggestions()));
             data.put("followup", defaultStr(treatment.getFollowup()));
-            data.put("painScoreBefore", treatment.getPainScoreBefore() != null ? String.valueOf(treatment.getPainScoreBefore()) : "");
-            data.put("painScoreAfter", treatment.getPainScoreAfter() != null ? String.valueOf(treatment.getPainScoreAfter()) : "");
+            data.put("painScoreBefore",
+                    treatment.getPainScoreBefore() != null ? String.valueOf(treatment.getPainScoreBefore()) : "");
+            data.put("painScoreAfter",
+                    treatment.getPainScoreAfter() != null ? String.valueOf(treatment.getPainScoreAfter()) : "");
 
             // แพทย์ผู้ตรวจ
             Doctor doctor = treatment.getDoctor();
@@ -336,7 +345,8 @@ public class DocumentExportService {
                     Map<String, Object> item = new HashMap<>();
                     String medName = rtm.getMedicine() != null ? rtm.getMedicine().getMedicineName() : "ยาแผนไทย";
                     double unitPrice = (rtm.getMedicine() != null && rtm.getMedicine().getUnitPrice() != null)
-                            ? rtm.getMedicine().getUnitPrice() : 0.0;
+                            ? rtm.getMedicine().getUnitPrice()
+                            : 0.0;
                     int qty = rtm.getQuantity() != null ? rtm.getQuantity() : 1;
                     double total = unitPrice * qty;
                     grandTotal += total;
@@ -348,6 +358,21 @@ public class DocumentExportService {
                     items.add(item);
                 }
             }
+            // ค่าบริการ / หัตถการ จาก Receipt
+            if (treatment.getReceipt() != null && treatment.getReceipt().getAdditionalItems() != null) {
+                for (ReceiptItem ri : treatment.getReceipt().getAdditionalItems()) {
+                    Map<String, Object> item = new HashMap<>();
+                    double amount = ri.getAmount() != null ? ri.getAmount() : 0.0;
+                    grandTotal += amount;
+
+                    item.put("name", ri.getItemName());
+                    item.put("price", String.format(Locale.US, "%.2f", amount));
+                    item.put("qty", "1");
+                    item.put("total", String.format(Locale.US, "%.2f", amount));
+                    items.add(item);
+                }
+            }
+
             data.put("items", items);
             data.put("grandTotal", String.format(Locale.US, "%.2f", grandTotal));
 
@@ -355,7 +380,8 @@ public class DocumentExportService {
             TreatmentRights rights = patient.getTreatmentRights();
             data.put("pay_direct", check(rights == TreatmentRights.PAY_DIRECT));
             data.put("pay_free", check(rights != null && rights != TreatmentRights.PAY_DIRECT));
-            data.put("pay_special", check(rights == TreatmentRights.ELDERLY || rights == TreatmentRights.MONK || rights == TreatmentRights.DISABLED));
+            data.put("pay_special", check(rights == TreatmentRights.ELDERLY || rights == TreatmentRights.MONK
+                    || rights == TreatmentRights.DISABLED));
             data.put("pay_other", check(rights == TreatmentRights.OTHER));
         } else {
             fillTreatmentDefaults(data);
@@ -377,10 +403,15 @@ public class DocumentExportService {
             }
         }
 
-        try (InputStream inputStream = resource.getInputStream();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        LoopRowTableRenderPolicy policy = new LoopRowTableRenderPolicy("[", "]", true);
+        Configure config = Configure.builder()
+                .bind("items", policy)
+                .build();
 
-            XWPFTemplate template = XWPFTemplate.compile(inputStream).render(data);
+        try (InputStream inputStream = resource.getInputStream();
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            XWPFTemplate template = XWPFTemplate.compile(inputStream, config).render(data);
             template.write(out);
             template.close();
             return out.toByteArray();
@@ -400,57 +431,111 @@ public class DocumentExportService {
     }
 
     private void fillPrincipleDefaults(Map<String, Object> data) {
-        data.put("pd_earth", UNCHECKED); data.put("pd_water", UNCHECKED);
-        data.put("pd_air", UNCHECKED); data.put("pd_fire", UNCHECKED);
-        data.put("sd_earth", UNCHECKED); data.put("sd_water", UNCHECKED);
-        data.put("sd_air", UNCHECKED); data.put("sd_fire", UNCHECKED);
-        data.put("cd_earth", UNCHECKED); data.put("cd_water", UNCHECKED);
-        data.put("cd_air", UNCHECKED); data.put("cd_fire", UNCHECKED);
-        data.put("cc_semha", UNCHECKED); data.put("cc_vata", UNCHECKED); data.put("cc_pitta", UNCHECKED);
-        data.put("so_semha", UNCHECKED); data.put("so_vata", UNCHECKED); data.put("so_pitta", UNCHECKED);
-        data.put("sc_semha", UNCHECKED); data.put("sc_vata", UNCHECKED); data.put("sc_pitta", UNCHECKED);
-        data.put("age_child", UNCHECKED); data.put("age_adult", UNCHECKED); data.put("age_aging", UNCHECKED);
-        data.put("to_semha", UNCHECKED); data.put("to_vata", UNCHECKED); data.put("to_pitta", UNCHECKED);
-        data.put("tc_semha", UNCHECKED); data.put("tc_vata", UNCHECKED); data.put("tc_pitta", UNCHECKED);
-        data.put("gb_earth", UNCHECKED); data.put("gb_water", UNCHECKED);
-        data.put("gb_air", UNCHECKED); data.put("gb_fire", UNCHECKED);
-        data.put("gc_earth", UNCHECKED); data.put("gc_water", UNCHECKED);
-        data.put("gc_air", UNCHECKED); data.put("gc_fire", UNCHECKED);
+        data.put("pd_earth", UNCHECKED);
+        data.put("pd_water", UNCHECKED);
+        data.put("pd_air", UNCHECKED);
+        data.put("pd_fire", UNCHECKED);
+        data.put("sd_earth", UNCHECKED);
+        data.put("sd_water", UNCHECKED);
+        data.put("sd_air", UNCHECKED);
+        data.put("sd_fire", UNCHECKED);
+        data.put("cd_earth", UNCHECKED);
+        data.put("cd_water", UNCHECKED);
+        data.put("cd_air", UNCHECKED);
+        data.put("cd_fire", UNCHECKED);
+        data.put("cc_semha", UNCHECKED);
+        data.put("cc_vata", UNCHECKED);
+        data.put("cc_pitta", UNCHECKED);
+        data.put("so_semha", UNCHECKED);
+        data.put("so_vata", UNCHECKED);
+        data.put("so_pitta", UNCHECKED);
+        data.put("sc_semha", UNCHECKED);
+        data.put("sc_vata", UNCHECKED);
+        data.put("sc_pitta", UNCHECKED);
+        data.put("age_child", UNCHECKED);
+        data.put("age_adult", UNCHECKED);
+        data.put("age_aging", UNCHECKED);
+        data.put("to_semha", UNCHECKED);
+        data.put("to_vata", UNCHECKED);
+        data.put("to_pitta", UNCHECKED);
+        data.put("tc_semha", UNCHECKED);
+        data.put("tc_vata", UNCHECKED);
+        data.put("tc_pitta", UNCHECKED);
+        data.put("gb_earth", UNCHECKED);
+        data.put("gb_water", UNCHECKED);
+        data.put("gb_air", UNCHECKED);
+        data.put("gb_fire", UNCHECKED);
+        data.put("gc_earth", UNCHECKED);
+        data.put("gc_water", UNCHECKED);
+        data.put("gc_air", UNCHECKED);
+        data.put("gc_fire", UNCHECKED);
     }
 
     private void fillHealthDefaults(Map<String, Object> data) {
         data.put("presentHistory", "");
-        data.put("dis_deny", UNCHECKED); data.put("dis_have", UNCHECKED); data.put("diseaseDetail", "");
-        data.put("drug_deny", UNCHECKED); data.put("drug_have", UNCHECKED); data.put("drugAllergyDetail", "");
-        data.put("food_deny", UNCHECKED); data.put("food_have", UNCHECKED); data.put("foodAllergyDetail", "");
-        data.put("fam_deny", UNCHECKED); data.put("fam_have", UNCHECKED);
-        data.put("alcohol_deny", UNCHECKED); data.put("alcohol_have", UNCHECKED);
-        data.put("smoke_deny", UNCHECKED); data.put("smoke_have", UNCHECKED);
+        data.put("dis_deny", UNCHECKED);
+        data.put("dis_have", UNCHECKED);
+        data.put("diseaseDetail", "");
+        data.put("drug_deny", UNCHECKED);
+        data.put("drug_have", UNCHECKED);
+        data.put("drugAllergyDetail", "");
+        data.put("food_deny", UNCHECKED);
+        data.put("food_have", UNCHECKED);
+        data.put("foodAllergyDetail", "");
+        data.put("fam_deny", UNCHECKED);
+        data.put("fam_have", UNCHECKED);
+        data.put("alcohol_deny", UNCHECKED);
+        data.put("alcohol_have", UNCHECKED);
+        data.put("smoke_deny", UNCHECKED);
+        data.put("smoke_have", UNCHECKED);
         data.put("menstruationHistory", "");
     }
 
     private void fillTreatmentDefaults(Map<String, Object> data) {
-        data.put("visitDate", ""); data.put("visitTime", ""); data.put("symptoms", "");
-        data.put("temp", ""); data.put("pulse", ""); data.put("respirationRate", "");
-        data.put("bp", ""); data.put("height", ""); data.put("weight", ""); data.put("bmi", "");
-        data.put("bicepRt", ""); data.put("bicepLt", "");
-        data.put("tricepsRt", ""); data.put("tricepsLt", "");
-        data.put("kneeRt", ""); data.put("kneeLt", "");
-        data.put("ankleRt", ""); data.put("ankleLt", "");
-        data.put("cause_food", UNCHECKED); data.put("cause_posture", UNCHECKED);
-        data.put("cause_weather", UNCHECKED); data.put("cause_fasting", UNCHECKED);
-        data.put("cause_suppress", UNCHECKED); data.put("cause_work", UNCHECKED);
-        data.put("cause_sadness", UNCHECKED); data.put("cause_anger", UNCHECKED);
+        data.put("visitDate", "");
+        data.put("visitTime", "");
+        data.put("symptoms", "");
+        data.put("temp", "");
+        data.put("pulse", "");
+        data.put("respirationRate", "");
+        data.put("bp", "");
+        data.put("height", "");
+        data.put("weight", "");
+        data.put("bmi", "");
+        data.put("bicepRt", "");
+        data.put("bicepLt", "");
+        data.put("tricepsRt", "");
+        data.put("tricepsLt", "");
+        data.put("kneeRt", "");
+        data.put("kneeLt", "");
+        data.put("ankleRt", "");
+        data.put("ankleLt", "");
+        data.put("cause_food", UNCHECKED);
+        data.put("cause_posture", UNCHECKED);
+        data.put("cause_weather", UNCHECKED);
+        data.put("cause_fasting", UNCHECKED);
+        data.put("cause_suppress", UNCHECKED);
+        data.put("cause_work", UNCHECKED);
+        data.put("cause_sadness", UNCHECKED);
+        data.put("cause_anger", UNCHECKED);
         data.put("cause_other", "");
-        data.put("summaryOfSickness", ""); data.put("diagnosisElements", "");
-        data.put("ttmDiagnosis", ""); data.put("modernDiagnosis", "");
-        data.put("treatmentPlan", ""); data.put("treatmentProgram", "");
-        data.put("suggestions", ""); data.put("followup", "");
-        data.put("painScoreBefore", ""); data.put("painScoreAfter", "");
-        data.put("doctorName", ""); data.put("doctorLicenseNo", "");
+        data.put("summaryOfSickness", "");
+        data.put("diagnosisElements", "");
+        data.put("ttmDiagnosis", "");
+        data.put("modernDiagnosis", "");
+        data.put("treatmentPlan", "");
+        data.put("treatmentProgram", "");
+        data.put("suggestions", "");
+        data.put("followup", "");
+        data.put("painScoreBefore", "");
+        data.put("painScoreAfter", "");
+        data.put("doctorName", "");
+        data.put("doctorLicenseNo", "");
         data.put("items", Collections.emptyList());
         data.put("grandTotal", "0.00");
-        data.put("pay_direct", UNCHECKED); data.put("pay_free", UNCHECKED);
-        data.put("pay_special", UNCHECKED); data.put("pay_other", UNCHECKED);
+        data.put("pay_direct", UNCHECKED);
+        data.put("pay_free", UNCHECKED);
+        data.put("pay_special", UNCHECKED);
+        data.put("pay_other", UNCHECKED);
     }
 }

@@ -16,10 +16,7 @@ public class DocumentTemplateTest {
     public void generateTestWordOutput() throws Exception {
         // หาไฟล์เทมเพลตที่ผู้ใช้แก้ไข
         File templateFile = new File("src/main/resources/templates/client_intake_form.docx");
-        if (!templateFile.exists()) {
-            templateFile = new File("src/main/resources/templates/client_intake_form.docx.docx");
-        }
-        assertTrue(templateFile.exists(), "Template file client_intake_form.docx not found!");
+        assertTrue(templateFile.exists(), "Template file not found!");
 
         // ข้อมูลจำลองสำหรับทดสอบ
         Map<String, Object> data = new HashMap<>();
@@ -56,26 +53,62 @@ public class DocumentTemplateTest {
         data.put("religion", "พุทธ");
 
         // ธาตุเจ้าเรือน
-        data.put("pd_earth", "☑"); data.put("pd_water", "☐"); data.put("pd_air", "☐"); data.put("pd_fire", "☐");
-        data.put("sd_earth", "☐"); data.put("sd_water", "☑"); data.put("sd_air", "☐"); data.put("sd_fire", "☐");
-        data.put("cd_earth", "☑"); data.put("cd_water", "☐"); data.put("cd_air", "☐"); data.put("cd_fire", "☐");
-        data.put("cc_semha", "☑"); data.put("cc_vata", "☐"); data.put("cc_pitta", "☐");
-        data.put("so_semha", "☑"); data.put("so_vata", "☐"); data.put("so_pitta", "☐");
-        data.put("sc_semha", "☐"); data.put("sc_vata", "☑"); data.put("sc_pitta", "☐");
-        data.put("age_child", "☐"); data.put("age_adult", "☐"); data.put("age_aging", "☑");
-        data.put("to_semha", "☑"); data.put("to_vata", "☐"); data.put("to_pitta", "☐");
-        data.put("tc_semha", "☐"); data.put("tc_vata", "☑"); data.put("tc_pitta", "☐");
-        data.put("gb_earth", "☑"); data.put("gb_water", "☐"); data.put("gb_air", "☐"); data.put("gb_fire", "☐");
-        data.put("gc_earth", "☑"); data.put("gc_water", "☐"); data.put("gc_air", "☐"); data.put("gc_fire", "☐");
+        data.put("pd_earth", "☑");
+        data.put("pd_water", "☐");
+        data.put("pd_air", "☐");
+        data.put("pd_fire", "☐");
+        data.put("sd_earth", "☐");
+        data.put("sd_water", "☑");
+        data.put("sd_air", "☐");
+        data.put("sd_fire", "☐");
+        data.put("cd_earth", "☑");
+        data.put("cd_water", "☐");
+        data.put("cd_air", "☐");
+        data.put("cd_fire", "☐");
+        data.put("cc_semha", "☑");
+        data.put("cc_vata", "☐");
+        data.put("cc_pitta", "☐");
+        data.put("so_semha", "☑");
+        data.put("so_vata", "☐");
+        data.put("so_pitta", "☐");
+        data.put("sc_semha", "☐");
+        data.put("sc_vata", "☑");
+        data.put("sc_pitta", "☐");
+        data.put("age_child", "☐");
+        data.put("age_adult", "☐");
+        data.put("age_aging", "☑");
+        data.put("to_semha", "☑");
+        data.put("to_vata", "☐");
+        data.put("to_pitta", "☐");
+        data.put("tc_semha", "☐");
+        data.put("tc_vata", "☑");
+        data.put("tc_pitta", "☐");
+        data.put("gb_earth", "☑");
+        data.put("gb_water", "☐");
+        data.put("gb_air", "☐");
+        data.put("gb_fire", "☐");
+        data.put("gc_earth", "☑");
+        data.put("gc_water", "☐");
+        data.put("gc_air", "☐");
+        data.put("gc_fire", "☐");
 
         // ประวัติสุขภาพ
         data.put("presentHistory", "มีอาการปวดตึงกล้ามเนื้อต้นคอบ่าไหล่ทั้งสองข้าง เป็นมาประมาณ 2 สัปดาห์");
-        data.put("dis_deny", "☐"); data.put("dis_have", "☑"); data.put("diseaseDetail", "ความดันโลหิตสูง");
-        data.put("drug_deny", "☑"); data.put("drug_have", "☐"); data.put("drugAllergyDetail", "");
-        data.put("food_deny", "☑"); data.put("food_have", "☐"); data.put("foodAllergyDetail", "");
-        data.put("fam_deny", "☑"); data.put("fam_have", "☐");
-        data.put("alcohol_deny", "☑"); data.put("alcohol_have", "☐");
-        data.put("smoke_deny", "☑"); data.put("smoke_have", "☐");
+        data.put("dis_deny", "☐");
+        data.put("dis_have", "☑");
+        data.put("diseaseDetail", "ความดันโลหิตสูง");
+        data.put("drug_deny", "☑");
+        data.put("drug_have", "☐");
+        data.put("drugAllergyDetail", "");
+        data.put("food_deny", "☑");
+        data.put("food_have", "☐");
+        data.put("foodAllergyDetail", "");
+        data.put("fam_deny", "☑");
+        data.put("fam_have", "☐");
+        data.put("alcohol_deny", "☑");
+        data.put("alcohol_have", "☐");
+        data.put("smoke_deny", "☑");
+        data.put("smoke_have", "☐");
         data.put("menstruationHistory", "-");
 
         // ตรวจร่างกาย & สัญญาณชีพ
@@ -91,16 +124,24 @@ public class DocumentTemplateTest {
         data.put("bmi", "23.03");
 
         // Reflex
-        data.put("bicepRt", "2+"); data.put("bicepLt", "2+");
-        data.put("tricepsRt", "2+"); data.put("tricepsLt", "2+");
-        data.put("kneeRt", "2+"); data.put("kneeLt", "2+");
-        data.put("ankleRt", "2+"); data.put("ankleLt", "2+");
+        data.put("bicepRt", "2+");
+        data.put("bicepLt", "2+");
+        data.put("tricepsRt", "2+");
+        data.put("tricepsLt", "2+");
+        data.put("kneeRt", "2+");
+        data.put("kneeLt", "2+");
+        data.put("ankleRt", "2+");
+        data.put("ankleLt", "2+");
 
         // มูลเหตุเกิดโรค
-        data.put("cause_food", "☐"); data.put("cause_posture", "☑");
-        data.put("cause_weather", "☐"); data.put("cause_fasting", "☐");
-        data.put("cause_suppress", "☐"); data.put("cause_work", "☑");
-        data.put("cause_sadness", "☐"); data.put("cause_anger", "☐");
+        data.put("cause_food", "☐");
+        data.put("cause_posture", "☑");
+        data.put("cause_weather", "☐");
+        data.put("cause_fasting", "☐");
+        data.put("cause_suppress", "☐");
+        data.put("cause_work", "☑");
+        data.put("cause_sadness", "☐");
+        data.put("cause_anger", "☐");
         data.put("cause_other", "");
 
         // การวินิจฉัย
@@ -153,9 +194,13 @@ public class DocumentTemplateTest {
         data.put("pay_special", "☐");
         data.put("pay_other", "☐");
 
+        com.deepoove.poi.config.Configure config = com.deepoove.poi.config.Configure.builder()
+                .bind("items", new com.deepoove.poi.plugin.table.LoopRowTableRenderPolicy("[", "]", true))
+                .build();
+
         // ทำการ Render
         try (FileInputStream fis = new FileInputStream(templateFile);
-             XWPFTemplate template = XWPFTemplate.compile(fis).render(data)) {
+                XWPFTemplate template = XWPFTemplate.compile(fis, config).render(data)) {
 
             File outputFile = new File("test_output.docx");
             try (FileOutputStream fos = new FileOutputStream(outputFile)) {
