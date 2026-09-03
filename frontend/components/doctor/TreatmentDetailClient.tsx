@@ -5,6 +5,7 @@ import type { RecordTreatmentResponseDTO, PatientResponseDTO } from "@/lib/types
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Printer, Edit, Leaf, ShieldAlert } from "lucide-react";
+import { DownloadDocxButton } from "@/components/doctor/DownloadDocxButton";
 
 interface TreatmentDetailClientProps {
   treatment: RecordTreatmentResponseDTO;
@@ -59,6 +60,12 @@ export function TreatmentDetailClient({
         </Button>
 
         <div className="flex items-center gap-2.5">
+          <DownloadDocxButton
+            recordTreatmentId={treatment.recordTreatmentId}
+            label="ดาวน์โหลดแบบบันทึก (Word)"
+            className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
+          />
+
           <Button
             type="button"
             variant="outline"

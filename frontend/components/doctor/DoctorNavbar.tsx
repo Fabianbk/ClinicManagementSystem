@@ -61,11 +61,10 @@ export function DoctorNavbar({ username }: { username?: string }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                    active
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${active
                       ? "bg-white/20 text-white shadow-xs border border-white/20 font-semibold"
                       : "text-white/75 hover:bg-white/10 hover:text-white"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-3.5 h-3.5 opacity-80" />
                   <span>{item.label}</span>
