@@ -6,6 +6,7 @@ import { getWorkingSchedules } from "@/lib/resources/working-schedules";
 import { getAllReviews } from "@/lib/resources/reviews";
 import { PublicDoctorSchedule } from "@/components/site/PublicDoctorSchedule";
 import { PublicReviewsSection } from "@/components/site/PublicReviewsSection";
+import { ClinicGallery } from "@/components/site/ClinicGallery";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -107,51 +108,58 @@ export default async function HomePage() {
           </div>
 
           <div className="lg:col-span-5">
-            <div className="relative rounded-card overflow-hidden bg-gradient-to-br from-clinic-primary-deep via-clinic-primary to-[#1f3f2d] shadow-xl p-6 sm:p-7 flex flex-col justify-between group border border-white/10 min-h-[380px]">
-              <LeafPattern className="absolute inset-0 w-full h-full opacity-20 object-cover" />
+            <div className="relative rounded-card overflow-hidden shadow-xl border border-clinic-line group min-h-[400px] sm:min-h-[430px] flex flex-col justify-between p-5 sm:p-6 bg-clinic-primary-deep">
+              {/* Real Clinic Exterior Photo */}
+              <Image
+                src="/clinic/exterior.jpg"
+                alt="บรรยากาศด้านหน้า พิมพ์วิมานคลินิกการแพทย์แผนไทย อ.ปาย"
+                fill
+                sizes="(max-width: 1024px) 100vw, 500px"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                priority
+              />
 
-              <div className="relative z-10 flex justify-between items-start">
-                <span className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white text-xs font-semibold border border-white/20 shadow-xs">
-                  พิมพ์วิมานคลินิกการแพทย์แผนไทย
-                </span>
-                <ShieldCheck className="w-6 h-6 text-clinic-terracotta-soft opacity-90" />
+              {/* Scrim overlay for readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/35" />
+
+              {/* Top Badges */}
+              <div className="relative z-10 flex items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 backdrop-blur-md text-white text-xs font-medium border border-white/20 shadow-sm">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="font-mono text-[11px] sm:text-xs">ใบอนุญาตเลขที่ 58108000161</span>
+                </div>
+                <div className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-black/45 backdrop-blur-md text-white text-xs font-medium border border-white/20 shadow-sm">
+                  <MapPin className="w-3.5 h-3.5 text-clinic-terracotta shrink-0" />
+                  <span className="text-[11px]">อ.ปาย</span>
+                </div>
               </div>
 
-              {/* Official Logo Display */}
-              <div className="relative z-10 flex flex-col items-center justify-center my-5 sm:my-6">
-                <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full p-2 bg-white/20 backdrop-blur-md border border-white/30 shadow-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <div className="relative w-full h-full rounded-full overflow-hidden bg-white shadow-inner flex items-center justify-center">
-                    <Image
-                      src="/logo.png"
-                      alt="ตราสัญลักษณ์ พิมพ์วิมานคลินิกการแพทย์แผนไทย"
-                      fill
-                      sizes="(max-width: 768px) 144px, 176px"
-                      className="object-contain p-1.5"
-                      priority
-                    />
+              {/* Bottom Info Card */}
+              <div className="relative z-10 bg-white/95 backdrop-blur-md rounded-control p-4 shadow-lg border border-white/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-bold text-clinic-primary-deep">
+                      เปิดทำการ: จันทร์ – เสาร์
+                    </span>
                   </div>
-                </div>
-                <p className="mt-3 text-white/90 text-xs sm:text-sm font-display font-medium tracking-wide text-center drop-shadow-xs">
-                  Pimvimaan Thai Traditional Medical Clinic
-                </p>
-              </div>
-
-              <div className="relative z-10 bg-white/95 backdrop-blur-md rounded-control p-3.5 sm:p-4 flex items-center gap-3.5 shadow-lg border border-white/30">
-                <div className="shrink-0 w-10 h-10 rounded-control bg-clinic-primary-soft text-clinic-primary flex items-center justify-center">
-                  <LeafIcon width={22} height={22} />
-                </div>
-                <div>
-                  <strong className="block text-sm font-semibold text-clinic-ink">
-                    คลินิกการแพทย์แผนไทย
-                  </strong>
-                  <span className="block text-xs text-clinic-ink-soft">
-                    ให้บริการตรวจวินิจฉัยและสั่งจ่ายตำรับยาสมุนไพรเฉพาะบุคคล
+                  <span className="text-[11px] font-mono font-semibold text-clinic-ink bg-clinic-bg px-2 py-0.5 rounded-control border border-clinic-line">
+                    09:00 – 19:00 น.
                   </span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-clinic-ink pt-1.5 border-t border-clinic-line/60">
+                  <MapPin className="w-3.5 h-3.5 text-clinic-terracotta shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-relaxed text-clinic-ink-soft">
+                    304/5 หมู่ 8 (ตลาดวันพุธ) ต.เวียงใต้ อ.ปาย จ.แม่ฮ่องสอน
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </section>
+
+        {/* Clinic Photo Gallery (Bento Grid Showcase) */}
+        <ClinicGallery />
 
         {/* Doctor Schedule Section (SRS UC 3.1.1 View Doctor Schedule) */}
         <section id="schedule" className="space-y-6 pt-4">
@@ -284,7 +292,7 @@ export default async function HomePage() {
                     </Button>
                     <Button asChild variant="outline" size="sm" className="bg-white text-xs gap-1.5 hover:bg-clinic-primary-soft">
                       <a
-                        href="https://maps.google.com/?q=19.3505488,98.437295"
+                        href="https://maps.google.com/?cid=17072035574095554318"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -332,8 +340,9 @@ export default async function HomePage() {
             </div>
             <p>© {new Date().getFullYear()} พิมพ์วิมานคลินิกการแพทย์แผนไทย. สงวนลิขสิทธิ์.</p>
           </div>
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-4 text-xs">
             <Link href="/" className="hover:text-clinic-primary-deep">หน้าหลัก</Link>
+            <Link href="/#gallery" className="hover:text-clinic-primary-deep">บรรยากาศคลินิก</Link>
             <Link href="/#schedule" className="hover:text-clinic-primary-deep">เวลาทำงานของแพทย์</Link>
             <Link href="/reviews" className="hover:text-clinic-primary-deep">รีวิวทั้งหมด</Link>
             <Link href="/#contact" className="hover:text-clinic-primary-deep">แผนที่และติดต่อ</Link>

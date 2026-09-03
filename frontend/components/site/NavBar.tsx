@@ -31,6 +31,11 @@ export function NavBar() {
               </Link>
             </li>
             <li>
+              <Link href="/#gallery" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-xs lg:text-sm font-medium transition-colors">
+                บรรยากาศคลินิก
+              </Link>
+            </li>
+            <li>
               <Link href="/#schedule" className="text-clinic-ink-soft hover:text-clinic-primary-deep text-xs lg:text-sm font-medium transition-colors">
                 เวลาทำงานของแพทย์
               </Link>
