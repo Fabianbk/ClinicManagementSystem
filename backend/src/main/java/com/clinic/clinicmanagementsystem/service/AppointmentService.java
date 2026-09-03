@@ -20,6 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -48,8 +50,17 @@ public class AppointmentService {
                             + slot.getStatus() + ")");
         }
 
+        if (slot.getStartTime().before(new Date())) {
+            throw new BadRequestException("Cannot book an appointment slot in the past");
+        }
+
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
+
+        if (appointmentRepository.existsOverlappingAppointmentForPatient(
+                patient.getPatientId(), AppointmentStatus.SCHEDULED, slot.getStartTime(), slot.getEndTime())) {
+            throw new BadRequestException("Patient already has an active scheduled appointment at this time");
+        }
 
         slot.setStatus(AppointmentSlotStatus.BOOKED);
         appointmentSlotRepository.save(slot);
@@ -61,6 +72,7 @@ public class AppointmentService {
 
         return appointmentMapper.toResponseDTO(appointmentRepository.save(appointment));
     }
+
 
     @Transactional(readOnly = true)
     public AppointmentResponseDTO getById(int appointmentId) {

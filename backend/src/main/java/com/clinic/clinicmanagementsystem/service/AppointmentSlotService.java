@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,10 @@ public class AppointmentSlotService {
             throw new BadRequestException(
                     "Slot times must be within the schedule shift window ("
                     + schedule.getShiftStart() + " – " + schedule.getShiftEnd() + ")");
+        }
+
+        if (dto.getStartTime().before(new Date())) {
+            throw new BadRequestException("Cannot create an appointment slot in the past");
         }
 
         AppointmentSlot slot = appointmentSlotMapper.toEntity(dto);
@@ -71,12 +76,15 @@ public class AppointmentSlotService {
         if (!workingScheduleRepository.existsById(scheduleId)) {
             throw new ResourceNotFoundException("WorkingSchedule", scheduleId);
         }
+        Date now = new Date();
         return appointmentSlotRepository
                 .findByWorkingSchedule_ScheduleIdAndStatus(scheduleId, AppointmentSlotStatus.AVAILABLE)
                 .stream()
+                .filter(slot -> slot.getStartTime().after(now))
                 .map(appointmentSlotMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
+
 
     /**
      * Allows a doctor/admin to manually flip a slot between AVAILABLE and BLOCKED

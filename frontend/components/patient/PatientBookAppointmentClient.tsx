@@ -253,6 +253,12 @@ export function PatientBookAppointmentClient({
       return;
     }
 
+    const currentSlot = slots.find((s) => s.slotId === selectedSlotId);
+    if (currentSlot && new Date(currentSlot.startTime) <= new Date()) {
+      setErrorMessage("ช่วงเวลาที่เลือกได้ผ่านไปแล้ว กรุณาเลือกช่วงเวลาอื่น");
+      return;
+    }
+
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -527,7 +533,7 @@ export function PatientBookAppointmentClient({
 
               {selectedSchedule && (
                 <Badge variant="terracotta" className="text-xs">
-                  ว่าง {slots.filter((s) => s.status === "AVAILABLE").length} / {slots.length} คิว
+                  ว่าง {slots.filter((s) => s.status === "AVAILABLE" && new Date(s.startTime) > new Date()).length} / {slots.length} คิว
                 </Badge>
               )}
             </CardHeader>
@@ -543,11 +549,13 @@ export function PatientBookAppointmentClient({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   {slots.map((slot) => {
                     const isAvailable = slot.status === "AVAILABLE";
+                    const isPast = new Date(slot.startTime) <= new Date();
+                    const canBook = isAvailable && !isPast;
                     const isSelected = slot.slotId === selectedSlotId;
                     const startTime = formatTimeString(slot.startTime);
                     const endTime = formatTimeString(slot.endTime);
 
-                    if (isAvailable) {
+                    if (canBook) {
                       return (
                         <button
                           key={slot.slotId}
@@ -577,6 +585,26 @@ export function PatientBookAppointmentClient({
                             ถึง {endTime} น.
                           </p>
                         </button>
+                      );
+                    }
+
+                    if (isPast) {
+                      return (
+                        <div
+                          key={slot.slotId}
+                          className="p-3 rounded-control border border-clinic-line/60 bg-clinic-bg/40 text-clinic-ink-muted opacity-50 cursor-not-allowed flex flex-col justify-between"
+                          title="ช่วงเวลานี้ผ่านไปแล้ว"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-sm line-through">
+                              {startTime}
+                            </span>
+                            <span className="text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded">
+                              ผ่านเวลาแล้ว
+                            </span>
+                          </div>
+                          <p className="text-[11px] mt-1">ถึง {endTime} น.</p>
+                        </div>
                       );
                     }
 

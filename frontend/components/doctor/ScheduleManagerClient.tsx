@@ -58,6 +58,14 @@ function formatTimeOnly(timeStr: string): string {
   });
 }
 
+function getTodayLocalDate(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function ScheduleManagerClient({
   doctorId,
   doctorUsername,
@@ -79,7 +87,7 @@ export function ScheduleManagerClient({
   const [scheduleDate, setScheduleDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split("T")[0];
+    return getTodayLocalDate();
   });
   const [shiftStartTime, setShiftStartTime] = useState("09:00");
   const [shiftEndTime, setShiftEndTime] = useState("16:00");
@@ -138,23 +146,53 @@ export function ScheduleManagerClient({
       return;
     }
 
+    const todayStr = getTodayLocalDate();
+    if (scheduleDate < todayStr) {
+      setErrorMsg("ไม่สามารถสร้างตารางเวรย้อนหลังก่อนวันปัจจุบันได้");
+      return;
+    }
+
     if (slotMinutes <= 0) {
       setErrorMsg("ระยะเวลาสล็อตต้องมากกว่า 0 นาที");
       return;
     }
 
+    const startDateTimeStr = `${scheduleDate}T${shiftStartTime}:00`;
+    const endDateTimeStr = `${scheduleDate}T${shiftEndTime}:00`;
+    const shiftStartObj = new Date(startDateTimeStr);
+    const shiftEndObj = new Date(endDateTimeStr);
+
+    if (shiftEndObj <= shiftStartObj) {
+      setErrorMsg("เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น");
+      return;
+    }
+
+    if (shiftEndObj <= new Date()) {
+      setErrorMsg("เวลาสิ้นสุดการตรวจได้ผ่านไปแล้ว ไม่สามารถสร้างตารางเวรย้อนหลังได้");
+      return;
+    }
+
+    // Check overlapping schedule for this doctor
+    const newStartMs = shiftStartObj.getTime();
+    const newEndMs = shiftEndObj.getTime();
+    const overlapping = schedules.find((s) => {
+      const sStart = new Date(s.shiftStart).getTime();
+      const sEnd = new Date(s.shiftEnd).getTime();
+      return sStart < newEndMs && sEnd > newStartMs;
+    });
+
+    if (overlapping) {
+      const overlapStart = formatTimeOnly(overlapping.shiftStart);
+      const overlapEnd = formatTimeOnly(overlapping.shiftEnd);
+      setErrorMsg(
+        `มีตารางเวรในช่วงเวลาดังกล่าวแล้ว (${overlapStart} - ${overlapEnd} น.) ไม่สามารถสร้างซ้ำซ้อนได้`
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
-      const startDateTimeStr = `${scheduleDate}T${shiftStartTime}:00`;
-      const endDateTimeStr = `${scheduleDate}T${shiftEndTime}:00`;
-      const shiftStartObj = new Date(startDateTimeStr);
-      const shiftEndObj = new Date(endDateTimeStr);
 
-      if (shiftEndObj <= shiftStartObj) {
-        setErrorMsg("เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น");
-        setSubmitting(false);
-        return;
-      }
 
       // 1. Create WorkingSchedule
       const resSchedule = await fetch("/api/working-schedules", {
@@ -474,6 +512,7 @@ export function ScheduleManagerClient({
                 id="scheduleDate"
                 type="date"
                 required
+                min={getTodayLocalDate()}
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
               />
@@ -606,13 +645,16 @@ export function ScheduleManagerClient({
                   const isBooked = slot.status === "BOOKED";
                   const isBlocked = slot.status === "BLOCKED";
                   const isUpdating = updatingSlotId === slot.slotId;
+                  const isPast = new Date(slot.startTime) < new Date();
 
                   return (
                     <div
                       key={slot.slotId}
                       className={`p-2.5 rounded-control border text-xs flex flex-col justify-between gap-2 transition-all ${
                         isAvailable
-                          ? "bg-emerald-50/70 border-emerald-300 text-emerald-900"
+                          ? isPast
+                            ? "bg-stone-50 border-stone-200 text-stone-600 opacity-80"
+                            : "bg-emerald-50/70 border-emerald-300 text-emerald-900"
                           : isBooked
                           ? "bg-blue-50/80 border-blue-300 text-blue-900 shadow-2xs"
                           : "bg-stone-100 border-stone-300 text-stone-500 opacity-70"
@@ -622,14 +664,21 @@ export function ScheduleManagerClient({
                         <span className="font-mono font-bold text-sm">
                           {formatTimeOnly(slot.startTime)} - {formatTimeOnly(slot.endTime)}
                         </span>
-                        {isAvailable && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
+                        {isAvailable && !isPast && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
+                        {isAvailable && isPast && <span className="w-2 h-2 rounded-full bg-stone-400" />}
                         {isBooked && <span className="w-2 h-2 rounded-full bg-blue-500" />}
                         {isBlocked && <span className="w-2 h-2 rounded-full bg-stone-400" />}
                       </div>
 
                       <div className="flex items-center justify-between pt-1 border-t border-black/5 text-[11px]">
                         <span>
-                          {isAvailable ? "ว่าง (พร้อมจอง)" : isBooked ? "มีนัดหมายแล้ว" : "ปิดรับจอง"}
+                          {isAvailable
+                            ? isPast
+                              ? "ว่าง (ผ่านเวลาแล้ว)"
+                              : "ว่าง (พร้อมจอง)"
+                            : isBooked
+                            ? "มีนัดหมายแล้ว"
+                            : "ปิดรับจอง"}
                         </span>
 
                         {!isBooked && (

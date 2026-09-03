@@ -22,4 +22,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // are excluded, and the ORDER BY gives the soonest appointment first.
     List<Appointment> findByPatient_PatientIdAndStatusAndAppointmentSlot_StartTimeAfterOrderByAppointmentSlot_StartTimeAsc(
             int patientId, AppointmentStatus status, Date now);
+
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.patientId = :patientId " +
+           "AND a.status = :status " +
+           "AND a.appointmentSlot.startTime < :slotEnd " +
+           "AND a.appointmentSlot.endTime > :slotStart")
+    boolean existsOverlappingAppointmentForPatient(
+            @Param("patientId") int patientId,
+            @Param("status") AppointmentStatus status,
+            @Param("slotStart") Date slotStart,
+            @Param("slotEnd") Date slotEnd);
 }

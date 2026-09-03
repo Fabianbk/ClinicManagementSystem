@@ -15,6 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,9 +31,12 @@ public class WorkingScheduleService {
     private final WorkingScheduleMapper workingScheduleMapper;
 
     public WorkingScheduleResponseDTO create(WorkingScheduleRequestDTO dto) {
-        if (dto.getShiftEnd().before(dto.getShiftStart()) ||
-                dto.getShiftEnd().equals(dto.getShiftStart())) {
-            throw new BadRequestException("Shift end time must be after shift start time");
+        validateShiftSchedule(dto);
+
+        if (workingScheduleRepository.existsOverlappingSchedule(
+                dto.getDoctorId(), dto.getShiftStart(), dto.getShiftEnd(), null)) {
+            throw new BadRequestException(
+                    "Doctor already has an overlapping working schedule during this shift window");
         }
 
         Doctor doctor = doctorRepository.findById(dto.getDoctorId())
@@ -41,6 +47,7 @@ public class WorkingScheduleService {
 
         return workingScheduleMapper.toResponseDTO(workingScheduleRepository.save(schedule));
     }
+
 
     @Transactional(readOnly = true)
     public WorkingScheduleResponseDTO getById(int scheduleId) {
@@ -65,15 +72,45 @@ public class WorkingScheduleService {
 
     /** Updates date and shift times only — the assigned doctor never changes after creation. */
     public WorkingScheduleResponseDTO update(int scheduleId, WorkingScheduleRequestDTO dto) {
+        validateShiftSchedule(dto);
+
+        WorkingSchedule existing = findScheduleOrThrow(scheduleId);
+        int doctorId = existing.getDoctor().getDoctorId();
+
+        if (workingScheduleRepository.existsOverlappingSchedule(
+                doctorId, dto.getShiftStart(), dto.getShiftEnd(), scheduleId)) {
+            throw new BadRequestException(
+                    "Doctor already has an overlapping working schedule during this shift window");
+        }
+
+        workingScheduleMapper.updateEntityFromDto(dto, existing);
+        return workingScheduleMapper.toResponseDTO(workingScheduleRepository.save(existing));
+    }
+
+    private void validateShiftSchedule(WorkingScheduleRequestDTO dto) {
         if (dto.getShiftEnd().before(dto.getShiftStart()) ||
                 dto.getShiftEnd().equals(dto.getShiftStart())) {
             throw new BadRequestException("Shift end time must be after shift start time");
         }
 
-        WorkingSchedule existing = findScheduleOrThrow(scheduleId);
-        workingScheduleMapper.updateEntityFromDto(dto, existing);
-        return workingScheduleMapper.toResponseDTO(workingScheduleRepository.save(existing));
+        LocalDate today = LocalDate.now();
+        if (dto.getDate() != null) {
+            LocalDate scheduleDate = dto.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            if (scheduleDate.isBefore(today)) {
+                throw new BadRequestException("Cannot create or update schedule for past dates");
+            }
+        }
+
+        LocalDate shiftDate = dto.getShiftStart().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        if (shiftDate.isBefore(today)) {
+            throw new BadRequestException("Cannot create or update schedule for past dates");
+        }
+
+        if (dto.getShiftEnd().before(new Date())) {
+            throw new BadRequestException("Shift end time has already passed");
+        }
     }
+
 
     /**
      * Safe to delete only if no slots exist yet. WorkingSchedule.appointmentSlots

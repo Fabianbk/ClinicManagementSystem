@@ -238,7 +238,9 @@ export function PublicDoctorSchedule({
   }, [selectedScheduleId]);
 
   const availableSlotsCount = useMemo(() => {
-    return slots.filter((s) => s.status === "AVAILABLE").length;
+    return slots.filter(
+      (s) => s.status === "AVAILABLE" && new Date(s.startTime) > new Date()
+    ).length;
   }, [slots]);
 
   return (
@@ -465,12 +467,14 @@ export function PublicDoctorSchedule({
                           const startTimeStr = formatTimeString(slot.startTime);
                           const endTimeStr = formatTimeString(slot.endTime);
                           const isAvailable = slot.status === "AVAILABLE";
+                          const isPast = new Date(slot.startTime) <= new Date();
+                          const canBook = isAvailable && !isPast;
 
                           return (
                             <div
                               key={slot.slotId}
                               className={`p-2.5 rounded-control border text-xs flex items-center justify-between gap-2 transition-all ${
-                                isAvailable
+                                canBook
                                   ? "bg-white border-clinic-line hover:border-clinic-primary/50 shadow-2xs"
                                   : "bg-clinic-bg/60 border-clinic-line/70 opacity-70"
                               }`}
@@ -482,7 +486,7 @@ export function PublicDoctorSchedule({
                                 <SlotStatusBadge status={slot.status} />
                               </div>
 
-                              {isAvailable ? (
+                              {canBook ? (
                                 <Button
                                   asChild
                                   variant="terracotta"
@@ -495,7 +499,11 @@ export function PublicDoctorSchedule({
                                 </Button>
                               ) : (
                                 <span className="text-[10px] font-medium text-clinic-ink-muted">
-                                  {slot.status === "BOOKED" ? "มีผู้จองแล้ว" : "งดตรวจ"}
+                                  {isPast
+                                    ? "ผ่านเวลาแล้ว"
+                                    : slot.status === "BOOKED"
+                                    ? "มีผู้จองแล้ว"
+                                    : "งดตรวจ"}
                                 </span>
                               )}
                             </div>
