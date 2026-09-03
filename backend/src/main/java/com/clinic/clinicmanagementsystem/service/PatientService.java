@@ -88,8 +88,36 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public Page<PatientResponseDTO> getAll(Pageable pageable) {
-        return patientRepository.findAll(pageable).map(patientMapper::toResponseDTO);
+        return getAll(null, pageable);
     }
+
+    @Transactional(readOnly = true)
+    public Page<PatientResponseDTO> getAll(String query, Pageable pageable) {
+        if (query == null || query.trim().isEmpty()) {
+            return patientRepository.findAll(pageable).map(patientMapper::toResponseDTO);
+        }
+        String cleanQuery = query.trim();
+        Integer idQuery = parsePatientId(cleanQuery);
+        if (idQuery != null) {
+            return patientRepository.searchPatientsWithId(cleanQuery, idQuery, pageable)
+                    .map(patientMapper::toResponseDTO);
+        }
+        return patientRepository.searchPatients(cleanQuery, pageable)
+                .map(patientMapper::toResponseDTO);
+    }
+
+    private Integer parsePatientId(String query) {
+        String clean = query.trim();
+        if (clean.toUpperCase().startsWith("P-")) {
+            clean = clean.substring(2).trim();
+        }
+        try {
+            return Integer.parseInt(clean);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
 
     /**
      * Updates Patient's own scalar fields only (name, contact info, etc).

@@ -54,10 +54,12 @@ public class PatientController {
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PageResponse<PatientResponseDTO>>> getAllPatients(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Page<PatientResponseDTO> result = patientService.getAll(PageRequest.of(page, size));
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String query) {
+        Page<PatientResponseDTO> result = patientService.getAll(query, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }
+
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")

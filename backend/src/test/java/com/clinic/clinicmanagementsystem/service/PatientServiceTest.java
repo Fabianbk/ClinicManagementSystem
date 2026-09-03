@@ -24,15 +24,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -173,5 +179,44 @@ class PatientServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getFullname()).isEqualTo("Somchai Jaidee");
         verify(currentUser).requireSelfOrDoctor(101);
+    }
+
+    @Test
+    void getAll_withoutQuery_shouldCallFindAll() {
+        when(patientRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(patientEntity)));
+        PatientResponseDTO responseDTO = PatientResponseDTO.builder().patientId(101).fullname("Somchai Jaidee").build();
+        when(patientMapper.toResponseDTO(patientEntity)).thenReturn(responseDTO);
+
+        Page<PatientResponseDTO> result = patientService.getAll(null, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(patientRepository).findAll(any(Pageable.class));
+        verify(patientRepository, never()).searchPatients(any(), any());
+    }
+
+    @Test
+    void getAll_withTextQuery_shouldCallSearchPatients() {
+        when(patientRepository.searchPatients(eq("Somchai"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(patientEntity)));
+        PatientResponseDTO responseDTO = PatientResponseDTO.builder().patientId(101).fullname("Somchai Jaidee").build();
+        when(patientMapper.toResponseDTO(patientEntity)).thenReturn(responseDTO);
+
+        Page<PatientResponseDTO> result = patientService.getAll("Somchai", PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(patientRepository).searchPatients(eq("Somchai"), any(Pageable.class));
+    }
+
+    @Test
+    void getAll_withHnQuery_shouldCallSearchPatientsWithId() {
+        when(patientRepository.searchPatientsWithId(eq("P-00101"), eq(101), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(patientEntity)));
+        PatientResponseDTO responseDTO = PatientResponseDTO.builder().patientId(101).fullname("Somchai Jaidee").build();
+        when(patientMapper.toResponseDTO(patientEntity)).thenReturn(responseDTO);
+
+        Page<PatientResponseDTO> result = patientService.getAll("P-00101", PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(patientRepository).searchPatientsWithId(eq("P-00101"), eq(101), any(Pageable.class));
     }
 }

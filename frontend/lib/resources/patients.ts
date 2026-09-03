@@ -7,8 +7,10 @@ import type {
   ContactPersonResponseDTO,
 } from "@/lib/types";
 
-export const getPatients = (page = 0, size = 20) =>
-  apiGet<PageResponse<PatientResponseDTO>>("/api/patients", { params: { page, size } });
+export const getPatients = (page = 0, size = 20, query?: string) =>
+  apiGet<PageResponse<PatientResponseDTO>>("/api/patients", {
+    params: { page, size, ...(query && query.trim() ? { query: query.trim() } : {}) },
+  });
 
 export const getPatient = (id: number) =>
   apiGet<PatientResponseDTO>(`/api/patients/${id}`);
