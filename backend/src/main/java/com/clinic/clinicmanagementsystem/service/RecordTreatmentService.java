@@ -20,6 +20,7 @@ import com.clinic.clinicmanagementsystem.entity.AppointmentSlot;
 import com.clinic.clinicmanagementsystem.entity.Patient;
 import com.clinic.clinicmanagementsystem.entity.WorkingSchedule;
 import com.clinic.clinicmanagementsystem.enums.AppointmentSlotStatus;
+import com.clinic.clinicmanagementsystem.enums.TreatmentProgramType;
 import com.clinic.clinicmanagementsystem.repository.AppointmentSlotRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
 import com.clinic.clinicmanagementsystem.repository.WorkingScheduleRepository;
@@ -28,6 +29,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 import com.clinic.clinicmanagementsystem.security.CurrentUser;
 
 import java.util.Date;
@@ -143,6 +147,8 @@ public class RecordTreatmentService {
             recordTreatment.setHealthProfile(healthProfileMapper.toEntity(dto.getHealthProfile()));
         }
 
+        ensureTreatmentProgramSummary(recordTreatment);
+
         return recordTreatmentMapper.toResponseDTO(recordTreatmentRepository.save(recordTreatment));
     }
 
@@ -209,7 +215,40 @@ public class RecordTreatmentService {
             }
         }
 
+        ensureTreatmentProgramSummary(existing);
+
         return recordTreatmentMapper.toResponseDTO(recordTreatmentRepository.save(existing));
+    }
+
+    private void ensureTreatmentProgramSummary(RecordTreatment recordTreatment) {
+        if (recordTreatment.getTreatmentProgram() != null && !recordTreatment.getTreatmentProgram().isBlank()) {
+            return;
+        }
+        if (recordTreatment.getTreatmentPrograms() == null || recordTreatment.getTreatmentPrograms().isEmpty()) {
+            return;
+        }
+        List<String> list = new ArrayList<>();
+        if (recordTreatment.getTreatmentPrograms().contains(TreatmentProgramType.MASSAGE)) {
+            String details = recordTreatment.getTreatmentProgramMassageDetails();
+            list.add(details != null && !details.isBlank() ? "นวด/หัตถการ (" + details + ")" : "นวด/หัตถการ");
+        }
+        if (recordTreatment.getTreatmentPrograms().contains(TreatmentProgramType.HERBAL_COMPRESS)) {
+            list.add("ประคบสมุนไพร");
+        }
+        if (recordTreatment.getTreatmentPrograms().contains(TreatmentProgramType.HERBAL_STEAM)) {
+            list.add("อบสมุนไพร");
+        }
+        if (recordTreatment.getTreatmentPrograms().contains(TreatmentProgramType.HERBAL_MEDICINE)) {
+            list.add("จ่ายยาสมุนไพร");
+        }
+        if (recordTreatment.getTreatmentPrograms().contains(TreatmentProgramType.CONSULTATION)) {
+            list.add("ให้คำปรึกษาทางการแพทย์");
+        }
+        if (recordTreatment.getTreatmentPrograms().contains(TreatmentProgramType.OTHER)) {
+            String other = recordTreatment.getTreatmentProgramOther();
+            list.add(other != null && !other.isBlank() ? "อื่นๆ (" + other + ")" : "อื่นๆ");
+        }
+        recordTreatment.setTreatmentProgram(String.join(", ", list));
     }
 
     private RecordTreatment findRecordTreatmentOrThrow(int recordTreatmentId) {

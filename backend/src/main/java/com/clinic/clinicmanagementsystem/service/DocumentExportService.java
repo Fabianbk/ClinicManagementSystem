@@ -222,12 +222,29 @@ public class DocumentExportService {
         }
 
         // ==========================================
-        // 3. ประวัติสุขภาพ (HealthProfile)
+        // 3. ประวัติสุขภาพ (HealthProfile) & ประวัติปัจจุบัน/ส่วนตัว
         // ==========================================
         HealthProfile hp = treatment != null ? treatment.getHealthProfile() : null;
-        if (hp != null) {
-            data.put("presentHistory", defaultStr(hp.getPresentHistory()));
 
+        // ประวัติการเจ็บป่วยปัจจุบัน (Present History) - ดึงจาก treatment ก่อน ถ้าไม่มีจึงดึงจาก healthProfile
+        String presentHistoryStr = "";
+        if (treatment != null && treatment.getPresentHistory() != null && !treatment.getPresentHistory().isBlank()) {
+            presentHistoryStr = treatment.getPresentHistory();
+        } else if (hp != null && hp.getPresentHistory() != null) {
+            presentHistoryStr = hp.getPresentHistory();
+        }
+        data.put("presentHistory", defaultStr(presentHistoryStr));
+
+        // ประวัติส่วนตัวและวิถีชีวิต (Personal History) - ดึงจาก treatment ก่อน ถ้าไม่มีจึงดึงจาก healthProfile
+        String personalHistoryStr = "";
+        if (treatment != null && treatment.getPersonalHistory() != null && !treatment.getPersonalHistory().isBlank()) {
+            personalHistoryStr = treatment.getPersonalHistory();
+        } else if (hp != null && hp.getPersonalHistory() != null) {
+            personalHistoryStr = hp.getPersonalHistory();
+        }
+        data.put("personalHistory", defaultStr(personalHistoryStr));
+
+        if (hp != null) {
             // โรคประจำตัว
             String dis = hp.getUnderlyingDisease();
             boolean hasDisease = dis != null && !dis.isBlank() && !dis.contains("ปฏิเสธ") && !dis.equalsIgnoreCase("ไม่มี");
@@ -320,10 +337,25 @@ public class DocumentExportService {
             data.put("diagnosisElements", defaultStr(treatment.getDiagnosisElements()));
             data.put("ttmDiagnosis", defaultStr(treatment.getTtmDiagnosis()));
             data.put("modernDiagnosis", defaultStr(treatment.getModernDiagnosis()));
+            data.put("additionalSymptoms", defaultStr(treatment.getAdditionalSymptoms()));
 
             // แผนการรักษา & โปรแกรม
             data.put("treatmentPlan", defaultStr(treatment.getTreatmentPlan()));
             data.put("treatmentProgram", defaultStr(treatment.getTreatmentProgram()));
+            data.put("treatmentProgramMassageDetails", defaultStr(treatment.getTreatmentProgramMassageDetails()));
+            data.put("treatmentProgramOther", defaultStr(treatment.getTreatmentProgramOther()));
+
+            // โปรแกรมการรักษา Checkboxes
+            Set<TreatmentProgramType> progs = treatment.getTreatmentPrograms();
+            data.put("prog_massage", check(progs != null && progs.contains(TreatmentProgramType.MASSAGE)));
+            data.put("prog_compress", check(progs != null && progs.contains(TreatmentProgramType.HERBAL_COMPRESS)));
+            data.put("prog_steam", check(progs != null && progs.contains(TreatmentProgramType.HERBAL_STEAM)));
+            data.put("prog_herbal_med", check(progs != null && progs.contains(TreatmentProgramType.HERBAL_MEDICINE)));
+            data.put("prog_consult", check(progs != null && progs.contains(TreatmentProgramType.CONSULTATION)));
+            data.put("prog_other", check(progs != null && progs.contains(TreatmentProgramType.OTHER)));
+
+            // ประเมินผลหลังการรักษา & คำแนะนำ
+            data.put("evalAfterTreatment", defaultStr(treatment.getEvalAfterTreatment()));
             data.put("suggestions", defaultStr(treatment.getSuggestions()));
             data.put("followup", defaultStr(treatment.getFollowup()));
             data.put("painScoreBefore",
@@ -529,8 +561,18 @@ public class DocumentExportService {
         data.put("diagnosisElements", "");
         data.put("ttmDiagnosis", "");
         data.put("modernDiagnosis", "");
+        data.put("additionalSymptoms", "");
         data.put("treatmentPlan", "");
         data.put("treatmentProgram", "");
+        data.put("treatmentProgramMassageDetails", "");
+        data.put("treatmentProgramOther", "");
+        data.put("prog_massage", UNCHECKED);
+        data.put("prog_compress", UNCHECKED);
+        data.put("prog_steam", UNCHECKED);
+        data.put("prog_herbal_med", UNCHECKED);
+        data.put("prog_consult", UNCHECKED);
+        data.put("prog_other", UNCHECKED);
+        data.put("evalAfterTreatment", "");
         data.put("suggestions", "");
         data.put("followup", "");
         data.put("painScoreBefore", "");

@@ -36,6 +36,15 @@ const SYMPTOM_CAUSE_MAP: Record<string, string> = {
   OTHER: "อื่นๆ (Other)",
 };
 
+const TREATMENT_PROGRAM_MAP: Record<string, string> = {
+  MASSAGE: "นวด / หัตถการ",
+  HERBAL_COMPRESS: "ประคบสมุนไพร",
+  HERBAL_STEAM: "อบสมุนไพร",
+  HERBAL_MEDICINE: "จ่ายยาสมุนไพร",
+  CONSULTATION: "ให้คำปรึกษาทางการแพทย์",
+  OTHER: "อื่นๆ",
+};
+
 export function TreatmentDetailClient({
   treatment,
   patient,
@@ -179,10 +188,23 @@ export function TreatmentDetailClient({
               </div>
             </div>
 
-            <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-1">
-              <span className="font-bold text-clinic-ink">อาการสำคัญ (Symptoms / Chief Complaint):</span>
-              <p className="text-clinic-ink mt-0.5 whitespace-pre-line leading-relaxed">{treatment.symptoms || "-"}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-1">
+                <span className="font-bold text-clinic-ink">อาการสำคัญ (Chief Complaint):</span>
+                <p className="text-clinic-ink mt-0.5 whitespace-pre-line leading-relaxed">{treatment.symptoms || "-"}</p>
+              </div>
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-1">
+                <span className="font-bold text-clinic-ink">ประวัติปัจจุบัน (Present Illness History):</span>
+                <p className="text-clinic-ink mt-0.5 whitespace-pre-line leading-relaxed">{treatment.presentHistory || "-"}</p>
+              </div>
             </div>
+
+            {treatment.personalHistory && (
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-1">
+                <span className="font-bold text-clinic-ink">ประวัติส่วนตัวและวิถีชีวิต (Personal / Lifestyle History):</span>
+                <p className="text-clinic-ink mt-0.5 whitespace-pre-line leading-relaxed">{treatment.personalHistory}</p>
+              </div>
+            )}
 
             {/* Health profile badges for this visit */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -306,6 +328,13 @@ export function TreatmentDetailClient({
               <p className="text-clinic-ink mt-0.5 whitespace-pre-line">{treatment.modernDiagnosis}</p>
             </div>
           )}
+
+          {treatment.additionalSymptoms && (
+            <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line text-xs">
+              <span className="font-bold text-clinic-ink-soft">อาการเพิ่มเติม (Additional Symptoms):</span>
+              <p className="text-clinic-ink mt-0.5 whitespace-pre-line">{treatment.additionalSymptoms}</p>
+            </div>
+          )}
         </div>
 
         {/* Section 4: การวินิจฉัยแพทย์แผนไทย (Part 4 TTM Diagnosis) */}
@@ -348,10 +377,33 @@ export function TreatmentDetailClient({
           </h2>
 
           <div className="space-y-3 text-xs">
-            {treatment.treatmentProgram && (
+            {((treatment.treatmentPrograms && treatment.treatmentPrograms.length > 0) || treatment.treatmentProgram) && (
+              <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line space-y-2">
+                <span className="font-bold text-clinic-ink block">หัตถการทางการแพทย์แผนไทยที่ได้รับ (Treatment Programs):</span>
+                {treatment.treatmentPrograms && treatment.treatmentPrograms.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {treatment.treatmentPrograms.map((prog) => (
+                      <Badge key={prog} variant="secondary" className="text-xs bg-white border border-clinic-line font-semibold">
+                        {TREATMENT_PROGRAM_MAP[prog] || prog}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {treatment.treatmentProgramMassageDetails && (
+                  <p className="text-xs text-clinic-ink pt-0.5">
+                    <strong>รายละเอียดหัตถการนวด:</strong> {treatment.treatmentProgramMassageDetails}
+                  </p>
+                )}
+                {treatment.treatmentProgram && (!treatment.treatmentPrograms || treatment.treatmentPrograms.length === 0) && (
+                  <p className="text-clinic-ink font-medium mt-0.5">{treatment.treatmentProgram}</p>
+                )}
+              </div>
+            )}
+
+            {treatment.evalAfterTreatment && (
               <div className="p-3 bg-clinic-bg/40 rounded-control border border-clinic-line">
-                <span className="font-bold text-clinic-ink">หัตถการทางการแพทย์แผนไทยที่ได้รับ:</span>
-                <p className="text-clinic-ink font-medium mt-0.5">{treatment.treatmentProgram}</p>
+                <span className="font-bold text-clinic-ink">ตรวจร่างกายและประเมินผลหลังการรักษา:</span>
+                <p className="text-clinic-ink mt-0.5 leading-relaxed">{treatment.evalAfterTreatment}</p>
               </div>
             )}
 

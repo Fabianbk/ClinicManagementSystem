@@ -1,6 +1,7 @@
 package com.clinic.clinicmanagementsystem.entity;
 
 import com.clinic.clinicmanagementsystem.enums.SymptomCause;
+import com.clinic.clinicmanagementsystem.enums.TreatmentProgramType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,6 +29,13 @@ public class RecordTreatment {
 
     @Column(name = "symptoms", columnDefinition = "TEXT")
     private String symptoms;
+
+    @Column(name = "present_history", columnDefinition = "TEXT")
+    private String presentHistory;
+
+    @Column(name = "personal_history", columnDefinition = "TEXT")
+    private String personalHistory;
+
 
     @Column(name = "temp")
     private Double temp;
@@ -99,11 +107,32 @@ public class RecordTreatment {
     @Column(name = "modern_diagnosis", columnDefinition = "TEXT")
     private String modernDiagnosis;
 
+    @Column(name = "additional_symptoms", columnDefinition = "TEXT")
+    private String additionalSymptoms;
+
     @Column(name = "treatment_plan", columnDefinition = "TEXT")
     private String treatmentPlan;
 
+    @ElementCollection(targetClass = TreatmentProgramType.class, fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "record_treatment_programs",
+            joinColumns = @JoinColumn(name = "record_treatment_id")
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "program", nullable = false, length = 50)
+    private Set<TreatmentProgramType> treatmentPrograms = new HashSet<>();
+
+    @Column(name = "treatment_program_massage_details", columnDefinition = "TEXT")
+    private String treatmentProgramMassageDetails;
+
+    @Column(name = "treatment_program_other", columnDefinition = "TEXT")
+    private String treatmentProgramOther;
+
     @Column(name = "treatment_program", columnDefinition = "TEXT")
     private String treatmentProgram;
+
+    @Column(name = "eval_after_treatment", columnDefinition = "TEXT")
+    private String evalAfterTreatment;
 
     @Column(name = "suggestions", columnDefinition = "TEXT")
     private String suggestions;

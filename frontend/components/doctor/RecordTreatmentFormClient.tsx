@@ -15,6 +15,7 @@ import type {
   TriDosha,
   AgePrinciple,
   SymptomCause,
+  TreatmentProgramType,
 } from "@/lib/types";
 
 export const DHATU_OPTIONS: { value: Dhatu; label: string; sub: string }[] = [
@@ -171,6 +172,7 @@ export function RecordTreatmentFormClient({
   // Personal History (ประวัติส่วนตัว)
   const [drinksAlcohol, setDrinksAlcohol] = useState<boolean>(false);
   const [smokes, setSmokes] = useState<boolean>(false);
+  const [personalHistory, setPersonalHistory] = useState("");
 
   // PART 3: Physical Examination & Pain Assessment
   const [temp, setTemp] = useState<number | "">(36.5);
@@ -581,14 +583,21 @@ export function RecordTreatmentFormClient({
       const recordDateObj = visitDate ? new Date(`${visitDate}T${visitTime || "00:00"}:00`) : new Date();
       const validRecordDateIso = isNaN(recordDateObj.getTime()) ? new Date().toISOString() : recordDateObj.toISOString();
 
+      const selectedPrograms: TreatmentProgramType[] = [];
+      if (programMassage) selectedPrograms.push("MASSAGE");
+      if (programCompress) selectedPrograms.push("HERBAL_COMPRESS");
+      if (programSteam) selectedPrograms.push("HERBAL_STEAM");
+      if (programHerbalMed) selectedPrograms.push("HERBAL_MEDICINE");
+      if (programConsult) selectedPrograms.push("CONSULTATION");
+
       const treatmentDTO: RecordTreatmentRequestDTO = {
         appointmentId: selectedAppointmentId === "WALK_IN" ? undefined : selectedAppointmentId,
         patientId: selectedPatientId,
         doctorId: Number(doctorId) || 1,
         recordDate: validRecordDateIso,
-        symptoms: presentHistory.trim()
-          ? `${symptoms.trim()}\n[ประวัติปัจจุบัน]: ${presentHistory.trim()}`
-          : symptoms.trim(),
+        symptoms: symptoms.trim(),
+        presentHistory: presentHistory.trim() || undefined,
+        personalHistory: personalHistory.trim() || undefined,
         temp: temp ? Number(temp) : undefined,
         pulse: pulse ? Number(pulse) : undefined,
         respirationRate: respirationRate ? Number(respirationRate) : undefined,
@@ -619,12 +628,14 @@ export function RecordTreatmentFormClient({
         summaryOfSickness: summaryOfSickness.trim() || undefined,
         diagnosisElements: diagnosisElements.trim() || undefined,
         ttmDiagnosis: ttmDiagnosis.trim() || undefined,
-        modernDiagnosis: composedModernDiagnosis || undefined,
+        modernDiagnosis: modernDiagnosis.trim() || undefined,
+        additionalSymptoms: additionalSymptoms.trim() || undefined,
         treatmentPlan: treatmentPlan.trim() || undefined,
+        treatmentPrograms: selectedPrograms,
+        treatmentProgramMassageDetails: programMassage ? (programMassageDetails.trim() || undefined) : undefined,
         treatmentProgram: composedTreatmentProgram || undefined,
-        suggestions: evalAfterTreatment.trim()
-          ? `[ประเมินหลังรักษา]: ${evalAfterTreatment.trim()} | [คำแนะนำ]: ${suggestions.trim()}`
-          : suggestions.trim() || undefined,
+        evalAfterTreatment: evalAfterTreatment.trim() || undefined,
+        suggestions: suggestions.trim() || undefined,
         followup: followup.trim() || undefined,
         painScoreBefore: painScoreBefore,
         painScoreAfter: painScoreAfter,
@@ -1250,6 +1261,20 @@ export function RecordTreatmentFormClient({
                   <span>สูบบุหรี่</span>
                 </label>
               </div>
+            </div>
+
+            {/* วิถีชีวิตและกิจวัตรประจำวัน (Lifestyle) */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-semibold text-clinic-ink">
+                วิถีชีวิตและกิจวัตรประจำวัน (Lifestyle Habits / Daily Routine):
+              </label>
+              <textarea
+                rows={2}
+                value={personalHistory}
+                onChange={(e) => setPersonalHistory(e.target.value)}
+                placeholder="เช่น เวลาตื่นนอน การรับประทานอาหารกี่มื้อ การอาบน้ำ กิจวัตรประจำวัน การพักผ่อน การออกกำลังกาย การใช้ชีวิต..."
+                className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+              />
             </div>
           </div>
         </div>

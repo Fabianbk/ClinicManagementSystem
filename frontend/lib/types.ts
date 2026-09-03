@@ -330,12 +330,22 @@ export interface AppointmentResponseDTO {
 
 // ---------- Record Treatment ----------
 
+export type TreatmentProgramType =
+  | "MASSAGE"
+  | "HERBAL_COMPRESS"
+  | "HERBAL_STEAM"
+  | "HERBAL_MEDICINE"
+  | "CONSULTATION"
+  | "OTHER";
+
 export interface RecordTreatmentRequestDTO {
   appointmentId?: number;
   patientId?: number;
   doctorId: number;
   recordDate: string;
   symptoms?: string;
+  presentHistory?: string;
+  personalHistory?: string;
   temp?: number;
   pulse?: number;
   respirationRate?: number;
@@ -357,8 +367,13 @@ export interface RecordTreatmentRequestDTO {
   diagnosisElements?: string;
   ttmDiagnosis?: string;
   modernDiagnosis?: string;
+  additionalSymptoms?: string;
   treatmentPlan?: string;
+  treatmentPrograms?: TreatmentProgramType[];
+  treatmentProgramMassageDetails?: string;
+  treatmentProgramOther?: string;
   treatmentProgram?: string;
+  evalAfterTreatment?: string;
   suggestions?: string;
   followup?: string;
   painScoreBefore?: number;
@@ -413,6 +428,8 @@ export interface RecordTreatmentResponseDTO {
   recordTreatmentId: number;
   recordDate: string;
   symptoms: string | null;
+  presentHistory?: string | null;
+  personalHistory?: string | null;
   temp: number | null;
   pulse: number | null;
   respirationRate: number | null;
@@ -434,8 +451,13 @@ export interface RecordTreatmentResponseDTO {
   diagnosisElements: string | null;
   ttmDiagnosis: string | null;
   modernDiagnosis: string | null;
+  additionalSymptoms?: string | null;
   treatmentPlan: string | null;
+  treatmentPrograms?: TreatmentProgramType[] | null;
+  treatmentProgramMassageDetails?: string | null;
+  treatmentProgramOther?: string | null;
   treatmentProgram: string | null;
+  evalAfterTreatment?: string | null;
   suggestions: string | null;
   followup: string | null;
   painScoreBefore: number | null;

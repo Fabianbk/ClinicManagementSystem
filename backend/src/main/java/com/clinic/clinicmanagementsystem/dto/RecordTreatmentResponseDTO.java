@@ -1,6 +1,7 @@
 package com.clinic.clinicmanagementsystem.dto;
 
 import com.clinic.clinicmanagementsystem.enums.SymptomCause;
+import com.clinic.clinicmanagementsystem.enums.TreatmentProgramType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,8 @@ public class RecordTreatmentResponseDTO {
     private int recordTreatmentId;
     private Date recordDate;
     private String symptoms;
+    private String presentHistory;
+    private String personalHistory;
     private Double temp;
     private Integer pulse;
     private Integer respirationRate;
@@ -39,8 +42,13 @@ public class RecordTreatmentResponseDTO {
     private String diagnosisElements;
     private String ttmDiagnosis;
     private String modernDiagnosis;
+    private String additionalSymptoms;
     private String treatmentPlan;
+    private Set<TreatmentProgramType> treatmentPrograms;
+    private String treatmentProgramMassageDetails;
+    private String treatmentProgramOther;
     private String treatmentProgram;
+    private String evalAfterTreatment;
     private String suggestions;
     private String followup;
     private Integer painScoreBefore;

@@ -1,6 +1,7 @@
 package com.clinic.clinicmanagementsystem.dto;
 
 import com.clinic.clinicmanagementsystem.enums.SymptomCause;
+import com.clinic.clinicmanagementsystem.enums.TreatmentProgramType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,13 @@ public class RecordTreatmentRequestDTO {
 
     @Size(max = 65535)
     private String symptoms;
+
+    @Size(max = 65535)
+    private String presentHistory;
+
+    @Size(max = 65535)
+    private String personalHistory;
+
 
     private Double temp;
     private Integer pulse;
@@ -83,10 +91,24 @@ public class RecordTreatmentRequestDTO {
     private String modernDiagnosis;
 
     @Size(max = 65535)
+    private String additionalSymptoms;
+
+    @Size(max = 65535)
     private String treatmentPlan;
+
+    private Set<TreatmentProgramType> treatmentPrograms;
+
+    @Size(max = 65535)
+    private String treatmentProgramMassageDetails;
+
+    @Size(max = 65535)
+    private String treatmentProgramOther;
 
     @Size(max = 65535)
     private String treatmentProgram;
+
+    @Size(max = 65535)
+    private String evalAfterTreatment;
 
     @Size(max = 65535)
     private String suggestions;

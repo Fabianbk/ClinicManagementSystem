@@ -10,7 +10,17 @@ import type {
   RecordTreatmentRequestDTO,
   RecordTreatmentMedicineResponseDTO,
   SymptomCause,
+  TreatmentProgramType,
 } from "@/lib/types";
+
+export const TREATMENT_PROGRAM_OPTIONS: { value: TreatmentProgramType; label: string }[] = [
+  { value: "MASSAGE", label: "นวด / หัตถการ (Massage)" },
+  { value: "HERBAL_COMPRESS", label: "ประคบสมุนไพร (Herbal compress)" },
+  { value: "HERBAL_STEAM", label: "อบสมุนไพร (Herbal steam)" },
+  { value: "HERBAL_MEDICINE", label: "จ่ายยาสมุนไพร (Herbal medicine)" },
+  { value: "CONSULTATION", label: "ให้คำปรึกษาทางการแพทย์ (Consultation)" },
+  { value: "OTHER", label: "อื่นๆ (Other)" },
+];
 
 export const SYMPTOM_CAUSE_OPTIONS: { value: SymptomCause; label: string; sub: string }[] = [
   { value: "FOOD", label: "อาหาร", sub: "Food" },
@@ -51,6 +61,8 @@ export function RecordTreatmentEditClient({
 
   // Clinical fields
   const [symptoms, setSymptoms] = useState(treatment.symptoms || "");
+  const [presentHistory, setPresentHistory] = useState(treatment.presentHistory || "");
+  const [personalHistory, setPersonalHistory] = useState(treatment.personalHistory || "");
   const [temp, setTemp] = useState<number | "">(treatment.temp ?? 36.5);
   const [pulse, setPulse] = useState<number | "">(treatment.pulse ?? 76);
   const [respirationRate, setRespirationRate] = useState<number | "">(treatment.respirationRate ?? 18);
@@ -72,6 +84,7 @@ export function RecordTreatmentEditClient({
 
   const [ttmDiagnosis, setTtmDiagnosis] = useState(treatment.ttmDiagnosis || "");
   const [modernDiagnosis, setModernDiagnosis] = useState(treatment.modernDiagnosis || "");
+  const [additionalSymptoms, setAdditionalSymptoms] = useState(treatment.additionalSymptoms || "");
   const [diagnosisElements, setDiagnosisElements] = useState(treatment.diagnosisElements || "");
   const [selectedCauses, setSelectedCauses] = useState<Set<SymptomCause>>(() => {
     return new Set(treatment.causesOfSymptoms || []);
@@ -92,9 +105,28 @@ export function RecordTreatmentEditClient({
   };
 
   const [treatmentPlan, setTreatmentPlan] = useState(treatment.treatmentPlan || "");
+  const [selectedPrograms, setSelectedPrograms] = useState<Set<TreatmentProgramType>>(() => {
+    return new Set(treatment.treatmentPrograms || []);
+  });
+  const [programMassageDetails, setProgramMassageDetails] = useState(
+    treatment.treatmentProgramMassageDetails || ""
+  );
   const [treatmentProgram, setTreatmentProgram] = useState(treatment.treatmentProgram || "");
+  const [evalAfterTreatment, setEvalAfterTreatment] = useState(treatment.evalAfterTreatment || "");
   const [suggestions, setSuggestions] = useState(treatment.suggestions || "");
   const [followup, setFollowup] = useState(treatment.followup || "");
+
+  const toggleProgram = (prog: TreatmentProgramType) => {
+    setSelectedPrograms((prev) => {
+      const next = new Set(prev);
+      if (next.has(prog)) {
+        next.delete(prog);
+      } else {
+        next.add(prog);
+      }
+      return next;
+    });
+  };
 
   // Dispensed medicines
   const [dispensedMedicines, setDispensedMedicines] = useState<RecordTreatmentMedicineResponseDTO[]>(
@@ -190,6 +222,8 @@ export function RecordTreatmentEditClient({
         doctorId: doctorId,
         recordDate: treatment.recordDate ? new Date(treatment.recordDate).toISOString() : new Date().toISOString(),
         symptoms: symptoms.trim(),
+        presentHistory: presentHistory.trim() || undefined,
+        personalHistory: personalHistory.trim() || undefined,
         temp: temp ? Number(temp) : undefined,
         pulse: pulse ? Number(pulse) : undefined,
         respirationRate: respirationRate ? Number(respirationRate) : undefined,
@@ -211,8 +245,14 @@ export function RecordTreatmentEditClient({
         diagnosisElements: diagnosisElements.trim() || undefined,
         ttmDiagnosis: ttmDiagnosis.trim() || undefined,
         modernDiagnosis: modernDiagnosis.trim() || undefined,
+        additionalSymptoms: additionalSymptoms.trim() || undefined,
         treatmentPlan: treatmentPlan.trim() || undefined,
+        treatmentPrograms: Array.from(selectedPrograms),
+        treatmentProgramMassageDetails: selectedPrograms.has("MASSAGE")
+          ? (programMassageDetails.trim() || undefined)
+          : undefined,
         treatmentProgram: treatmentProgram.trim() || undefined,
+        evalAfterTreatment: evalAfterTreatment.trim() || undefined,
         suggestions: suggestions.trim() || undefined,
         followup: followup.trim() || undefined,
         painScoreBefore: painScoreBefore,
@@ -511,22 +551,50 @@ export function RecordTreatmentEditClient({
       {/* Symptoms & Diagnosis */}
       <div className="bg-white border border-clinic-line rounded-card p-6 shadow-2xs space-y-4">
         <h2 className="font-display font-bold text-sm text-clinic-primary-deep border-b border-clinic-line pb-3">
-          🌿 อาการสำคัญและการวินิจฉัยโรค
+          🌿 อาการสำคัญและประวัติการเจ็บป่วย
         </h2>
 
         <div>
-          <label className="block text-xs font-bold text-clinic-ink mb-1">อาการสำคัญ</label>
+          <label className="block text-xs font-bold text-clinic-ink mb-1">
+            อาการสำคัญ (Chief Complaint)
+          </label>
           <textarea
-            rows={3}
+            rows={2}
             value={symptoms}
             onChange={(e) => setSymptoms(e.target.value)}
             className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-bold text-clinic-ink mb-1">
+            ประวัติปัจจุบัน (Present Illness History)
+          </label>
+          <textarea
+            rows={2}
+            value={presentHistory}
+            onChange={(e) => setPresentHistory(e.target.value)}
+            placeholder="ประวัติการเจ็บป่วยในปัจจุบัน อาการกำเริบเมื่อใด สิ่งที่ทำให้ทุเลาหรือรุนแรงขึ้น..."
+            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-clinic-ink mb-1">
+            ประวัติส่วนตัวและวิถีชีวิต (Personal / Lifestyle History)
+          </label>
+          <textarea
+            rows={2}
+            value={personalHistory}
+            onChange={(e) => setPersonalHistory(e.target.value)}
+            placeholder="เช่น เวลาตื่นนอน การรับประทานอาหารกี่มื้อ การอาบน้ำ กิจวัตรประจำวัน การพักผ่อน การใช้ชีวิต..."
+            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <div>
-            <label className="block text-xs font-semibold text-clinic-ink mb-1">การวินิจฉัยแพทย์แผนไทย</label>
+            <label className="block text-xs font-semibold text-clinic-ink mb-1">การวินิจฉัยแพทย์แผนไทย (TTM Diagnosis)</label>
             <input
               type="text"
               value={ttmDiagnosis}
@@ -535,11 +603,33 @@ export function RecordTreatmentEditClient({
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-clinic-ink mb-1">การวินิจฉัยแผนปัจจุบัน</label>
+            <label className="block text-xs font-semibold text-clinic-ink mb-1">สมุฏฐานธาตุพิการ</label>
+            <input
+              type="text"
+              value={diagnosisElements}
+              onChange={(e) => setDiagnosisElements(e.target.value)}
+              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-clinic-ink mb-1">การวินิจฉัยแผนปัจจุบัน (Modern Diagnosis)</label>
             <input
               type="text"
               value={modernDiagnosis}
               onChange={(e) => setModernDiagnosis(e.target.value)}
+              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-clinic-ink mb-1">อาการเพิ่มเติม (Additional Symptoms)</label>
+            <input
+              type="text"
+              value={additionalSymptoms}
+              onChange={(e) => setAdditionalSymptoms(e.target.value)}
+              placeholder="ระบุอาการเพิ่มเติม (ถ้ามี)..."
               className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
             />
           </div>
@@ -612,39 +702,85 @@ export function RecordTreatmentEditClient({
           💆 การรักษาและคำแนะนำ
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-clinic-ink mb-1">แผนการรักษา</label>
-            <input
-              type="text"
-              value={treatmentPlan}
-              onChange={(e) => setTreatmentPlan(e.target.value)}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
-            />
+        <div>
+          <label className="block text-xs font-semibold text-clinic-ink mb-1">แผนการรักษา (Treatment Plan)</label>
+          <input
+            type="text"
+            value={treatmentPlan}
+            onChange={(e) => setTreatmentPlan(e.target.value)}
+            className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+          />
+        </div>
+
+        {/* Treatment Program Selection */}
+        <div className="space-y-2 pt-2 border-t border-clinic-line">
+          <label className="block text-xs font-bold text-clinic-ink">
+            วิธีการรักษา / หัตถการ (Treatment Programs):
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            {TREATMENT_PROGRAM_OPTIONS.map((opt) => (
+              <label
+                key={opt.value}
+                className={`flex items-center gap-2 p-2.5 rounded-control border cursor-pointer transition-colors ${
+                  selectedPrograms.has(opt.value)
+                    ? "bg-clinic-primary/10 border-clinic-primary font-semibold text-clinic-primary-deep"
+                    : "bg-clinic-bg/40 border-clinic-line text-clinic-ink hover:bg-clinic-bg"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedPrograms.has(opt.value)}
+                  onChange={() => toggleProgram(opt.value)}
+                  className="rounded text-clinic-primary"
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-clinic-ink mb-1">วิธีการรักษา / หัตถการ</label>
-            <input
-              type="text"
-              value={treatmentProgram}
-              onChange={(e) => setTreatmentProgram(e.target.value)}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
-            />
-          </div>
+
+          {selectedPrograms.has("MASSAGE") && (
+            <div className="pt-2">
+              <label className="block text-[11px] font-semibold text-clinic-ink mb-1">
+                รายละเอียดหัตถการนวดเฉพาะจุด:
+              </label>
+              <input
+                type="text"
+                placeholder="ระบุจุดนวดแก้อาการ เช่น บริเวณสะบัก บ่า และต้นคอ..."
+                value={programMassageDetails}
+                onChange={(e) => setProgramMassageDetails(e.target.value)}
+                className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Evaluation after treatment */}
+        <div className="pt-2 border-t border-clinic-line">
+          <label className="block text-xs font-semibold text-clinic-ink mb-1">
+            ตรวจร่างกายและประเมินผลหลังการรักษา (Physical examination and evaluation after treatments)
+          </label>
+          <textarea
+            rows={2}
+            value={evalAfterTreatment}
+            onChange={(e) => setEvalAfterTreatment(e.target.value)}
+            placeholder="เช่น กล้ามเนื้อคลายตัว ความตึงตัวลดลง ผู้ป่วยรู้สึกเบาสบาย..."
+            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-clinic-ink mb-1">คำแนะนำสำหรับผู้ป่วย</label>
+            <label className="block text-xs font-semibold text-clinic-ink mb-1">คำแนะนำสำหรับผู้ป่วย (Suggestions / Advice)</label>
             <input
               type="text"
               value={suggestions}
               onChange={(e) => setSuggestions(e.target.value)}
+              placeholder="คำแนะนำการปฏิบัติตัว การยืดเหยียด การประคบ..."
               className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-clinic-ink mb-1">นัดหมายติดตามผล</label>
+            <label className="block text-xs font-semibold text-clinic-ink mb-1">นัดหมายติดตามผล (Follow-up)</label>
             <input
               type="text"
               value={followup}
