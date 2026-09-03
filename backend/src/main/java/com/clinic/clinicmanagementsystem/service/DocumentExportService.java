@@ -229,34 +229,40 @@ public class DocumentExportService {
             data.put("presentHistory", defaultStr(hp.getPresentHistory()));
 
             // โรคประจำตัว
-            boolean hasDisease = hp.getUnderlyingDisease() != null && !hp.getUnderlyingDisease().isBlank();
+            String dis = hp.getUnderlyingDisease();
+            boolean hasDisease = dis != null && !dis.isBlank() && !dis.contains("ปฏิเสธ") && !dis.equalsIgnoreCase("ไม่มี");
             data.put("dis_deny", check(!hasDisease));
             data.put("dis_have", check(hasDisease));
-            data.put("diseaseDetail", defaultStr(hp.getUnderlyingDisease()));
+            data.put("diseaseDetail", hasDisease ? dis : "");
 
             // แพ้ยา
-            boolean hasDrugAllergy = hp.getDrugAllergy() != null && !hp.getDrugAllergy().isBlank();
+            String drug = hp.getDrugAllergy();
+            boolean hasDrugAllergy = drug != null && !drug.isBlank() && !drug.contains("ปฏิเสธ") && !drug.equalsIgnoreCase("ไม่มี");
             data.put("drug_deny", check(!hasDrugAllergy));
             data.put("drug_have", check(hasDrugAllergy));
-            data.put("drugAllergyDetail", defaultStr(hp.getDrugAllergy()));
+            data.put("drugAllergyDetail", hasDrugAllergy ? drug : "");
 
             // แพ้อาหาร
-            boolean hasFoodAllergy = hp.getFoodAllergy() != null && !hp.getFoodAllergy().isBlank();
+            String food = hp.getFoodAllergy();
+            boolean hasFoodAllergy = food != null && !food.isBlank() && !food.contains("ปฏิเสธ") && !food.equalsIgnoreCase("ไม่มี");
             data.put("food_deny", check(!hasFoodAllergy));
             data.put("food_have", check(hasFoodAllergy));
-            data.put("foodAllergyDetail", defaultStr(hp.getFoodAllergy()));
+            data.put("foodAllergyDetail", hasFoodAllergy ? food : "");
 
             // ประวัติครอบครัว (โรคทางพันธุกรรม)
-            boolean hasHereditary = hp.getHereditaryDisease() != null && !hp.getHereditaryDisease().isBlank();
+            String fam = hp.getHereditaryDisease();
+            boolean hasHereditary = fam != null && !fam.isBlank() && !fam.contains("ปฏิเสธ") && !fam.equalsIgnoreCase("ไม่มี");
             data.put("fam_deny", check(!hasHereditary));
             data.put("fam_have", check(hasHereditary));
 
             // พฤติกรรม (แอลกอฮอล์ / บุหรี่)
-            boolean drinks = hp.getAlcoholConsumption() != null && !hp.getAlcoholConsumption().isBlank();
+            String alc = hp.getAlcoholConsumption();
+            boolean drinks = alc != null && alc.contains("ดื่ม") && !alc.contains("ปฏิเสธ");
             data.put("alcohol_deny", check(!drinks));
             data.put("alcohol_have", check(drinks));
 
-            boolean smokes = hp.getSmokingHistory() != null && !hp.getSmokingHistory().isBlank();
+            String smk = hp.getSmokingHistory();
+            boolean smokes = smk != null && smk.contains("สูบ") && !smk.contains("ปฏิเสธ");
             data.put("smoke_deny", check(!smokes));
             data.put("smoke_have", check(smokes));
 

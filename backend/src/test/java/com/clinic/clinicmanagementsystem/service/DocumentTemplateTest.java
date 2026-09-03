@@ -94,9 +94,9 @@ public class DocumentTemplateTest {
 
         // ประวัติสุขภาพ
         data.put("presentHistory", "มีอาการปวดตึงกล้ามเนื้อต้นคอบ่าไหล่ทั้งสองข้าง เป็นมาประมาณ 2 สัปดาห์");
-        data.put("dis_deny", "☐");
-        data.put("dis_have", "☑");
-        data.put("diseaseDetail", "ความดันโลหิตสูง");
+        data.put("dis_deny", "☑");
+        data.put("dis_have", "☐");
+        data.put("diseaseDetail", "");
         data.put("drug_deny", "☑");
         data.put("drug_have", "☐");
         data.put("drugAllergyDetail", "");
