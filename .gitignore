@@ -32,9 +32,37 @@ build/
 ### VS Code ###
 .vscode/
 
+### Node / Next.js ###
 node_modules/
 .next/
-.env.local
+out/
+.env*.local
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
+### Agent / Scratch ###
+.scratch/
+
+### Logs & Temp ###
+*.log
+logs/
+*.tmp
+test_output.docx
+
+### MS Office Temporary Lock Files ###
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+### OS Generated Files ###
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Project Specific ###
 SRS_ระบบบริหารจัดการคลินิก.md
 backend/src/main/java/com/clinic/clinicmanagementsystem/config/DoctorDataSeeder.java
