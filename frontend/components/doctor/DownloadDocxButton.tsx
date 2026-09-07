@@ -4,32 +4,61 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown, Loader2 } from "lucide-react";
 
-interface DownloadDocxButtonProps {
+export type PatientDocType = "intake-th" | "intake-en" | "opd-card" | "intake-form";
+
+export interface DownloadDocxButtonProps {
   patientId?: number;
   recordTreatmentId?: number;
+  docType?: PatientDocType;
   label?: string;
   variant?: "default" | "terracotta" | "accent" | "secondary" | "outline" | "ghost" | "danger" | "link";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
+  icon?: React.ReactNode;
+  showIcon?: boolean;
 }
 
 export function DownloadDocxButton({
   patientId,
   recordTreatmentId,
-  label = "ดาวน์โหลดแบบบันทึก (Word)",
+  docType,
+  label,
   variant = "outline",
   size = "sm",
   className,
+  icon,
+  showIcon = true,
 }: DownloadDocxButtonProps) {
   const [loading, setLoading] = useState(false);
+
+  // Determine default label based on docType if not provided
+  let defaultLabel = "ดาวน์โหลดแบบบันทึก (Word)";
+  if (docType === "intake-th") defaultLabel = "แบบกรอกประวัติ (ไทย)";
+  else if (docType === "intake-en") defaultLabel = "แบบกรอกประวัติ (EN)";
+  else if (docType === "opd-card") defaultLabel = "บัตรเวชระเบียน (OPD Card)";
+  else if (docType === "intake-form") defaultLabel = "เวชระเบียนฉบับเต็ม";
+
+  const buttonLabel = label ?? defaultLabel;
 
   const handleDownload = async () => {
     try {
       setLoading(true);
 
-      const endpoint = recordTreatmentId
-        ? `/api/documents/intake-form/treatment/${recordTreatmentId}`
-        : `/api/documents/intake-form/patient/${patientId}`;
+      let endpoint = "";
+      let fallbackFilename = "document.docx";
+
+      if (docType && patientId) {
+        endpoint = `/api/documents/patient/${patientId}/${docType}`;
+        fallbackFilename = `${docType}-patient-${patientId}.docx`;
+      } else if (recordTreatmentId) {
+        endpoint = `/api/documents/intake-form/treatment/${recordTreatmentId}`;
+        fallbackFilename = `treatment-record-${recordTreatmentId}.docx`;
+      } else if (patientId) {
+        endpoint = `/api/documents/intake-form/patient/${patientId}`;
+        fallbackFilename = `client-intake-patient-${patientId}.docx`;
+      } else {
+        throw new Error("Missing patientId or recordTreatmentId");
+      }
 
       const res = await fetch(endpoint);
 
@@ -40,9 +69,7 @@ export function DownloadDocxButton({
 
       // Extract filename from header or fallback
       const disposition = res.headers.get("Content-Disposition");
-      let filename = recordTreatmentId
-        ? `treatment-record-${recordTreatmentId}.docx`
-        : `client-intake-patient-${patientId}.docx`;
+      let filename = fallbackFilename;
 
       if (disposition && disposition.includes("filename=")) {
         const match = disposition.match(/filename="?([^"]+)"?/);
@@ -76,17 +103,17 @@ export function DownloadDocxButton({
       variant={variant}
       size={size}
       className={className}
-      title="ดาวน์โหลดเอกสาร Word (.docx) พร้อมข้อมูลที่กรอกเรียบร้อยแล้ว"
+      title={`ดาวน์โหลดเอกสาร Word (.docx): ${buttonLabel}`}
     >
       {loading ? (
         <>
-          <Loader2 className="w-4 h-4 mr-1.5 animate-spin text-clinic-primary" />
-          <span>กำลังสร้างไฟล์...</span>
+          <Loader2 className="w-4 h-4 mr-1.5 animate-spin text-clinic-primary shrink-0" />
+          <span>กำลังโหลด...</span>
         </>
       ) : (
         <>
-          <FileDown className="w-4 h-4 mr-1.5 text-clinic-primary" />
-          <span>{label}</span>
+          {showIcon && (icon || <FileDown className="w-4 h-4 mr-1.5 text-clinic-primary shrink-0" />)}
+          {buttonLabel && <span>{buttonLabel}</span>}
         </>
       )}
     </Button>

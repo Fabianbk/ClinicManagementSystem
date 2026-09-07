@@ -150,3 +150,128 @@
 | `[price]` | ราคาต่อหน่วย (บาท) | `400.00` |
 | `[total]` | ราคารวมรายการ (บาท) | `400.00` |
 | `{{grandTotal}}` | ยอดรวมเงินสุทธิทั้งสิ้น (บาท) | `670.00` |
+
+---
+
+## ๗. แบบกรอกประวัติผู้ป่วยภาษาไทย (`patient_intake_th.docx`)
+
+ไฟล์เทมเพลต Word: `patient_intake_th.docx`  
+ใช้สำหรับพิมพ์แบบฟอร์มลงทะเบียนประวัติผู้ป่วยภาษาไทยตามรูปแบบมาตรฐานคลินิก (มีช่องเลขบัตรประชาชน 13 หลักแยกช่อง)
+
+### ข้อมูลประวัติและที่อยู่
+
+| Tag Name | ความหมาย / รายละเอียด | ตัวอย่างข้อมูล |
+|---|---|---|
+| `{{regDate}}` | วันที่ลงทะเบียน (dd/MM/yyyy พ.ศ.) | `07/09/2569` |
+| `{{fullname}}` | ชื่อ-นามสกุล ผู้รับการรักษา | `นายสมศักดิ์ รักษ์ดี` |
+| `{{id_0}}` - `{{id_12}}` | เลขประจำตัวประชาชน 13 หลัก (แยกช่องละ 1 ตัวเลข) | `1`, `1`, `0`, `0`, `2`, ... |
+| `{{dob}}` | วันเดือนปีเกิด | `15/08/2500` |
+| `{{age}}` | อายุ (ปี) | `69` |
+| `{{gender_male}}` | เพศชาย | `☑` หรือ `☐` |
+| `{{gender_female}}` | เพศหญิง | `☑` หรือ `☐` |
+| `{{status_single}}` | สถานภาพ: โสด | `☑` หรือ `☐` |
+| `{{status_married}}` | สถานภาพ: สมรส | `☑` หรือ `☐` |
+| `{{status_widowed}}` | สถานภาพ: หม้าย | `☑` หรือ `☐` |
+| `{{status_divorced}}` | สถานภาพ: หย่า | `☑` หรือ `☐` |
+| `{{status_separated}}` | สถานภาพ: แยกกันอยู่ | `☑` หรือ `☐` |
+| `{{status_monk}}` | สถานภาพ: สมณเพศ | `☑` หรือ `☐` |
+| `{{status_other}}` | สถานภาพ: อื่นๆ | `☑` หรือ `☐` |
+| `{{nationality}}` | สัญชาติ | `ไทย` |
+| `{{race}}` | เชื้อชาติ | `ไทย` |
+| `{{religion}}` | ศาสนา | `พุทธ` |
+| `{{occupation}}` | อาชีพ | `ข้าราชการบำนาญ` |
+| `{{treatment_rights_pay_direct}}` | สิทธิการรักษา: ชำระเงินเอง | `☑` หรือ `☐` |
+| `{{treatment_rights_elderly}}` | สิทธิการรักษา: สิทธิผู้สูงอายุ | `☑` หรือ `☐` |
+| `{{treatment_rights_monk}}` | สิทธิการรักษา: พระภิกษุสงฆ์ | `☑` หรือ `☐` |
+| `{{treatment_rights_disabled}}` | สิทธิการรักษา: ผู้พิการ | `☑` หรือ `☐` |
+| `{{treatment_rights_other}}` | สิทธิการรักษา: อื่นๆ | `☑` หรือ `☐` |
+| `{{treatment_rights_other_detail}}` | รายละเอียดสิทธิการรักษาอื่นๆ | `-` |
+| `{{houseNo}}` | บ้านเลขที่ | `123/45` |
+| `{{moo}}` | หมู่ที่ | `3` |
+| `{{buildingVillage}}` | อาคาร / หมู่บ้าน | `หมู่บ้านสุขสำราญ` |
+| `{{soi}}` | ซอย | `สุขเกษม 2` |
+| `{{road}}` | ถนน | `มิตรภาพ` |
+| `{{subDistrict}}` | แขวง / ตำบล | `ในเมือง` |
+| `{{district}}` | เขต / อำเภอ | `เมืองขอนแก่น` |
+| `{{province}}` | จังหวัด | `ขอนแก่น` |
+| `{{postalCode}}` | รหัสไปรษณีย์ | `40000` |
+| `{{phone}}` | เบอร์โทรศัพท์ผู้ป่วย | `081-234-5678` |
+| `{{house_owner}}` | ที่พักอาศัย: บ้านตนเอง | `☑` หรือ `☐` |
+| `{{house_rent}}` | ที่พักอาศัย: บ้านเช่า | `☑` หรือ `☐` |
+| `{{house_other}}` | ที่พักอาศัย: อื่นๆ | `☑` หรือ `☐` |
+| `{{house_other_detail}}` | รายละเอียดที่พักอาศัยอื่นๆ | `-` |
+| `{{contact_fullname}}` | ชื่อ-นามสกุล ผู้ติดต่อฉุกเฉิน | `นางสมศรี รักษ์ดี` |
+| `{{contact_relationship}}` | ความสัมพันธ์ผู้ติดต่อฉุกเฉิน | `ภรรยา` |
+| `{{contact_phone}}` | เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน | `089-876-5432` |
+
+---
+
+## ๘. แบบกรอกประวัติผู้ป่วยภาษาอังกฤษ (`patient_intake_en.docx`)
+
+ไฟล์เทมเพลต Word: `patient_intake_en.docx`  
+ใช้สำหรับพิมพ์แบบฟอร์มลงทะเบียนประวัติผู้ป่วยภาษาอังกฤษ (Patient’s Personal Data) สำหรับผู้ป่วยต่างชาติ
+
+| Tag Name | ความหมาย / รายละเอียด | ตัวอย่างข้อมูล |
+|---|---|---|
+| `{{regDate}}` | Registration Date (dd/MM/yyyy A.D.) | `07/09/2026` |
+| `{{fullname}}` | Patient’s Full Name | `Mr. Johnathan Doe` |
+| `{{passportNo}}` | Passport No. / ID Card | `AA1234567` |
+| `{{dob}}` | Date of Birth | `15/08/1980` |
+| `{{age}}` | Age (Years) | `46` |
+| `{{gender_male}}` | Gender: Male | `☑` หรือ `☐` |
+| `{{gender_female}}` | Gender: Female | `☑` หรือ `☐` |
+| `{{marital_single}}` | Marital: Single | `☑` หรือ `☐` |
+| `{{marital_married}}` | Marital: Married | `☑` หรือ `☐` |
+| `{{marital_divorced}}` | Marital: Divorced | `☑` หรือ `☐` |
+| `{{marital_widowed}}` | Marital: Widowed | `☑` หรือ `☐` |
+| `{{marital_other}}` | Marital: Other | `☑` หรือ `☐` |
+| `{{nationality}}` | Nationality | `American` |
+| `{{religion}}` | Religion | `Christian` |
+| `{{occupation}}` | Occupation | `Engineer` |
+| `{{blood_a}}`, `{{blood_b}}`, `{{blood_o}}`, `{{blood_ab}}` | Blood Group (A, B, O, AB) | `☑` หรือ `☐` |
+| `{{address}}` | Current Address | `123 Sukhumvit Soi 11, Bangkok` |
+| `{{postalCode}}` | Postal Code | `10110` |
+| `{{phone}}` | Contact Phone | `081-999-8888` |
+| `{{email}}` | Email Address | `john.doe@example.com` |
+| `{{contact_fullname}}` | Emergency Contact Person | `Jane Doe` |
+| `{{contact_phone}}` | Emergency Contact Phone | `081-999-7777` |
+| `{{rel_parent}}` | Relationship: Parent | `☑` หรือ `☐` |
+| `{{rel_spouse}}` | Relationship: Spouse | `☑` หรือ `☐` |
+| `{{rel_sibling}}` | Relationship: Brother/Sister | `☑` หรือ `☐` |
+| `{{rel_friend}}` | Relationship: Friend | `☑` หรือ `☐` |
+| `{{rel_other}}` | Relationship: Other | `☑` หรือ `☐` |
+| `{{allergy_no}}` | History of drug allergy: No | `☑` หรือ `☐` |
+| `{{allergy_yes}}` | History of drug allergy: Yes | `☑` หรือ `☐` |
+| `{{allergy_detail}}` | Drug Allergy Specification | `Penicillin` |
+
+---
+
+## ๙. บัตรเวชระเบียนผู้ป่วย พิมพ์วิมานคลินิก (`opd_card.docx`)
+
+ไฟล์เทมเพลต Word: `opd_card.docx`  
+ใช้สำหรับพิมพ์บัตรประจำตัวผู้ป่วย/หน้าซองเวชระเบียน (OPD Card) ตารางข้อมูลคลินิกขนาดกะทัดรัด (2x2 Grid)
+
+| Tag Name | ความหมาย / รายละเอียด | ตัวอย่างข้อมูล |
+|---|---|---|
+| `{{opdCardNo}}` | เลขที่บัตรประจำตัวผู้ป่วย (HN) | `HN-00012` |
+| `{{regDate}}` | วันที่ออกบัตร / ลงทะเบียน | `07/09/2569` |
+| `{{fullname}}` | ชื่อ - นามสกุล ผู้รับการรักษา | `นายสมศักดิ์ รักษ์ดี` |
+| `{{nationalId}}` | เลขประจำตัวประชาชน | `1-1002-34567-89-0` |
+| `{{gender}}` | เพศ | `ชาย` / `หญิง` |
+| `{{dob}}` | เกิดวันที่ | `15/08/2500` |
+| `{{age}}` | อายุ | `69 ปี` |
+| `{{bloodGroup}}` | หมู่โลหิต (Blood Group) | `O` |
+| `{{nationality}}` | สัญชาติ | `ไทย` |
+| `{{race}}` | เชื้อชาติ | `ไทย` |
+| `{{religion}}` | ศาสนา | `พุทธ` |
+| `{{maritalStatus}}` | สถานภาพสมรส | `สมรส` |
+| `{{occupation}}` | อาชีพ | `ข้าราชการบำนาญ` |
+| `{{treatmentRights}}` | สิทธิการรักษา | `ชำระเงินเอง` / `ผู้สูงอายุ` |
+| `{{phone}}` | โทรศัพท์ | `081-234-5678` |
+| `{{address}}` | ที่อยู่ปัจจุบัน | `123/45 หมู่ 3 ซ.สุขเกษม ถ.มิตรภาพ อ.เมือง จ.ขอนแก่น` |
+| `{{contactName}}` | ชื่อบุคคลที่ติดต่อได้ | `นางสมศรี รักษ์ดี` |
+| `{{contactRel}}` | ความสัมพันธ์ | `ภรรยา` |
+| `{{contactPhone}}` | โทรศัพท์บุคคลที่ติดต่อได้ | `089-876-5432` |
+| `{{congenitalDisease}}` | โรคประจำตัว | `ความดันโลหิตสูง` หรือ `ปฏิเสธ` |
+| `{{drugAllergy}}` | ประวัติแพ้ยา / แพ้อาหาร | `Penicillin (ผื่นคัน)` หรือ `ปฏิเสธ` |
+

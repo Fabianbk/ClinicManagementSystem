@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   ShieldCheck,
 } from "lucide-react";
+import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
+import { PatientDocumentSection } from "@/components/doctor/PatientDocumentSection";
 
 function formatMaritalStatus(status: string | undefined | null): string {
   switch (status) {
@@ -138,6 +140,10 @@ export default async function PatientDetailPage({
                 <span>ย้อนกลับ</span>
               </Link>
             </Button>
+            <PatientDocumentDropdown
+              patientId={patient.patientId}
+              patientName={patient.fullname}
+            />
             <Button asChild variant="outline" size="sm">
               <Link href={`/doctor/patients/${patient.patientId}/edit`}>
                 <Edit className="w-4 h-4" />
@@ -516,6 +522,12 @@ export default async function PatientDetailPage({
           </CardContent>
         </Card>
       )}
+
+      {/* Word Documents & Forms Section */}
+      <PatientDocumentSection
+        patientId={patient.patientId}
+        patientName={patient.fullname}
+      />
 
       {/* Treatment History Records */}
       <Card>

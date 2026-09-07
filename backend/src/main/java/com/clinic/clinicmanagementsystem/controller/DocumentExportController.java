@@ -61,4 +61,49 @@ public class DocumentExportController {
 
         return ResponseEntity.ok().headers(headers).body(docx);
     }
+
+    /**
+     * Export Thai Patient Intake Form (.docx) by patientId.
+     */
+    @GetMapping("/patient/{patientId}/intake-th")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'STAFF', 'ADMIN')")
+    public ResponseEntity<byte[]> exportPatientIntakeTh(@PathVariable int patientId) {
+        byte[] docx = documentExportService.exportPatientIntakeTh(patientId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "patient-intake-th-" + patientId + ".docx");
+
+        return ResponseEntity.ok().headers(headers).body(docx);
+    }
+
+    /**
+     * Export English Patient Personal Data (.docx) by patientId.
+     */
+    @GetMapping("/patient/{patientId}/intake-en")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'STAFF', 'ADMIN')")
+    public ResponseEntity<byte[]> exportPatientIntakeEn(@PathVariable int patientId) {
+        byte[] docx = documentExportService.exportPatientIntakeEn(patientId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "patient-intake-en-" + patientId + ".docx");
+
+        return ResponseEntity.ok().headers(headers).body(docx);
+    }
+
+    /**
+     * Export OPD Card (.docx) by patientId.
+     */
+    @GetMapping("/patient/{patientId}/opd-card")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'STAFF', 'ADMIN')")
+    public ResponseEntity<byte[]> exportOpdCard(@PathVariable int patientId) {
+        byte[] docx = documentExportService.exportOpdCard(patientId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "opd-card-" + patientId + ".docx");
+
+        return ResponseEntity.ok().headers(headers).body(docx);
+    }
 }

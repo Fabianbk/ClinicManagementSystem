@@ -33,6 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
 
 interface PatientListClientProps {
   initialData: PageResponse<PatientResponseDTO> | null;
@@ -462,6 +463,14 @@ export function PatientListClient({ initialData }: PatientListClientProps) {
                             <span className="hidden md:inline">ดูข้อมูล</span>
                           </Link>
                         </Button>
+                        <PatientDocumentDropdown
+                          patientId={patient.patientId}
+                          patientName={patient.fullname}
+                          variant="ghost"
+                          size="sm"
+                          label="Word"
+                          className="h-7 px-2 text-xs gap-1 text-clinic-primary hover:bg-clinic-primary-soft"
+                        />
                         <Button
                           asChild
                           variant="ghost"

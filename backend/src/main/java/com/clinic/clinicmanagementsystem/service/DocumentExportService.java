@@ -82,6 +82,320 @@ public class DocumentExportService {
     }
 
     /**
+     * Export Thai Patient Intake Form (.docx) by patientId.
+     */
+    public byte[] exportPatientIntakeTh(int patientId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", patientId));
+        Map<String, Object> data = buildPatientIntakeThData(patient);
+        return renderTemplate("templates/patient_intake_th.docx", data);
+    }
+
+    /**
+     * Export English Patient Personal Data (.docx) by patientId.
+     */
+    public byte[] exportPatientIntakeEn(int patientId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", patientId));
+        HealthProfile hp = getLatestHealthProfile(patientId);
+        Map<String, Object> data = buildPatientIntakeEnData(patient, hp);
+        return renderTemplate("templates/patient_intake_en.docx", data);
+    }
+
+    /**
+     * Export OPD Card (.docx) by patientId.
+     */
+    public byte[] exportOpdCard(int patientId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", patientId));
+        HealthProfile hp = getLatestHealthProfile(patientId);
+        Map<String, Object> data = buildOpdCardData(patient, hp);
+        return renderTemplate("templates/opd_card.docx", data);
+    }
+
+    public Map<String, Object> buildPatientIntakeThData(Patient patient) {
+        Map<String, Object> data = new HashMap<>();
+
+        data.put("fullname", defaultStr(patient.getFullname()));
+
+        String natId = defaultStr(patient.getNationalId()).replaceAll("\\D", "");
+        for (int i = 0; i < 13; i++) {
+            data.put("id_" + i, i < natId.length() ? String.valueOf(natId.charAt(i)) : " ");
+        }
+
+        data.put("houseNo", defaultStr(patient.getHouseNo()));
+        data.put("moo", defaultStr(patient.getMoo()));
+        data.put("village", defaultStr(patient.getSubDistrict()));
+        data.put("subDistrict", defaultStr(patient.getSubDistrict()));
+        data.put("district", defaultStr(patient.getDistrict()));
+        data.put("province", defaultStr(patient.getProvince()));
+        data.put("zipCode", defaultStr(patient.getZipCode()));
+
+        data.put("dateOfBirth", formatThaiDate(patient.getDateOfBirth()));
+        data.put("age", String.valueOf(calculateAge(patient.getDateOfBirth())));
+        data.put("occupation", defaultStr(patient.getOccupation()));
+        data.put("mobileNumber", defaultStr(patient.getMobileNumber()));
+        data.put("education", defaultStr(patient.getEducation()));
+        data.put("religion", defaultStr(patient.getReligion()));
+        data.put("originalDomicile", defaultStr(patient.getOriginalDomicile()));
+        data.put("bloodGroup", formatBloodGroup(patient));
+
+        data.put("house_head", check(patient.getHouseholdStatus() == HouseholdStatus.HEAD_OF_HOUSEHOLD));
+        data.put("house_resident", check(patient.getHouseholdStatus() == HouseholdStatus.RESIDENT));
+
+        MaritalStatus ms = patient.getMaritalStatus();
+        data.put("status_single", check(ms == MaritalStatus.SINGLE));
+        data.put("status_married", check(ms == MaritalStatus.MARRIED));
+        data.put("status_divorced", check(ms == MaritalStatus.DIVORCED));
+        data.put("status_widowed", check(ms == MaritalStatus.WIDOWED));
+        data.put("status_monk", check(ms == MaritalStatus.MONK));
+
+        data.put("fatherName", defaultStr(patient.getFatherName()));
+        data.put("motherName", defaultStr(patient.getMotherName()));
+        data.put("spouseName", defaultStr(patient.getSpouseName()));
+
+        if (patient.getContactPersons() != null && !patient.getContactPersons().isEmpty()) {
+            ContactPerson cp = patient.getContactPersons().get(0);
+            data.put("contactName", defaultStr(cp.getContactName()));
+            data.put("contactRelationship", defaultStr(cp.getRelationship()));
+            data.put("contactAddress", defaultStr(cp.getContactAddress()));
+            data.put("contact_same_house", check(cp.getContactAddress() != null && cp.getContactAddress().contains("เดียวกัน")));
+            data.put("contactPhone", defaultStr(cp.getMobileNumber()));
+        } else {
+            data.put("contactName", "-");
+            data.put("contactRelationship", "-");
+            data.put("contactAddress", "-");
+            data.put("contact_same_house", UNCHECKED);
+            data.put("contactPhone", "-");
+        }
+
+        return data;
+    }
+
+    public Map<String, Object> buildPatientIntakeEnData(Patient patient, HealthProfile hp) {
+        Map<String, Object> data = new HashMap<>();
+
+        data.put("fullname", defaultStr(patient.getFullname()));
+        data.put("gender_male", check(patient.getGender() == Gender.MALE));
+        data.put("gender_female", check(patient.getGender() == Gender.FEMALE));
+        data.put("passportNo", patient.getPassportNo() != null && !patient.getPassportNo().isBlank()
+                ? patient.getPassportNo()
+                : defaultStr(patient.getNationalId()));
+
+        data.put("dateOfBirth", formatEnglishDate(patient.getDateOfBirth()));
+        data.put("age", String.valueOf(calculateAge(patient.getDateOfBirth())));
+        data.put("occupation", defaultStr(patient.getOccupation()));
+
+        MaritalStatus ms = patient.getMaritalStatus();
+        data.put("marital_single", check(ms == MaritalStatus.SINGLE));
+        data.put("marital_relationship", UNCHECKED);
+        data.put("marital_married", check(ms == MaritalStatus.MARRIED));
+        data.put("marital_widow", check(ms == MaritalStatus.WIDOWED));
+        data.put("marital_divorced", check(ms == MaritalStatus.DIVORCED));
+        data.put("marital_separate", UNCHECKED);
+        data.put("marital_priest", check(ms == MaritalStatus.MONK));
+
+        data.put("citizenship", defaultStr(patient.getCitizenship()));
+        data.put("ethnicity", defaultStr(patient.getEthnicity()));
+        data.put("religion", defaultStr(patient.getReligion()));
+
+        BloodGroupAbo abo = patient.getBloodGroupAbo();
+        data.put("blood_a", check(abo == BloodGroupAbo.A));
+        data.put("blood_b", check(abo == BloodGroupAbo.B));
+        data.put("blood_ab", check(abo == BloodGroupAbo.AB));
+        data.put("blood_o", check(abo == BloodGroupAbo.O));
+        data.put("blood_rh", check(patient.getBloodGroupRh() != null && patient.getBloodGroupRh() != BloodGroupRh.UNKNOWN));
+        data.put("blood_unknown", check(abo == BloodGroupAbo.UNKNOWN || abo == null));
+
+        data.put("houseNo", defaultStr(patient.getHouseNo()));
+        data.put("soi", defaultStr(patient.getSoi()));
+        data.put("road", defaultStr(patient.getRoad()));
+        data.put("district", defaultStr(patient.getDistrict()));
+        data.put("province", defaultStr(patient.getProvince()));
+        data.put("zipCode", defaultStr(patient.getZipCode()));
+
+        data.put("telephone", "-");
+        data.put("mobileNumber", defaultStr(patient.getMobileNumber()));
+        data.put("email", defaultStr(patient.getEmail()));
+
+        if (patient.getContactPersons() != null && !patient.getContactPersons().isEmpty()) {
+            ContactPerson cp = patient.getContactPersons().get(0);
+            data.put("contactName", defaultStr(cp.getContactName()));
+            data.put("contactAddress", defaultStr(cp.getContactAddress()));
+            data.put("contactPhone", defaultStr(cp.getMobileNumber()));
+
+            String rel = defaultStr(cp.getRelationship()).toLowerCase();
+            boolean isParent = rel.contains("พ่อ") || rel.contains("แม่") || rel.contains("father") || rel.contains("mother") || rel.contains("บิดา") || rel.contains("มารดา");
+            boolean isChild = rel.contains("ลูก") || rel.contains("child") || rel.contains("บุตร");
+            boolean isSpouse = rel.contains("สามี") || rel.contains("ภรรยา") || rel.contains("คู่สมรส") || rel.contains("spouse") || rel.contains("husband") || rel.contains("wife");
+            boolean isFriend = rel.contains("เพื่อน") || rel.contains("friend");
+            boolean isGuardian = rel.contains("ผู้ปกครอง") || rel.contains("guardian");
+            boolean isEmployer = rel.contains("นายจ้าง") || rel.contains("employer");
+            boolean isOther = !isParent && !isChild && !isSpouse && !isFriend && !isGuardian && !isEmployer && !rel.isBlank();
+
+            data.put("rel_parent", check(isParent));
+            data.put("rel_guardian", check(isGuardian));
+            data.put("rel_child", check(isChild));
+            data.put("rel_spouse", check(isSpouse));
+            data.put("rel_friend", check(isFriend));
+            data.put("rel_employer", check(isEmployer));
+            data.put("rel_other", check(isOther));
+            data.put("rel_other_specify", isOther ? cp.getRelationship() : "");
+        } else {
+            data.put("contactName", "-");
+            data.put("contactAddress", "-");
+            data.put("contactPhone", "-");
+            data.put("rel_parent", UNCHECKED);
+            data.put("rel_guardian", UNCHECKED);
+            data.put("rel_child", UNCHECKED);
+            data.put("rel_spouse", UNCHECKED);
+            data.put("rel_friend", UNCHECKED);
+            data.put("rel_employer", UNCHECKED);
+            data.put("rel_other", UNCHECKED);
+            data.put("rel_other_specify", "");
+        }
+
+        if (hp != null && hp.getDrugAllergy() != null && !hp.getDrugAllergy().isBlank()) {
+            String allergy = hp.getDrugAllergy();
+            if (allergy.contains("ปฏิเสธ") || allergy.contains("ไม่มี") || allergy.equalsIgnoreCase("no")) {
+                data.put("allergy_unknown", UNCHECKED);
+                data.put("allergy_no", CHECKED);
+                data.put("allergy_yes", UNCHECKED);
+                data.put("allergyDetail", "");
+            } else {
+                data.put("allergy_unknown", UNCHECKED);
+                data.put("allergy_no", UNCHECKED);
+                data.put("allergy_yes", CHECKED);
+                data.put("allergyDetail", "(" + allergy + ")");
+            }
+        } else {
+            data.put("allergy_unknown", UNCHECKED);
+            data.put("allergy_no", CHECKED);
+            data.put("allergy_yes", UNCHECKED);
+            data.put("allergyDetail", "");
+        }
+
+        return data;
+    }
+
+    public Map<String, Object> buildOpdCardData(Patient patient, HealthProfile hp) {
+        Map<String, Object> data = new HashMap<>();
+
+        data.put("opdCardNo", patient.getPatientId() > 0 ? String.format("OPD-%05d", patient.getPatientId()) : "-");
+        data.put("fullname", defaultStr(patient.getFullname()));
+        data.put("nationalId", formatNationalId(patient.getNationalId()));
+        data.put("regDate", formatThaiDate(new Date()));
+        data.put("gender", patient.getGender() == Gender.MALE ? "ชาย" : "หญิง");
+        data.put("age", String.valueOf(calculateAge(patient.getDateOfBirth())));
+
+        data.put("dateOfBirth", formatThaiDate(patient.getDateOfBirth()));
+        data.put("ethnicity", defaultStr(patient.getEthnicity()));
+        data.put("religion", defaultStr(patient.getReligion()));
+        data.put("occupation", defaultStr(patient.getOccupation()));
+        data.put("maritalStatus", formatMaritalStatus(patient.getMaritalStatus()));
+        data.put("fatherName", defaultStr(patient.getFatherName()));
+        data.put("motherName", defaultStr(patient.getMotherName()));
+        data.put("bloodGroup", formatBloodGroup(patient));
+        data.put("drugAllergy", (hp != null && hp.getDrugAllergy() != null && !hp.getDrugAllergy().isBlank())
+                ? hp.getDrugAllergy()
+                : "ปฏิเสธการแพ้ยา");
+        data.put("treatmentRights", formatTreatmentRights(patient.getTreatmentRights()));
+
+        data.put("houseNo", defaultStr(patient.getHouseNo()));
+        data.put("moo", defaultStr(patient.getMoo()));
+        data.put("soi", defaultStr(patient.getSoi()));
+        data.put("road", defaultStr(patient.getRoad()));
+        data.put("subDistrict", defaultStr(patient.getSubDistrict()));
+        data.put("district", defaultStr(patient.getDistrict()));
+        data.put("province", defaultStr(patient.getProvince()));
+        data.put("mobileNumber", defaultStr(patient.getMobileNumber()));
+
+        if (patient.getContactPersons() != null && !patient.getContactPersons().isEmpty()) {
+            ContactPerson cp = patient.getContactPersons().get(0);
+            data.put("contactName", defaultStr(cp.getContactName()));
+            data.put("contactAddress", defaultStr(cp.getContactAddress()));
+            data.put("contactPhone", defaultStr(cp.getMobileNumber()));
+            data.put("contactRelationship", defaultStr(cp.getRelationship()));
+        } else {
+            data.put("contactName", "-");
+            data.put("contactAddress", "-");
+            data.put("contactPhone", "-");
+            data.put("contactRelationship", "-");
+        }
+
+        return data;
+    }
+
+    private HealthProfile getLatestHealthProfile(int patientId) {
+        return recordTreatmentRepository
+                .findFirstByAppointment_Patient_PatientIdAndHealthProfileIsNotNullOrderByRecordDateDescRecordTreatmentIdDesc(patientId)
+                .map(RecordTreatment::getHealthProfile)
+                .orElse(null);
+    }
+
+    private String formatNationalId(String id) {
+        if (id == null) return "-";
+        String clean = id.replaceAll("\\D", "");
+        if (clean.length() == 13) {
+            return String.format("%s-%s-%s-%s-%s",
+                    clean.substring(0, 1),
+                    clean.substring(1, 5),
+                    clean.substring(5, 10),
+                    clean.substring(10, 12),
+                    clean.substring(12, 13));
+        }
+        return id;
+    }
+
+    private int calculateAge(Date dob) {
+        if (dob == null) return 0;
+        LocalDate birth = dob.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return Period.between(birth, LocalDate.now()).getYears();
+    }
+
+    private String formatThaiDate(Date date) {
+        if (date == null) return "-";
+        SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy", Locale.of("th", "TH"));
+        return df.format(date);
+    }
+
+    private String formatEnglishDate(Date date) {
+        if (date == null) return "-";
+        SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+        return df.format(date);
+    }
+
+    private String formatMaritalStatus(MaritalStatus status) {
+        if (status == null) return "-";
+        return switch (status) {
+            case SINGLE -> "โสด";
+            case MARRIED -> "คู่ / สมรส";
+            case DIVORCED -> "หย่า";
+            case WIDOWED -> "หม้าย";
+            case MONK -> "สมณะ";
+            default -> status.name();
+        };
+    }
+
+    private String formatTreatmentRights(TreatmentRights rights) {
+        if (rights == null) return "ชำระเงิน";
+        return switch (rights) {
+            case PAY_DIRECT -> "ชำระเงิน";
+            case ELDERLY, MONK, DISABLED -> "ผู้สูงอายุ / นักบวช / ผู้พิการ";
+            case OTHER -> "อื่น ๆ";
+            default -> rights.name();
+        };
+    }
+
+    private String formatBloodGroup(Patient patient) {
+        String abo = patient.getBloodGroupAbo() != null ? patient.getBloodGroupAbo().name() : "";
+        String rh = patient.getBloodGroupRh() != null && patient.getBloodGroupRh() != BloodGroupRh.UNKNOWN
+                ? " (" + patient.getBloodGroupRh().name() + ")"
+                : "";
+        return (abo + rh).trim();
+    }
+
+    /**
      * Maps Patient, DhatuPrinciple, HealthProfile, and RecordTreatment into a
      * comprehensive data map
      * with tag names matching Word placeholders like {{patientName}}, {{cb_male}},

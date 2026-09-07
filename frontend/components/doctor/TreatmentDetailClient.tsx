@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Printer, Edit, Leaf, ShieldAlert } from "lucide-react";
 import { DownloadDocxButton } from "@/components/doctor/DownloadDocxButton";
+import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
 
 interface TreatmentDetailClientProps {
   treatment: RecordTreatmentResponseDTO;
@@ -74,6 +75,16 @@ export function TreatmentDetailClient({
             label="ดาวน์โหลดแบบบันทึก (Word)"
             className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
           />
+
+          {patient && (
+            <PatientDocumentDropdown
+              patientId={patient.patientId}
+              patientName={patient.fullname}
+              label="แบบฟอร์มอื่น (Word)"
+              variant="outline"
+              className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
+            />
+          )}
 
           <Button
             type="button"
