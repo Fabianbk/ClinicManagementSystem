@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
@@ -95,8 +94,8 @@ export function ScheduleManagerClient({
     return getTodayLocalDate();
   });
   const [shiftStartTime, setShiftStartTime] = useState("09:00");
-  const [shiftEndTime, setShiftEndTime] = useState("16:00");
-  const [slotMinutes, setSlotMinutes] = useState<number>(30);
+  const [shiftEndTime, setShiftEndTime] = useState("19:00");
+  const [slotMinutes, setSlotMinutes] = useState<number>(60);
   const [hasLunchBreak, setHasLunchBreak] = useState(true);
   const [lunchStart, setLunchStart] = useState("12:00");
   const [lunchEnd, setLunchEnd] = useState("13:00");
@@ -351,6 +350,12 @@ export function ScheduleManagerClient({
                 setErrorMsg(null);
                 setSuccessMsg(null);
                 setWeeklySummary(null);
+                setShiftStartTime("09:00");
+                setShiftEndTime("19:00");
+                setSlotMinutes(60);
+                setHasLunchBreak(true);
+                setLunchStart("12:00");
+                setLunchEnd("13:00");
                 setIsCreateOpen(true);
               }}
               className="gap-1.5 shadow-xs"
@@ -559,6 +564,12 @@ export function ScheduleManagerClient({
                   setErrorMsg(null);
                   setSuccessMsg(null);
                   setWeeklySummary(null);
+                  setShiftStartTime("09:00");
+                  setShiftEndTime("19:00");
+                  setSlotMinutes(60);
+                  setHasLunchBreak(true);
+                  setLunchStart("12:00");
+                  setLunchEnd("13:00");
                   setIsCreateOpen(true);
                 }}
                 className="gap-1.5"
@@ -624,21 +635,17 @@ export function ScheduleManagerClient({
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="slotMinutes" required>
-                ระยะเวลาต่อ 1 สล็อตนัดหมาย
-              </Label>
-              <Select
-                id="slotMinutes"
-                value={slotMinutes}
-                onChange={(e) => setSlotMinutes(Number(e.target.value))}
-              >
-                <option value={15}>15 นาที (ตรวจเร็ว/จ่ายยา)</option>
-                <option value={20}>20 นาที</option>
-                <option value={30}>30 นาที (มาตรฐานการตรวจแผนไทย)</option>
-                <option value={45}>45 นาที (ตรวจ + หัตถการสั้น)</option>
-                <option value={60}>60 นาที (นวดรักษา/ประคบสมุนไพร)</option>
-              </Select>
+            {/* Slot Size: Standard 60 minutes */}
+            <div className="p-3 bg-clinic-bg rounded-control border border-clinic-line flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-clinic-primary" />
+                <span className="text-xs font-semibold text-clinic-ink">
+                  ขนาดสล็อตตรวจมาตรฐาน:
+                </span>
+              </div>
+              <Badge variant="outline" className="text-xs font-bold text-clinic-primary border-clinic-primary/30 bg-white">
+                60 นาที (1 ชั่วโมง)
+              </Badge>
             </div>
 
             {/* Lunch Break Settings */}
@@ -648,11 +655,14 @@ export function ScheduleManagerClient({
                   type="checkbox"
                   checked={hasLunchBreak}
                   onChange={(e) => setHasLunchBreak(e.target.checked)}
-                  className="rounded text-clinic-primary focus:ring-clinic-primary"
+                  className="rounded text-clinic-primary focus:ring-clinic-primary w-4 h-4"
                 />
-                <Coffee className="w-3.5 h-3.5 text-clinic-terracotta" />
-                <span>เว้นช่วงพักเที่ยง (ไม่สร้างสล็อต)</span>
+                <Coffee className="w-4 h-4 text-clinic-terracotta" />
+                <span>เว้นช่วงพักเที่ยง (12:00 - 13:00 น.) ไม่สร้างสล็อต</span>
               </label>
+              <p className="text-[10px] text-clinic-ink-soft pl-6 mt-0.5">
+                ช่วงเช้า 3 สล็อต (09:00 - 12:00) และช่วงบ่ายถึงค่ำ 6 สล็อต (13:00 - 19:00) รวม 9 สล็อต
+              </p>
 
               {hasLunchBreak && (
                 <div className="grid grid-cols-2 gap-2 pt-1">
