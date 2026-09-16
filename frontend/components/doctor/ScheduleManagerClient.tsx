@@ -29,7 +29,10 @@ import {
   AlertCircle,
   CalendarCheck,
   Coffee,
+  CalendarDays,
 } from "lucide-react";
+import { WeeklyScheduleDialog } from "@/components/doctor/WeeklyScheduleDialog";
+import type { WeeklyBatchResponse } from "@/app/api/working-schedules/weekly-batch/route";
 
 interface ScheduleManagerClientProps {
   doctorId: number;
@@ -81,6 +84,8 @@ export function ScheduleManagerClient({
 
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isWeeklyOpen, setIsWeeklyOpen] = useState(false);
+  const [weeklySummary, setWeeklySummary] = useState<WeeklyBatchResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Form fields
@@ -322,23 +327,76 @@ export function ScheduleManagerClient({
         title="จัดการตารางเวรแพทย์ (Duty Schedule)"
         subtitle="กำหนดวันออกตรวจ เวลาทำงาน และสร้างช่วงเวลานัดหมาย (Slots) สำหรับคนไข้จองออนไลน์"
         actions={
-          <Button
-            type="button"
-            variant="terracotta"
-            size="sm"
-            onClick={() => {
-              setErrorMsg(null);
-              setIsCreateOpen(true);
-            }}
-            className="gap-1.5 shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ กำหนดวันออกตรวจใหม่</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setErrorMsg(null);
+                setSuccessMsg(null);
+                setWeeklySummary(null);
+                setIsWeeklyOpen(true);
+              }}
+              className="gap-1.5 shadow-xs border-clinic-primary/30 text-clinic-primary hover:bg-clinic-primary/5 hover:text-clinic-primary-deep"
+            >
+              <CalendarDays className="w-4 h-4 text-clinic-primary" />
+              <span>+ จัดตารางรายสัปดาห์ (จันทร์-เสาร์)</span>
+            </Button>
+            <Button
+              type="button"
+              variant="terracotta"
+              size="sm"
+              onClick={() => {
+                setErrorMsg(null);
+                setSuccessMsg(null);
+                setWeeklySummary(null);
+                setIsCreateOpen(true);
+              }}
+              className="gap-1.5 shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ กำหนดวันออกตรวจใหม่</span>
+            </Button>
+          </div>
         }
       />
 
       {/* Messages */}
+      {weeklySummary && (
+        <div className="p-4 rounded-control bg-clinic-success-bg border border-clinic-success text-clinic-success text-xs font-medium space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>
+                สร้างตารางเวรสำเร็จ {weeklySummary.createdDaysCount} วัน รวม {weeklySummary.createdSlotsCount} สล็อต (สล็อตละ 1 ชั่วโมง)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWeeklySummary(null)}
+              className="text-xs underline cursor-pointer"
+            >
+              ปิด
+            </button>
+          </div>
+          {weeklySummary.skippedDays.length > 0 && (
+            <div className="text-[11px] text-clinic-ink-soft bg-white/80 p-2.5 rounded border border-clinic-line space-y-1">
+              <span className="font-semibold text-amber-800">
+                วันที่ถูกข้าม ({weeklySummary.skippedDays.length} วัน):
+              </span>
+              <ul className="list-disc list-inside space-y-0.5">
+                {weeklySummary.skippedDays.map((s, idx) => (
+                  <li key={idx}>
+                    {formatDateThai(s.date)} ({s.date}): {s.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {errorMsg && (
         <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -477,18 +535,38 @@ export function ScheduleManagerClient({
           title="ไม่พบรายการตารางเวรในช่วงที่เลือก"
           description="ท่านสามารถเพิ่มวันออกตรวจและสร้างสล็อตเวลาอัตโนมัติได้ทันที"
           action={
-            <Button
-              type="button"
-              variant="terracotta"
-              size="sm"
-              onClick={() => {
-                setErrorMsg(null);
-                setIsCreateOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              <span>+ กำหนดวันออกตรวจใหม่</span>
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setErrorMsg(null);
+                  setSuccessMsg(null);
+                  setWeeklySummary(null);
+                  setIsWeeklyOpen(true);
+                }}
+                className="gap-1.5 border-clinic-primary/30 text-clinic-primary hover:bg-clinic-primary/5"
+              >
+                <CalendarDays className="w-4 h-4 text-clinic-primary" />
+                <span>+ จัดตารางรายสัปดาห์ (จันทร์-เสาร์)</span>
+              </Button>
+              <Button
+                type="button"
+                variant="terracotta"
+                size="sm"
+                onClick={() => {
+                  setErrorMsg(null);
+                  setSuccessMsg(null);
+                  setWeeklySummary(null);
+                  setIsCreateOpen(true);
+                }}
+                className="gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ กำหนดวันออกตรวจใหม่</span>
+              </Button>
+            </div>
           }
         />
       )}
@@ -724,6 +802,17 @@ export function ScheduleManagerClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 3. Modal: Weekly Working Schedule (Mon-Sat) */}
+      <WeeklyScheduleDialog
+        open={isWeeklyOpen}
+        onOpenChange={setIsWeeklyOpen}
+        doctorId={doctorId}
+        onSuccess={(response) => {
+          setWeeklySummary(response);
+          refreshSchedules();
+        }}
+      />
     </div>
   );
 }
