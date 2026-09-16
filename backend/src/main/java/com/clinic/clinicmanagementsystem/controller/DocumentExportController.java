@@ -106,4 +106,24 @@ public class DocumentExportController {
 
         return ResponseEntity.ok().headers(headers).body(docx);
     }
+
+    /**
+     * Export Medical Certificate (ใบรับรองแพทย์) (.docx) by recordTreatmentId.
+     */
+    @GetMapping("/medical-certificate/{recordTreatmentId}")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    public ResponseEntity<byte[]> exportMedicalCertificate(
+            @PathVariable int recordTreatmentId,
+            @RequestParam(required = false) Integer sickLeaveDays,
+            @RequestParam(required = false) String sickLeaveFrom,
+            @RequestParam(required = false) String sickLeaveTo) {
+        byte[] docx = documentExportService.exportMedicalCertificate(recordTreatmentId, sickLeaveDays, sickLeaveFrom, sickLeaveTo);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "medical-certificate-" + recordTreatmentId + ".docx");
+
+        return ResponseEntity.ok().headers(headers).body(docx);
+    }
 }
+

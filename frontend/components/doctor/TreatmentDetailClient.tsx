@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Printer, Edit, Leaf, ShieldAlert } from "lucide-react";
 import { DownloadDocxButton } from "@/components/doctor/DownloadDocxButton";
 import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
+import { MedicalCertificateDialog } from "@/components/doctor/MedicalCertificateDialog";
 
 interface TreatmentDetailClientProps {
   treatment: RecordTreatmentResponseDTO;
@@ -73,6 +74,16 @@ export function TreatmentDetailClient({
           <DownloadDocxButton
             recordTreatmentId={treatment.recordTreatmentId}
             label="ดาวน์โหลดแบบบันทึก (Word)"
+            className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
+          />
+
+          <MedicalCertificateDialog
+            recordTreatmentId={treatment.recordTreatmentId}
+            patientName={treatment.patientFullname}
+            patientId={treatment.patientId}
+            diagnosis={treatment.ttmDiagnosis || treatment.modernDiagnosis || undefined}
+            doctorName={treatment.doctorFullname || undefined}
+            label="ใบรับรองแพทย์ (Word)"
             className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
           />
 

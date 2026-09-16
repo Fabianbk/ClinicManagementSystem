@@ -211,4 +211,36 @@ public class DocumentTemplateTest {
             System.out.println("==================================================");
         }
     }
+
+    @Test
+    public void generateMedicalCertificateTestOutput() throws Exception {
+        File templateFile = new File("src/main/resources/templates/medical_certificate.docx");
+        assertTrue(templateFile.exists(), "medical_certificate.docx not found!");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("certDate", "16 September 2026");
+        data.put("patientName", "นายสมศักดิ์ รักษ์ดี");
+        data.put("hn", "P-00042");
+        data.put("age", "35");
+        data.put("diagnosis", "โรคลมปลายปัตฆาตสัญญาณ 4 หลัง (Myofascial Pain Syndrome)");
+        data.put("recommendation", "ควรหลีกเลี่ยงการยกของหนัก พักผ่อนให้เพียงพอ และประคบอุ่นบริเวณกล้ามเนื้อที่มีอาการตึงเกร็ง");
+        data.put("sickLeaveDays", "3");
+        data.put("sickLeaveFrom", "16/09/2026");
+        data.put("sickLeaveTo", "18/09/2026");
+        data.put("doctorName", "พท.ว. พิมพ์วิมาน เบ็กเคอร์");
+        data.put("physicianLicenseNo", "พท.ว. 20173");
+
+        try (FileInputStream fis = new FileInputStream(templateFile);
+             XWPFTemplate template = XWPFTemplate.compile(fis).render(data)) {
+            File outputFile = new File("test_medical_certificate_output.docx");
+            try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                template.write(fos);
+            }
+            assertTrue(outputFile.exists() && outputFile.length() > 0);
+            System.out.println("==================================================");
+            System.out.println("สร้างใบรับรองแพทย์ทดสอบสำเร็จที่: " + outputFile.getAbsolutePath());
+            System.out.println("==================================================");
+        }
+    }
 }
+

@@ -113,6 +113,81 @@ public class DocumentExportService {
         return renderTemplate("templates/opd_card.docx", data);
     }
 
+    /**
+     * Export Medical Certificate (ใบรับรองแพทย์) (.docx) by recordTreatmentId.
+     */
+    public byte[] exportMedicalCertificate(int recordTreatmentId, Integer sickLeaveDays, String sickLeaveFrom, String sickLeaveTo) {
+        RecordTreatment treatment = recordTreatmentRepository.findById(recordTreatmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("RecordTreatment", recordTreatmentId));
+        Patient patient = treatment.getPatient();
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient not found for treatment ID: " + recordTreatmentId);
+        }
+
+        Map<String, Object> data = buildMedicalCertificateData(treatment, patient, sickLeaveDays, sickLeaveFrom, sickLeaveTo);
+        return renderTemplate("templates/medical_certificate.docx", data);
+    }
+
+    public Map<String, Object> buildMedicalCertificateData(RecordTreatment treatment, Patient patient, Integer sickLeaveDays, String sickLeaveFrom, String sickLeaveTo) {
+        Map<String, Object> data = new HashMap<>();
+
+        // Date of certificate
+        Date certDateObj = treatment.getRecordDate() != null ? treatment.getRecordDate() : new Date();
+        SimpleDateFormat df = new SimpleDateFormat("d MMMM yyyy", Locale.US);
+        data.put("certDate", df.format(certDateObj));
+
+        // Patient info
+        data.put("patientName", defaultStr(patient.getFullname()));
+        data.put("hn", String.format("P-%05d", patient.getPatientId()));
+        int age = calculateAge(patient.getDateOfBirth());
+        data.put("age", age > 0 ? String.valueOf(age) : "-");
+
+        // Diagnosis
+        String ttm = defaultStr(treatment.getTtmDiagnosis()).trim();
+        String modern = defaultStr(treatment.getModernDiagnosis()).trim();
+        String diagnosis;
+        if (!ttm.isEmpty() && !modern.isEmpty()) {
+            diagnosis = ttm + " (" + modern + ")";
+        } else if (!ttm.isEmpty()) {
+            diagnosis = ttm;
+        } else if (!modern.isEmpty()) {
+            diagnosis = modern;
+        } else {
+            diagnosis = "-";
+        }
+        data.put("diagnosis", diagnosis);
+        data.put("ttmDiagnosis", ttm);
+        data.put("modernDiagnosis", modern);
+
+        // Recommendation
+        String rec = defaultStr(treatment.getSuggestions()).trim();
+        data.put("recommendation", !rec.isEmpty() ? rec : "-");
+
+        // Sick leave
+        if (sickLeaveDays != null && sickLeaveDays > 0) {
+            data.put("sickLeaveDays", String.valueOf(sickLeaveDays));
+        } else {
+            data.put("sickLeaveDays", "-");
+        }
+        data.put("sickLeaveFrom", (sickLeaveFrom != null && !sickLeaveFrom.isBlank()) ? sickLeaveFrom.trim() : "-");
+        data.put("sickLeaveTo", (sickLeaveTo != null && !sickLeaveTo.isBlank()) ? sickLeaveTo.trim() : "-");
+
+        // Attending doctor
+        Doctor doctor = treatment.getDoctor();
+        String doctorName = (doctor != null && doctor.getFullname() != null && !doctor.getFullname().isBlank())
+                ? doctor.getFullname()
+                : "พิมพ์วิมาน เบ็กเคอร์";
+        String licenseNo = (doctor != null && doctor.getPhysicianLicenseNo() != null && !doctor.getPhysicianLicenseNo().isBlank())
+                ? doctor.getPhysicianLicenseNo()
+                : "พท.ว. 20173";
+
+        data.put("doctorName", doctorName);
+        data.put("physicianLicenseNo", licenseNo);
+
+        return data;
+    }
+
+
     public Map<String, Object> buildPatientIntakeThData(Patient patient) {
         Map<String, Object> data = new HashMap<>();
 
