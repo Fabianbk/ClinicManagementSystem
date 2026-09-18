@@ -173,9 +173,17 @@ export function RecordTreatmentEditClient({
         throw new Error(errJson.message || "ไม่สามารถเพิ่มรายการยาได้");
       }
 
-      const newMed: RecordTreatmentMedicineResponseDTO = await res.json();
-      setDispensedMedicines((prev) => [...prev, newMed]);
+      // Re-fetch treatment record to reflect potential multi-lot split lines
+      const refetchRes = await fetch(`/api/record-treatments/${treatment.recordTreatmentId}`);
+      if (refetchRes.ok) {
+        const refetchedData = await refetchRes.json();
+        setDispensedMedicines(refetchedData.recordTreatmentMedicines || []);
+      } else {
+        const newMed: RecordTreatmentMedicineResponseDTO = await res.json();
+        setDispensedMedicines((prev) => [...prev, newMed]);
+      }
       setMedQuantity(1);
+      router.refresh();
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
@@ -185,7 +193,7 @@ export function RecordTreatmentEditClient({
 
   // Handle Remove Medicine
   const handleRemoveMedicine = async (recordTreatmentMedicineId: number) => {
-    if (!confirm("ยืนยันการลบรายการยานี้และคืนสต็อก?")) return;
+    if (!confirm("ยืนยันการลบรายการยานี้และคืนสต็อกล็อตยาเข้าคลัง?")) return;
     try {
       setErrorMsg(null);
       const res = await fetch(`/api/record-treatment-medicines/${recordTreatmentMedicineId}`, {
@@ -200,6 +208,7 @@ export function RecordTreatmentEditClient({
       setDispensedMedicines((prev) =>
         prev.filter((m) => m.recordTreatmentMedicineId !== recordTreatmentMedicineId)
       );
+      router.refresh();
     } catch (err: any) {
       setErrorMsg(err.message);
     }
@@ -804,6 +813,7 @@ export function RecordTreatmentEditClient({
               <thead className="bg-clinic-bg text-clinic-ink-soft uppercase text-[10px] tracking-wider border-b border-clinic-line">
                 <tr>
                   <th className="px-4 py-2">รายการยา</th>
+                  <th className="px-4 py-2">ล็อตยา / วันหมดอายุ</th>
                   <th className="px-4 py-2 text-right">ราคา/หน่วย</th>
                   <th className="px-4 py-2 text-center">จำนวน</th>
                   <th className="px-4 py-2 text-right">รวม (บาท)</th>
@@ -814,6 +824,20 @@ export function RecordTreatmentEditClient({
                 {dispensedMedicines.map((m) => (
                   <tr key={m.recordTreatmentMedicineId}>
                     <td className="px-4 py-2 font-semibold text-clinic-ink">{m.medicineName}</td>
+                    <td className="px-4 py-2 text-clinic-ink-soft">
+                      {m.lotNumber ? (
+                        <div className="font-mono text-[11px]">
+                          <span className="font-semibold text-clinic-ink">{m.lotNumber}</span>
+                          {m.expiryDate && (
+                            <span className="text-[10px] text-clinic-ink-soft block">
+                              Exp: {m.expiryDate}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-clinic-ink-soft italic">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2 text-right font-mono">฿{m.priceAtTime}</td>
                     <td className="px-4 py-2 text-center font-mono font-bold">{m.quantity}</td>
                     <td className="px-4 py-2 text-right font-mono font-bold text-clinic-primary-deep">
@@ -848,11 +872,21 @@ export function RecordTreatmentEditClient({
               onChange={(e) => setSelectedMedId(Number(e.target.value))}
               className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-white"
             >
-              {medicines.map((m) => (
-                <option key={m.medicineId} value={m.medicineId}>
-                  {m.medicineName} (฿{m.unitPrice}) · คงเหลือ {m.stockRemaining ?? 0}
-                </option>
-              ))}
+              {medicines.map((m) => {
+                const isOutOfStock = (m.stockRemaining ?? 0) <= 0;
+                const expiryBadge = m.hasExpired
+                  ? " [⚠️ มีล็อตหมดอายุ]"
+                  : m.hasExpiringSoon
+                  ? ` [⏳ ใกล้หมด: ${m.earliestExpiryDate ?? ""}]`
+                  : m.earliestExpiryDate
+                  ? ` [Exp: ${m.earliestExpiryDate}]`
+                  : "";
+                return (
+                  <option key={m.medicineId} value={m.medicineId} disabled={isOutOfStock}>
+                    {m.medicineName} (฿{m.unitPrice}) · คงเหลือ {m.stockRemaining ?? 0}{expiryBadge} {isOutOfStock ? "(หมดสต็อก)" : ""}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

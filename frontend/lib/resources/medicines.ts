@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from "@/lib/api-client";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api-client";
 import type { MedicineRequestDTO, MedicineResponseDTO, PageResponse } from "@/lib/types";
 
 export const createMedicine = (dto: MedicineRequestDTO) =>
@@ -12,3 +12,6 @@ export const getAllMedicines = (page = 0, size = 20) =>
 
 export const updateMedicine = (id: number, dto: MedicineRequestDTO) =>
   apiPut<MedicineResponseDTO>(`/api/medicines/${id}`, dto);
+
+export const deleteMedicine = (id: number) =>
+  apiDelete(`/api/medicines/${id}`);

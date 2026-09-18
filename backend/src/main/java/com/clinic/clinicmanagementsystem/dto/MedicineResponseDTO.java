@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,4 +23,10 @@ public class MedicineResponseDTO {
     private Integer stockReceived;
     private Integer stockIssued;
     private String note;
+
+    private Integer activeLotCount;
+    private LocalDate earliestExpiryDate;
+    private Boolean hasExpiringSoon;
+    private Boolean hasExpired;
+    private List<MedicineLotResponseDTO> lots;
 }

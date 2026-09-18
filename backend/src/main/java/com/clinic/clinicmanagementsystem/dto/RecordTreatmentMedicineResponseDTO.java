@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,4 +19,8 @@ public class RecordTreatmentMedicineResponseDTO {
 
     private int medicineId;
     private String medicineName;
+
+    private Integer lotId;
+    private String lotNumber;
+    private LocalDate expiryDate;
 }

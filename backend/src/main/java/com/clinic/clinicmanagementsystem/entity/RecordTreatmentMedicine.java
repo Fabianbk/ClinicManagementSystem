@@ -33,4 +33,8 @@ public class RecordTreatmentMedicine {
     @ManyToOne
     @JoinColumn(name = "medicine_id", nullable = false)
     private Medicine medicine;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lot_id")
+    private MedicineLot medicineLot;
 }

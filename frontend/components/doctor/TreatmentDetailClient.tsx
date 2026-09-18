@@ -447,8 +447,15 @@ export function TreatmentDetailClient({
                       {medicines.map((m, idx) => (
                         <tr key={m.recordTreatmentMedicineId}>
                           <td className="p-2.5 text-center font-mono">{idx + 1}</td>
-                          <td className="p-2.5 font-semibold text-clinic-ink">{m.medicineName}</td>
-                          <td className="p-2.5 text-center font-mono">{m.quantity}</td>
+                          <td className="p-2.5">
+                            <span className="font-semibold text-clinic-ink block">{m.medicineName}</span>
+                            {m.lotNumber && (
+                              <span className="text-[11px] text-clinic-ink-soft block font-mono">
+                                ล็อต: <strong className="text-clinic-ink">{m.lotNumber}</strong> {m.expiryDate ? `· หมดอายุ ${m.expiryDate}` : ""}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2.5 text-center font-mono font-semibold">{m.quantity}</td>
                           <td className="p-2.5 text-right font-mono">฿{(m.priceAtTime ?? 0).toLocaleString()}</td>
                           <td className="p-2.5 text-right font-mono font-bold text-clinic-primary">
                             ฿{(m.subTotal ?? 0).toLocaleString()}

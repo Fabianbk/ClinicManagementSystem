@@ -48,4 +48,7 @@ public class Medicine {
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "medicine")
     private List<RecordTreatmentMedicine> recordTreatmentMedicines;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "medicine", orphanRemoval = true)
+    private List<MedicineLot> medicineLots;
 }

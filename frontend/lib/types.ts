@@ -395,6 +395,9 @@ export interface RecordTreatmentMedicineResponseDTO {
   subTotal: number;
   medicineId: number;
   medicineName: string;
+  lotId?: number | null;
+  lotNumber?: string | null;
+  expiryDate?: string | null;
 }
 
 export interface ReceiptItemDTO {
@@ -497,6 +500,51 @@ export interface MedicineResponseDTO {
   stockReceived: number | null;
   stockIssued: number | null;
   note: string | null;
+  activeLotCount?: number;
+  earliestExpiryDate?: string | null;
+  hasExpiringSoon?: boolean;
+  hasExpired?: boolean;
+  lots?: MedicineLotResponseDTO[];
+}
+
+// ---------- Medicine Lot & Stock Adjustment ----------
+
+export interface MedicineLotRequestDTO {
+  medicineId: number;
+  lotNumber: string;
+  manufactureDate?: string;
+  expiryDate: string;
+  receivedDate?: string;
+  quantityReceived: number;
+  costPrice?: number;
+  note?: string;
+}
+
+export interface MedicineLotResponseDTO {
+  lotId: number;
+  medicineId: number;
+  medicineName: string;
+  unitType: string | null;
+  lotNumber: string;
+  manufactureDate: string | null;
+  expiryDate: string;
+  receivedDate: string;
+  quantityReceived: number;
+  quantityRemaining: number;
+  costPrice: number | null;
+  status: "ACTIVE" | "DEPLETED" | "EXPIRED";
+  note: string | null;
+  daysUntilExpiry: number;
+  expired: boolean;
+  expiringSoon: boolean;
+}
+
+export interface StockAdjustmentRequestDTO {
+  medicineId: number;
+  lotId?: number;
+  newQuantityRemaining: number;
+  reason: string;
+  note?: string;
 }
 
 // ---------- Review ----------

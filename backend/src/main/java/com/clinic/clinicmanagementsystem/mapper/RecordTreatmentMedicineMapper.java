@@ -12,11 +12,15 @@ public interface RecordTreatmentMedicineMapper {
     @Mapping(target = "recordTreatmentMedicineId", ignore = true)
     @Mapping(target = "recordTreatment", ignore = true)
     @Mapping(target = "medicine", ignore = true)
+    @Mapping(target = "medicineLot", ignore = true)
     @Mapping(target = "priceAtTime", ignore = true) // service computes from Medicine.unitPrice at the time of treatment
     @Mapping(target = "subTotal", ignore = true)    // service computes as priceAtTime * quantity
     RecordTreatmentMedicine toEntity(RecordTreatmentMedicineRequestDTO dto);
 
     @Mapping(target = "medicineId", source = "medicine.medicineId")
     @Mapping(target = "medicineName", source = "medicine.medicineName")
+    @Mapping(target = "lotId", source = "medicineLot.lotId")
+    @Mapping(target = "lotNumber", source = "medicineLot.lotNumber")
+    @Mapping(target = "expiryDate", source = "medicineLot.expiryDate")
     RecordTreatmentMedicineResponseDTO toResponseDTO(RecordTreatmentMedicine entity);
 }

@@ -52,4 +52,11 @@ public class MedicineController {
         return ResponseEntity.ok(ApiResponse.success(
                 medicineService.update(id, dto), "Medicine updated successfully"));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable int id) {
+        medicineService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Medicine deleted successfully"));
+    }
 }

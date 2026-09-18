@@ -12,6 +12,7 @@ public interface MedicineMapper {
 
     @Mapping(target = "medicineId", ignore = true)
     @Mapping(target = "recordTreatmentMedicines", ignore = true)
+    @Mapping(target = "medicineLots", ignore = true)
     Medicine toEntity(MedicineRequestDTO dto);
 
     MedicineResponseDTO toResponseDTO(Medicine entity);
@@ -19,5 +20,6 @@ public interface MedicineMapper {
     /** Updates an existing Medicine in place — no new row created, stock history stays attached. */
     @Mapping(target = "medicineId", ignore = true)
     @Mapping(target = "recordTreatmentMedicines", ignore = true)
+    @Mapping(target = "medicineLots", ignore = true)
     void updateEntityFromDto(MedicineRequestDTO dto, @MappingTarget Medicine entity);
 }

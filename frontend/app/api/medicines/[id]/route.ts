@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getMedicine, updateMedicine } from "@/lib/resources/medicines";
+import { getMedicine, updateMedicine, deleteMedicine } from "@/lib/resources/medicines";
 import { ApiError } from "@/lib/api-client";
 import type { MedicineRequestDTO } from "@/lib/types";
 
@@ -35,3 +35,20 @@ export async function PUT(
     return NextResponse.json({ message: "Failed to update medicine" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const id = Number(params.id);
+    await deleteMedicine(id);
+    return NextResponse.json({ success: true, message: "Medicine deleted successfully" });
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return NextResponse.json({ message: err.message, errors: err.errors }, { status: err.status });
+    }
+    return NextResponse.json({ message: "Failed to delete medicine" }, { status: 500 });
+  }
+}
+

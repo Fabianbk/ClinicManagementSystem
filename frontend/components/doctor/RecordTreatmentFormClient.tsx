@@ -426,6 +426,19 @@ export function RecordTreatmentFormClient({
     const qty = Number(medQuantity);
     if (qty <= 0) return;
 
+    const available = med.stockRemaining ?? 0;
+    if (available <= 0) {
+      alert(`ไม่สามารถสั่งจ่ายยา '${med.medicineName}' ได้ เนื่องจากสต็อกคงเหลือเป็น 0`);
+      return;
+    }
+
+    const existingItem = prescribedMedicines.find((p) => p.medicineId === med.medicineId);
+    const currentInCart = existingItem?.quantity || 0;
+    if (currentInCart + qty > available) {
+      alert(`สต็อกยาไม่เพียงพอ! ยา '${med.medicineName}' มีคงเหลือ ${available} ${med.unitType ?? "หน่วย"} (ในรายการสั่งจ่ายมีอยู่แล้ว ${currentInCart} ${med.unitType ?? "หน่วย"})`);
+      return;
+    }
+
     const existingIndex = prescribedMedicines.findIndex((p) => p.medicineId === med.medicineId);
     if (existingIndex >= 0) {
       const updated = [...prescribedMedicines];
@@ -2226,11 +2239,21 @@ export function RecordTreatmentFormClient({
                 onChange={(e) => setSelectedMedId(Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs text-clinic-ink bg-white focus:ring-2 focus:ring-clinic-primary"
               >
-                {medicines.map((m) => (
-                  <option key={m.medicineId} value={m.medicineId}>
-                    {m.medicineName} (฿{m.unitPrice} / {m.unitType ?? "หน่วย"}) · สต็อก {m.stockRemaining ?? 0}
-                  </option>
-                ))}
+                {medicines.map((m) => {
+                  const isOutOfStock = (m.stockRemaining ?? 0) <= 0;
+                  const expiryBadge = m.hasExpired
+                    ? " [⚠️ มีล็อตหมดอายุ]"
+                    : m.hasExpiringSoon
+                    ? ` [⏳ ใกล้หมด: ${m.earliestExpiryDate ?? ""}]`
+                    : m.earliestExpiryDate
+                    ? ` [Exp: ${m.earliestExpiryDate}]`
+                    : "";
+                  return (
+                    <option key={m.medicineId} value={m.medicineId} disabled={isOutOfStock}>
+                      {m.medicineName} (฿{m.unitPrice} / {m.unitType ?? "หน่วย"}) · สต็อก {m.stockRemaining ?? 0}{expiryBadge} {isOutOfStock ? "(หมดสต็อก)" : ""}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
