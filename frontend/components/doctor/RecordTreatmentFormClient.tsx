@@ -3,6 +3,12 @@
 import { useState, useEffect, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FormField } from "@/components/ui/form-field";
+import { scrollToFirstError } from "@/lib/form-utils";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
+import { Loader2 } from "lucide-react";
 import type {
   AppointmentResponseDTO,
   PatientResponseDTO,
@@ -91,6 +97,31 @@ export function RecordTreatmentFormClient({
 }: RecordTreatmentFormClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Unsaved changes guard
+  useUnsavedChanges(isDirty && !isSubmitting);
+
+  const clearError = (field: string) => {
+    setIsDirty(true);
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const handleBlur = (field: string, value?: any) => {
+    if (!value || (typeof value === "string" && !value.trim()) || (typeof value === "number" && value <= 0)) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: field === "patientId" || field === "selectedPatientId" ? "กรุณาเลือกผู้ป่วย" : "กรุณากรอกข้อมูลนี้",
+      }));
+    }
+  };
 
   // Set of appointment IDs that already have a treatment record
   const treatedAppointmentIds = useMemo(() => {
@@ -582,15 +613,23 @@ export function RecordTreatmentFormClient({
     setErrorMsg(null);
     setSuccessMsg(null);
 
+    const newErrors: Record<string, string> = {};
     if (!selectedPatientId) {
-      setErrorMsg("กรุณาเลือกผู้ป่วยที่เข้ารับการตรวจรักษา");
-      return;
+      newErrors.patientId = "กรุณาเลือกผู้ป่วยที่เข้ารับการตรวจรักษา";
     }
 
     if (!symptoms.trim()) {
-      setErrorMsg("กรุณาระบุอาการสำคัญ (Symptoms/Condition)");
+      newErrors.symptoms = "กรุณาระบุอาการสำคัญ (Symptoms/Condition)";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
+      setTimeout(() => scrollToFirstError(), 60);
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const recordDateObj = visitDate ? new Date(`${visitDate}T${visitTime || "00:00"}:00`) : new Date();
@@ -729,15 +768,16 @@ export function RecordTreatmentFormClient({
         }).catch((err) => console.error("Receipt error:", err));
       }
 
-      setSuccessMsg("บันทึกเวชระเบียนการตรวจรักษาและใบสั่งการรักษาเรียบร้อยแล้ว!");
+      toast.success("บันทึกเวชระเบียนการตรวจรักษาและใบสั่งการรักษาเรียบร้อยแล้ว!");
+      setIsDirty(false);
       startTransition(() => {
-        setTimeout(() => {
-          router.push(`/doctor/treatments/${recordTreatmentId}`);
-          router.refresh();
-        }, 1200);
+        router.push(`/doctor/treatments/${recordTreatmentId}`);
+        router.refresh();
       });
     } catch (err: any) {
+      toast.error(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
       setErrorMsg(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      setIsSubmitting(false);
     }
   };
 
@@ -802,22 +842,6 @@ export function RecordTreatmentFormClient({
         </div>
       )}
 
-      {/* Error & Success Messages */}
-      {errorMsg && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium flex items-center justify-between">
-          <span>⚠️ {errorMsg}</span>
-          <button onClick={() => setErrorMsg(null)} className="text-xs underline ml-2 cursor-pointer">
-            ปิด
-          </button>
-        </div>
-      )}
-
-      {successMsg && (
-        <div className="p-4 rounded-control bg-emerald-50 border border-emerald-300 text-emerald-800 text-sm font-medium flex items-center gap-2">
-          <span>✅ {successMsg}</span>
-        </div>
-      )}
-
       {/* =========================================================
           SECTION 1: ข้อมูลผู้รับบริการ & นัดหมาย (Part 1 Personal Info)
           ========================================================= */}
@@ -855,33 +879,45 @@ export function RecordTreatmentFormClient({
           </div>
 
           {/* Select Patient */}
-          <div>
-            <label className="block text-xs font-semibold text-clinic-ink-soft mb-1">
-              ผู้ป่วย / ผู้รับบริการ <span className="text-red-500">*</span>
-            </label>
+          <FormField
+            label="ผู้ป่วย / ผู้รับบริการ"
+            required
+            error={errors.selectedPatientId || errors.patientId}
+            id="selectedPatientId"
+          >
             <select
+              id="selectedPatientId"
               value={selectedPatientId}
-              onChange={(e) => setSelectedPatientId(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/40 focus:ring-2 focus:ring-clinic-primary"
+              onChange={(e) => {
+                setSelectedPatientId(Number(e.target.value));
+                clearError("selectedPatientId");
+                clearError("patientId");
+              }}
+              onBlur={() => handleBlur("selectedPatientId", selectedPatientId)}
+              className={`w-full px-3 py-2 border rounded-control text-xs text-clinic-ink bg-clinic-bg/40 focus:ring-2 focus:ring-clinic-primary transition-colors ${
+                errors.selectedPatientId || errors.patientId ? "border-clinic-danger focus:ring-clinic-danger" : "border-clinic-line"
+              }`}
+              aria-invalid={!!(errors.selectedPatientId || errors.patientId)}
             >
+              <option value={0}>-- เลือกผู้ป่วย --</option>
               {patients.map((p) => (
                 <option key={p.patientId} value={p.patientId}>
                   HN: {p.patientId} - {p.fullname} (ID: {p.idNumber})
                 </option>
               ))}
             </select>
-          </div>
+          </FormField>
 
           {/* Date and Time of Visit */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-semibold text-clinic-ink-soft mb-1">วันที่มาพบแพทย์</label>
-              <input
-                type="date"
-                value={visitDate}
-                onChange={(e) => setVisitDate(e.target.value)}
-                className="w-full px-2.5 py-2 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/40"
-              />
+              <FormField label="วันที่มาพบแพทย์" id="visitDate">
+                <DatePicker
+                  value={visitDate}
+                  onChange={(val) => setVisitDate(val)}
+                  placeholder="เลือกวันที่มาพบแพทย์"
+                />
+              </FormField>
             </div>
             <div>
               <label className="block text-xs font-semibold text-clinic-ink-soft mb-1">เวลา (น.)</label>
@@ -1046,19 +1082,28 @@ export function RecordTreatmentFormClient({
         </div>
 
         {/* อาการสำคัญ (Chief Complaint) */}
-        <div>
-          <label className="block text-xs font-bold text-clinic-ink mb-1">
-            อาการสำคัญ (Symptoms/Condition) <span className="text-red-500">*</span>
-          </label>
+        <FormField
+          label="อาการสำคัญ (Symptoms/Condition)"
+          required
+          error={errors.symptoms}
+          id="symptoms"
+        >
           <textarea
+            id="symptoms"
             rows={2}
             value={symptoms}
-            onChange={(e) => setSymptoms(e.target.value)}
+            onChange={(e) => {
+              setSymptoms(e.target.value);
+              clearError("symptoms");
+            }}
+            onBlur={() => handleBlur("symptoms", symptoms)}
             placeholder="ระบุอาการสำคัญ เช่น ปวดบ่าและสะบักข้างขวา ร้าวขึ้นคอ เป็นมา 3 วัน..."
-            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/30 focus:ring-2 focus:ring-clinic-primary"
-            required
+            className={`w-full px-3 py-2 border rounded-control text-xs text-clinic-ink bg-clinic-bg/30 focus:ring-2 focus:ring-clinic-primary transition-colors ${
+              errors.symptoms ? "border-clinic-danger focus:ring-clinic-danger" : "border-clinic-line"
+            }`}
+            aria-invalid={!!errors.symptoms}
           />
-        </div>
+        </FormField>
 
         {/* ประวัติปัจจุบัน (Present History) */}
         <div>
@@ -2521,14 +2566,17 @@ export function RecordTreatmentFormClient({
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || isSubmitting}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 rounded-control text-sm font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <span>
-              {isPending
-                ? "กำลังบันทึกเวชระเบียน…"
-                : "✓ บันทึกเวชระเบียนและออกใบสั่งการรักษา"}
-            </span>
+            {isPending || isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>กำลังบันทึกเวชระเบียน…</span>
+              </>
+            ) : (
+              <span>✓ บันทึกเวชระเบียนและออกใบสั่งการรักษา</span>
+            )}
           </button>
         </div>
       </div>

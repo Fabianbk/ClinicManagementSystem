@@ -21,6 +21,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { FormField } from "@/components/ui/form-field";
+import { DatePicker } from "@/components/ui/date-picker";
+import { toast } from "sonner";
+import {
+  formatNationalId,
+  formatPhoneNumber,
+  stripNonDigits,
+  scrollToFirstError,
+} from "@/lib/form-utils";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import {
   Edit,
   ArrowLeft,
@@ -35,6 +45,7 @@ import {
   ShieldAlert,
   Plus,
   Trash2,
+  Loader2,
 } from "lucide-react";
 
 const PROVINCES = [
@@ -68,7 +79,9 @@ export default function EditPatientPage({
 
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
 
   // Patient Intake Mode
   const [idType, setIdType] = useState<IdType>("THAI_ID");
@@ -81,6 +94,8 @@ export default function EditPatientPage({
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [occupation, setOccupation] = useState("");
   const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>("SINGLE");
+
+
 
   // Auto-calculated age
   const calculatedAge = dateOfBirth
@@ -125,6 +140,51 @@ export default function EditPatientPage({
   // Section 6: Emergency Contacts
   const [emergencyContacts, setEmergencyContacts] = useState<ContactPersonRequestDTO[]>([]);
 
+  // Unsaved changes guard
+  useUnsavedChanges(isDirty && !isSubmitting);
+
+  // Clear single field error on change
+  const clearError = (field: string) => {
+    setIsDirty(true);
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  // Validate single field on blur (Touched state)
+  const handleBlur = (field: string) => {
+    const errMap: Record<string, string> = {};
+
+    if (field === "fullname" && !fullname.trim()) {
+      errMap.fullname = "กรุณาระบุชื่อ-นามสกุล";
+    }
+    if (field === "nationalId" && idType === "THAI_ID") {
+      if (!nationalId || stripNonDigits(nationalId).length !== 13) {
+        errMap.nationalId = "เลขประจำตัวประชาชนต้องมี 13 หลักพอดี";
+      }
+    }
+    if (field === "passportNo" && idType === "PASSPORT") {
+      if (!passportNo || passportNo.trim().length === 0 || passportNo.trim().length > 15) {
+        errMap.passportNo = "กรุณาระบุเลขหนังสือเดินทาง (ความยาวไม่เกิน 15 ตัวอักษร)";
+      }
+    }
+    if (field === "dateOfBirth" && !dateOfBirth) {
+      errMap.dateOfBirth = "กรุณาระบุวันเดือนปีเกิด";
+    }
+    if (field === "mobileNumber") {
+      if (!mobileNumber || stripNonDigits(mobileNumber).length < 9) {
+        errMap.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+      }
+    }
+
+    if (errMap[field]) {
+      setErrors((prev) => ({ ...prev, [field]: errMap[field] }));
+    }
+  };
+
   // Fetch initial patient data
   useEffect(() => {
     async function loadPatient() {
@@ -135,7 +195,7 @@ export default function EditPatientPage({
 
         setFullname(data.fullname || "");
         setIdType(data.idType || "THAI_ID");
-        setNationalId(data.nationalId || "");
+        setNationalId(data.nationalId ? formatNationalId(data.nationalId) : "");
         setPassportNo(data.passportNo || "");
         setGender((data.gender as Gender) || "MALE");
         setDateOfBirth(data.dateOfBirth ? data.dateOfBirth.split("T")[0] : "");
@@ -158,7 +218,7 @@ export default function EditPatientPage({
         setDistrict(data.district || "");
         setProvince(data.province || "แม่ฮ่องสอน");
         setZipCode(data.zipCode || "");
-        setMobileNumber(data.mobileNumber || "");
+        setMobileNumber(data.mobileNumber ? formatPhoneNumber(data.mobileNumber) : "");
         setEmail(data.email || "");
 
         setOriginalDomicile(data.originalDomicile || "");
@@ -177,7 +237,7 @@ export default function EditPatientPage({
               contactName: c.contactName,
               relationship: c.relationship || "",
               contactAddress: c.contactAddress || "",
-              mobileNumber: c.mobileNumber || "",
+              mobileNumber: c.mobileNumber ? formatPhoneNumber(c.mobileNumber) : "",
             }))
           );
         } else {
@@ -186,7 +246,7 @@ export default function EditPatientPage({
           ]);
         }
       } catch (err: any) {
-        setErrorMessage(err.message || "เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        toast.error(err.message || "เกิดข้อผิดพลาดในการโหลดข้อมูล");
       } finally {
         setIsLoading(false);
       }
@@ -198,6 +258,7 @@ export default function EditPatientPage({
   }, [patientId]);
 
   const addEmergencyContact = () => {
+    setIsDirty(true);
     setEmergencyContacts((prev) => [
       ...prev,
       { contactName: "", relationship: "", contactAddress: "", mobileNumber: "" },
@@ -205,6 +266,7 @@ export default function EditPatientPage({
   };
 
   const removeEmergencyContact = (index: number) => {
+    setIsDirty(true);
     setEmergencyContacts((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -213,6 +275,7 @@ export default function EditPatientPage({
     field: keyof ContactPersonRequestDTO,
     value: string
   ) => {
+    setIsDirty(true);
     setEmergencyContacts((prev) =>
       prev.map((c, i) => (i === index ? { ...c, [field]: value } : c))
     );
@@ -221,35 +284,45 @@ export default function EditPatientPage({
   // Submit Handler
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setErrorMessage(null);
+    const newErrors: Record<string, string> = {};
 
-    // Validate ID based on Discriminator
+    if (!fullname.trim()) {
+      newErrors.fullname = "กรุณาระบุชื่อ-นามสกุล";
+    }
+
     if (idType === "THAI_ID") {
-      if (!nationalId || nationalId.trim().length !== 13) {
-        setErrorMessage("เลขประจำตัวประชาชนต้องมี 13 หลักพอดี");
-        return;
+      const cleanId = stripNonDigits(nationalId);
+      if (!cleanId || cleanId.length !== 13) {
+        newErrors.nationalId = "เลขประจำตัวประชาชนต้องมี 13 หลักพอดี";
       }
     } else {
       if (!passportNo || passportNo.trim().length === 0 || passportNo.trim().length > 15) {
-        setErrorMessage("กรุณาระบุเลขหนังสือเดินทาง (Passport No.) ความยาวไม่เกิน 15 ตัวอักษร");
-        return;
+        newErrors.passportNo = "กรุณาระบุเลขหนังสือเดินทาง (ความยาวไม่เกิน 15 ตัวอักษร)";
       }
     }
 
     if (!dateOfBirth) {
-      setErrorMessage("กรุณาระบุวันเดือนปีเกิด");
+      newErrors.dateOfBirth = "กรุณาระบุวันเดือนปีเกิด";
+    }
+
+    const cleanPhone = stripNonDigits(mobileNumber);
+    if (!cleanPhone || cleanPhone.length < 9) {
+      newErrors.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนและถูกต้อง");
+      setTimeout(() => scrollToFirstError(), 60);
       return;
     }
 
-    if (!mobileNumber || mobileNumber.trim().length === 0) {
-      setErrorMessage("กรุณาระบุเบอร์โทรศัพท์มือถือ");
-      return;
-    }
+    setIsSubmitting(true);
 
     const payload: PatientRequestDTO = {
       fullname: fullname.trim(),
       idType,
-      nationalId: idType === "THAI_ID" ? nationalId.trim() : undefined,
+      nationalId: idType === "THAI_ID" ? stripNonDigits(nationalId) : undefined,
       passportNo: idType === "PASSPORT" ? passportNo.trim() : undefined,
       gender,
       dateOfBirth: new Date(dateOfBirth).toISOString(),
@@ -283,7 +356,7 @@ export default function EditPatientPage({
       education: idType === "THAI_ID" ? education.trim() || undefined : undefined,
 
       // Contact
-      mobileNumber: mobileNumber.trim(),
+      mobileNumber: stripNonDigits(mobileNumber),
       email: email.trim() || undefined,
 
       contactPersons: emergencyContacts.filter((c) => c.contactName.trim() !== ""),
@@ -302,16 +375,20 @@ export default function EditPatientPage({
           errBody?.errors && errBody.errors.length > 0
             ? errBody.errors.join(", ")
             : errBody?.message || "ไม่สามารถอัปเดตข้อมูลผู้ป่วยได้";
-        setErrorMessage(detailMsg);
+        toast.error(detailMsg);
+        setIsSubmitting(false);
         return;
       }
 
+      toast.success("อัปเดตข้อมูลผู้ป่วยสำเร็จเรียบร้อยแล้ว!");
+      setIsDirty(false);
       startTransition(() => {
         router.push(`/doctor/patients/${patientId}`);
         router.refresh();
       });
     } catch (err: any) {
-      setErrorMessage(err.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
+      toast.error(err.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
+      setIsSubmitting(false);
     }
   }
 
@@ -368,14 +445,6 @@ export default function EditPatientPage({
         }
       />
 
-      {/* Error Alert */}
-      {errorMessage && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-xs font-medium flex items-center gap-2 shadow-2xs">
-          <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
       {/* Edit Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 1. Basic Info & Identification */}
@@ -387,109 +456,152 @@ export default function EditPatientPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="fullname" required>
-                ชื่อ-นามสกุล (Full Name)
-              </Label>
-              <Input
+            <div className="sm:col-span-2">
+              <FormField
                 id="fullname"
+                label="ชื่อ-นามสกุล (Full Name)"
                 required
-                value={fullname}
-                onChange={(e) => setFullname(e.target.value)}
-              />
+                error={errors.fullname}
+              >
+                <Input
+                  id="fullname"
+                  required
+                  value={fullname}
+                  onChange={(e) => {
+                    setFullname(e.target.value);
+                    clearError("fullname");
+                  }}
+                  onBlur={() => handleBlur("fullname")}
+                />
+              </FormField>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="gender" required>
-                เพศ (Gender)
-              </Label>
-              <Select
-                id="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-              >
-                <option value="MALE">ชาย (Male)</option>
-                <option value="FEMALE">หญิง (Female)</option>
-                <option value="OTHER">อื่นๆ (Other)</option>
-              </Select>
+            <div>
+              <FormField id="gender" label="เพศ (Gender)" required>
+                <Select
+                  id="gender"
+                  value={gender}
+                  onChange={(e) => {
+                    setGender(e.target.value as Gender);
+                    setIsDirty(true);
+                  }}
+                >
+                  <option value="MALE">ชาย (Male)</option>
+                  <option value="FEMALE">หญิง (Female)</option>
+                  <option value="OTHER">อื่นๆ (Other)</option>
+                </Select>
+              </FormField>
             </div>
 
             {idType === "THAI_ID" ? (
-              <div className="space-y-1.5">
-                <Label htmlFor="nationalId" required>
-                  เลขประจำตัวประชาชน 13 หลัก (National ID)
-                </Label>
-                <Input
+              <div>
+                <FormField
                   id="nationalId"
+                  label="เลขประจำตัวประชาชน 13 หลัก (National ID)"
                   required
-                  maxLength={13}
-                  value={nationalId}
-                  onChange={(e) => setNationalId(e.target.value.replace(/\D/g, ""))}
-                />
+                  error={errors.nationalId}
+                >
+                  <Input
+                    id="nationalId"
+                    maxLength={17}
+                    placeholder="1-2345-67890-12-3"
+                    value={nationalId}
+                    onChange={(e) => {
+                      setNationalId(formatNationalId(e.target.value));
+                      clearError("nationalId");
+                    }}
+                    onBlur={() => handleBlur("nationalId")}
+                  />
+                </FormField>
               </div>
             ) : (
-              <div className="space-y-1.5">
-                <Label htmlFor="passportNo" required>
-                  เลขหนังสือเดินทาง (Passport No.)
-                </Label>
-                <Input
+              <div>
+                <FormField
                   id="passportNo"
+                  label="เลขหนังสือเดินทาง (Passport No.)"
                   required
-                  maxLength={15}
-                  value={passportNo}
-                  onChange={(e) => setPassportNo(e.target.value.toUpperCase())}
-                />
+                  error={errors.passportNo}
+                >
+                  <Input
+                    id="passportNo"
+                    maxLength={15}
+                    value={passportNo}
+                    onChange={(e) => {
+                      setPassportNo(e.target.value.toUpperCase());
+                      clearError("passportNo");
+                    }}
+                    onBlur={() => handleBlur("passportNo")}
+                  />
+                </FormField>
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="dateOfBirth" required>
-                วันเดือนปีเกิด (Date of Birth)
-              </Label>
-              <Input
+            <div>
+              <FormField
                 id="dateOfBirth"
-                type="date"
+                label="วันเดือนปีเกิด (Date of Birth)"
                 required
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="calculatedAge">อายุคำนวณ (ปี)</Label>
-              <Input
-                id="calculatedAge"
-                readOnly
-                disabled
-                value={calculatedAge !== "" ? `${calculatedAge} ปี` : "-"}
-                className="bg-clinic-bg font-mono"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="maritalStatus">สถานภาพสมรส (Marital Status)</Label>
-              <Select
-                id="maritalStatus"
-                value={maritalStatus}
-                onChange={(e) => setMaritalStatus(e.target.value as MaritalStatus)}
+                error={errors.dateOfBirth}
               >
-                <option value="SINGLE">โสด (Single)</option>
-                <option value="IN_RELATIONSHIP">มีคู่ / อยู่ด้วยกัน (In a relationship)</option>
-                <option value="MARRIED">สมรส (Married)</option>
-                <option value="WIDOWED">หม้าย (Widowed)</option>
-                <option value="SEPARATED">แยกกันอยู่ (Separated)</option>
-                <option value="DIVORCED">หย่า (Divorced)</option>
-                <option value="MONK">สมณะ / นักบวช (Monk / Clergy)</option>
-              </Select>
+                <DatePicker
+                  id="dateOfBirth"
+                  value={dateOfBirth}
+                  onChange={(iso) => {
+                    setDateOfBirth(iso);
+                    clearError("dateOfBirth");
+                  }}
+                  onBlur={() => handleBlur("dateOfBirth")}
+                  error={Boolean(errors.dateOfBirth)}
+                  maxDate={new Date().toISOString().split("T")[0]}
+                  placeholder="เลือกวันเดือนปีเกิด"
+                />
+              </FormField>
             </div>
 
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="occupation">อาชีพ (Occupation)</Label>
-              <Input
-                id="occupation"
-                value={occupation}
-                onChange={(e) => setOccupation(e.target.value)}
-              />
+            <div>
+              <FormField id="calculatedAge" label="อายุคำนวณ (ปี)">
+                <Input
+                  id="calculatedAge"
+                  readOnly
+                  disabled
+                  value={calculatedAge !== "" ? `${calculatedAge} ปี` : "-"}
+                  className="bg-clinic-bg font-mono"
+                />
+              </FormField>
+            </div>
+
+            <div>
+              <FormField id="maritalStatus" label="สถานภาพสมรส (Marital Status)">
+                <Select
+                  id="maritalStatus"
+                  value={maritalStatus}
+                  onChange={(e) => {
+                    setMaritalStatus(e.target.value as MaritalStatus);
+                    setIsDirty(true);
+                  }}
+                >
+                  <option value="SINGLE">โสด (Single)</option>
+                  <option value="IN_RELATIONSHIP">มีคู่ / อยู่ด้วยกัน (In a relationship)</option>
+                  <option value="MARRIED">สมรส (Married)</option>
+                  <option value="WIDOWED">หม้าย (Widowed)</option>
+                  <option value="SEPARATED">แยกกันอยู่ (Separated)</option>
+                  <option value="DIVORCED">หย่า (Divorced)</option>
+                  <option value="MONK">สมณะ / นักบวช (Monk / Clergy)</option>
+                </Select>
+              </FormField>
+            </div>
+
+            <div className="sm:col-span-2">
+              <FormField id="occupation" label="อาชีพ (Occupation)">
+                <Input
+                  id="occupation"
+                  value={occupation}
+                  onChange={(e) => {
+                    setOccupation(e.target.value);
+                    setIsDirty(true);
+                  }}
+                />
+              </FormField>
             </div>
           </CardContent>
         </Card>
@@ -679,17 +791,26 @@ export default function EditPatientPage({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-clinic-line">
-              <div className="space-y-1.5">
-                <Label htmlFor="mobileNumber" required>
-                  เบอร์โทรศัพท์มือถือ (Mobile Phone)
-                </Label>
-                <Input
+              <div>
+                <FormField
                   id="mobileNumber"
-                  type="tel"
+                  label="เบอร์โทรศัพท์มือถือ (Mobile Phone)"
                   required
-                  value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value)}
-                />
+                  error={errors.mobileNumber}
+                >
+                  <Input
+                    id="mobileNumber"
+                    type="tel"
+                    maxLength={12}
+                    placeholder="เช่น 081-935-8026"
+                    value={mobileNumber}
+                    onChange={(e) => {
+                      setMobileNumber(formatPhoneNumber(e.target.value));
+                      clearError("mobileNumber");
+                    }}
+                    onBlur={() => handleBlur("mobileNumber")}
+                  />
+                </FormField>
               </div>
 
               <div className="space-y-1.5">
@@ -698,7 +819,10 @@ export default function EditPatientPage({
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setIsDirty(true);
+                  }}
                 />
               </div>
             </div>
@@ -885,10 +1009,17 @@ export default function EditPatientPage({
             type="submit"
             variant="terracotta"
             size="sm"
-            disabled={isPending}
-            className="font-semibold shadow-sm px-6"
+            disabled={isPending || isSubmitting}
+            className="font-semibold shadow-sm px-6 flex items-center gap-2 cursor-pointer"
           >
-            {isPending ? "กำลังบันทึก..." : "✓ บันทึกการแก้ไข"}
+            {isPending || isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>กำลังบันทึกการแก้ไข...</span>
+              </>
+            ) : (
+              <span>✓ บันทึกการแก้ไข</span>
+            )}
           </Button>
         </div>
       </form>

@@ -1,0 +1,23 @@
+"use client";
+
+import { useEffect } from "react";
+
+/**
+ * Hook to prompt the user before leaving the page if there are unsaved changes
+ */
+export function useUnsavedChanges(isDirty: boolean) {
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
+}

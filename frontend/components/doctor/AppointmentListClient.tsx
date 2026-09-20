@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge, AppointmentStatusBadge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -254,12 +255,11 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
             />
           </div>
 
-          <div className="w-full sm:w-44">
-            <Input
-              type="date"
+          <div className="w-full sm:w-48">
+            <DatePicker
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="text-xs"
+              onChange={(val) => setSelectedDate(val)}
+              placeholder="กรองตามวันที่"
             />
           </div>
 

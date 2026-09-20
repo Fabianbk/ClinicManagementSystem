@@ -9,6 +9,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
+import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FormField } from "@/components/ui/form-field";
 import {
   Dialog,
   DialogContent,
@@ -252,12 +255,16 @@ export function ScheduleManagerClient({
         curr = nextTime;
       }
 
+      toast.success(
+        `สร้างตารางเวรวันที่ ${formatDateThai(scheduleDate)} สำเร็จ! พร้อมสล็อตเวลารับนัด ${createdSlotCount} สล็อต`
+      );
       setSuccessMsg(
         `สร้างตารางเวรวันที่ ${formatDateThai(scheduleDate)} สำเร็จ! พร้อมสล็อตเวลารับนัด ${createdSlotCount} สล็อต`
       );
       setIsCreateOpen(false);
       refreshSchedules();
     } catch (err: any) {
+      toast.error(err.message || "เกิดข้อผิดพลาดในการสร้างตารางเวร");
       setErrorMsg(err.message || "เกิดข้อผิดพลาดในการสร้างตารางเวร");
     } finally {
       setSubmitting(false);
@@ -276,9 +283,11 @@ export function ScheduleManagerClient({
         const errJson = await res.json().catch(() => ({}));
         throw new Error(errJson.message || "ไม่สามารถลบตารางเวรได้ (อาจมีนัดหมายค้างอยู่)");
       }
+      toast.success("ลบตารางเวรเรียบร้อยแล้ว");
       setSuccessMsg("ลบตารางเวรเรียบร้อยแล้ว");
       refreshSchedules();
     } catch (err: any) {
+      toast.error(err.message || "ไม่สามารถลบตารางเวรได้");
       setErrorMsg(err.message || "ไม่สามารถลบตารางเวรได้");
     } finally {
       setLoading(false);
@@ -593,19 +602,17 @@ export function ScheduleManagerClient({
           </DialogHeader>
 
           <form onSubmit={handleCreateSchedule} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="scheduleDate" required>
-                วันที่ออกตรวจ (Date)
-              </Label>
-              <Input
-                id="scheduleDate"
-                type="date"
-                required
-                min={getTodayLocalDate()}
+            <FormField
+              label="วันที่ออกตรวจ (Date)"
+              required
+              id="scheduleDate"
+            >
+              <DatePicker
                 value={scheduleDate}
-                onChange={(e) => setScheduleDate(e.target.value)}
+                onChange={(val) => setScheduleDate(val)}
+                placeholder="เลือกวันที่ออกตรวจ"
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   CalendarDays,
   Clock,
@@ -176,9 +178,11 @@ export function WeeklyScheduleDialog({
         throw new Error((data as any).message || "เกิดข้อผิดพลาดในการสร้างตารางเวรรายสัปดาห์");
       }
 
+      toast.success("สร้างตารางเวรรายสัปดาห์เรียบร้อยแล้ว");
       onSuccess(data);
       onOpenChange(false);
     } catch (err: any) {
+      toast.error(err.message || "ไม่สามารถสร้างตารางเวรรายสัปดาห์ได้");
       setErrorMsg(err.message || "ไม่สามารถสร้างตารางเวรรายสัปดาห์ได้");
     } finally {
       setSubmitting(false);
@@ -240,12 +244,10 @@ export function WeeklyScheduleDialog({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-              <Input
-                id="weekInput"
-                type="date"
+              <DatePicker
                 value={selectedMonday}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="h-9 text-xs"
+                onChange={(val) => handleDateChange(val)}
+                placeholder="เลือกวันในสัปดาห์"
               />
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white border border-clinic-line text-xs">
                 <span className="text-clinic-ink-soft">สัปดาห์:</span>

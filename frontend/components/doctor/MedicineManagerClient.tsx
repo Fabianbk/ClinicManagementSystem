@@ -17,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ui/empty-state";
+import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FormField } from "@/components/ui/form-field";
 import {
   Table,
   TableHeader,
@@ -322,18 +325,22 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
   const handleReceiveStock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!receiveMedId) {
+      toast.error("กรุณาเลือกยาสมุนไพรที่ต้องการรับเข้าคลัง");
       setErrorMsg("กรุณาเลือกยาสมุนไพรที่ต้องการรับเข้าคลัง");
       return;
     }
     if (!lotNumber.trim()) {
+      toast.error("กรุณาระบุเลขล็อตยา");
       setErrorMsg("กรุณาระบุเลขล็อตยา");
       return;
     }
     if (!expiryDate) {
+      toast.error("กรุณาระบุวันหมดอายุ");
       setErrorMsg("กรุณาระบุวันหมดอายุ");
       return;
     }
     if (quantityReceived <= 0) {
+      toast.error("จำนวนรับเข้าต้องมากกว่า 0");
       setErrorMsg("จำนวนรับเข้าต้องมากกว่า 0");
       return;
     }
@@ -359,6 +366,7 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
         const errBody = await res.json().catch(() => ({}));
         throw new Error(errBody.message || "ไม่สามารถรับยาเข้าคลังได้");
       }
+      toast.success(`รับยาล็อต "${payload.lotNumber}" จำนวน ${payload.quantityReceived} หน่วยเข้าคลังเรียบร้อยแล้ว`);
       setSuccessMsg(`รับยาล็อต "${payload.lotNumber}" จำนวน ${payload.quantityReceived} หน่วยเข้าคลังเรียบร้อยแล้ว`);
       setIsReceiveStockModalOpen(false);
       refreshMedicines();
@@ -366,6 +374,7 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
         loadLotsForMedicine(receiveMedId);
       }
     } catch (err: any) {
+      toast.error(err.message || "เกิดข้อผิดพลาดในการรับยาเข้าคลัง");
       setErrorMsg(err.message || "เกิดข้อผิดพลาดในการรับยาเข้าคลัง");
     } finally {
       setSubmitting(false);
@@ -1097,30 +1106,28 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="receive-exp" required>
-                  วันหมดอายุ (Expiry Date)
-                </Label>
-                <Input
-                  id="receive-exp"
-                  type="date"
-                  required
+              <FormField
+                label="วันหมดอายุ (Expiry Date)"
+                required
+                id="receive-exp"
+              >
+                <DatePicker
                   value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)}
+                  onChange={(val) => setExpiryDate(val)}
+                  placeholder="เลือกวันหมดอายุ"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="receive-mfg">
-                  วันที่ผลิต (Mfg Date)
-                </Label>
-                <Input
-                  id="receive-mfg"
-                  type="date"
+              <FormField
+                label="วันที่ผลิต (Mfg Date)"
+                id="receive-mfg"
+              >
+                <DatePicker
                   value={manufactureDate}
-                  onChange={(e) => setManufactureDate(e.target.value)}
+                  onChange={(val) => setManufactureDate(val)}
+                  placeholder="เลือกวันที่ผลิต"
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

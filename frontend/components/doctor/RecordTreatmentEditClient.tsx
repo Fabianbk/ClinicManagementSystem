@@ -3,6 +3,11 @@
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
+import { FormField } from "@/components/ui/form-field";
+import { scrollToFirstError } from "@/lib/form-utils";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
+import { Loader2 } from "lucide-react";
 import type {
   RecordTreatmentResponseDTO,
   PatientResponseDTO,
@@ -143,6 +148,30 @@ export function RecordTreatmentEditClient({
   // UI state
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useUnsavedChanges(isDirty && !isSubmitting);
+
+  const clearError = (field: string) => {
+    setIsDirty(true);
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const handleBlur = (field: string, value?: any) => {
+    if (!value || (typeof value === "string" && !value.trim())) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: "กรุณากรอกข้อมูลนี้",
+      }));
+    }
+  };
 
   // Auto calculate BMI
   const bmiValue = useMemo(() => {
@@ -183,8 +212,10 @@ export function RecordTreatmentEditClient({
         setDispensedMedicines((prev) => [...prev, newMed]);
       }
       setMedQuantity(1);
+      toast.success("เพิ่มรายการยาลงในเวชระเบียนเรียบร้อยแล้ว");
       router.refresh();
     } catch (err: any) {
+      toast.error(err.message || "ไม่สามารถเพิ่มรายการยาได้");
       setErrorMsg(err.message);
     } finally {
       setIsAddingMed(false);
@@ -208,8 +239,10 @@ export function RecordTreatmentEditClient({
       setDispensedMedicines((prev) =>
         prev.filter((m) => m.recordTreatmentMedicineId !== recordTreatmentMedicineId)
       );
+      toast.success("ลบรายการยาและคืนสต็อกล็อตยาเรียบร้อยแล้ว");
       router.refresh();
     } catch (err: any) {
+      toast.error(err.message || "ไม่สามารถลบรายการยาได้");
       setErrorMsg(err.message);
     }
   };
@@ -220,10 +253,19 @@ export function RecordTreatmentEditClient({
     setErrorMsg(null);
     setSuccessMsg(null);
 
+    const newErrors: Record<string, string> = {};
     if (!symptoms.trim()) {
-      setErrorMsg("กรุณาระบุอาการสำคัญ");
+      newErrors.symptoms = "กรุณาระบุอาการสำคัญ (Chief Complaint)";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
+      setTimeout(() => scrollToFirstError(), 60);
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const updateDTO: RecordTreatmentRequestDTO = {
@@ -279,15 +321,17 @@ export function RecordTreatmentEditClient({
         throw new Error(errJson.message || "ไม่สามารถอัปเดตข้อมูลการรักษาได้");
       }
 
-      setSuccessMsg("บันทึกการแก้ไขเวชระเบียนเรียบร้อยแล้ว!");
+      toast.success("บันทึกการแก้ไขเวชระเบียนเรียบร้อยแล้ว!");
+      setIsDirty(false);
       startTransition(() => {
-        setTimeout(() => {
-          router.push(`/doctor/treatments/${treatment.recordTreatmentId}`);
-          router.refresh();
-        }, 1000);
+        router.push(`/doctor/treatments/${treatment.recordTreatmentId}`);
+        router.refresh();
       });
     } catch (err: any) {
+      toast.error(err.message || "เกิดข้อผิดพลาดในการบันทึก");
       setErrorMsg(err.message || "เกิดข้อผิดพลาดในการบันทึก");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -319,29 +363,20 @@ export function RecordTreatmentEditClient({
           </Link>
           <button
             type="submit"
-            disabled={isPending}
-            className="px-6 py-2 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-2xs cursor-pointer"
+            disabled={isPending || isSubmitting}
+            className="px-6 py-2 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-2xs cursor-pointer flex items-center gap-2 disabled:opacity-50"
           >
-            {isPending ? "กำลังบันทึก…" : "✓ บันทึกการแก้ไข"}
+            {isPending || isSubmitting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>กำลังบันทึก…</span>
+              </>
+            ) : (
+              <span>✓ บันทึกการแก้ไข</span>
+            )}
           </button>
         </div>
       </div>
-
-      {/* Messages */}
-      {errorMsg && (
-        <div className="p-4 rounded-control bg-clinic-danger-bg border border-clinic-danger text-clinic-danger text-sm font-medium animate-in fade-in flex items-center justify-between">
-          <span>⚠️ {errorMsg}</span>
-          <button onClick={() => setErrorMsg(null)} className="text-xs underline ml-2 cursor-pointer">
-            ปิด
-          </button>
-        </div>
-      )}
-
-      {successMsg && (
-        <div className="p-4 rounded-control bg-emerald-50 border border-emerald-300 text-emerald-800 text-sm font-medium animate-in fade-in">
-          ✅ {successMsg}
-        </div>
-      )}
 
       {/* Physical Exam & Vitals */}
       <div className="bg-white border border-clinic-line rounded-card p-6 shadow-2xs space-y-4">
@@ -563,17 +598,27 @@ export function RecordTreatmentEditClient({
           🌿 อาการสำคัญและประวัติการเจ็บป่วย
         </h2>
 
-        <div>
-          <label className="block text-xs font-bold text-clinic-ink mb-1">
-            อาการสำคัญ (Chief Complaint)
-          </label>
+        <FormField
+          label="อาการสำคัญ (Chief Complaint)"
+          required
+          error={errors.symptoms}
+          id="symptoms"
+        >
           <textarea
+            id="symptoms"
             rows={2}
             value={symptoms}
-            onChange={(e) => setSymptoms(e.target.value)}
-            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+            onChange={(e) => {
+              setSymptoms(e.target.value);
+              clearError("symptoms");
+            }}
+            onBlur={() => handleBlur("symptoms", symptoms)}
+            className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+              errors.symptoms ? "border-clinic-danger focus:ring-clinic-danger" : "border-clinic-line"
+            }`}
+            aria-invalid={!!errors.symptoms}
           />
-        </div>
+        </FormField>
 
         <div>
           <label className="block text-xs font-bold text-clinic-ink mb-1">
@@ -908,6 +953,35 @@ export function RecordTreatmentEditClient({
             className="px-4 py-1.5 bg-clinic-primary hover:bg-clinic-primary-deep text-white font-bold text-xs rounded-control transition-all cursor-pointer shadow-2xs"
           >
             + จ่ายยาเพิ่ม
+          </button>
+        </div>
+      </div>
+
+      {/* Sticky Bottom Action Bar */}
+      <div className="bg-white border border-clinic-line rounded-card p-4 shadow-md flex items-center justify-between gap-4 sticky bottom-4 z-20">
+        <div className="text-xs text-clinic-ink-soft">
+          <span>เวชระเบียน #{treatment.recordTreatmentId} · {treatment.patientFullname}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/doctor/treatments/${treatment.recordTreatmentId}`}
+            className="px-4 py-2 rounded-control text-xs font-semibold text-clinic-ink bg-clinic-bg border border-clinic-line hover:bg-slate-100"
+          >
+            ยกเลิก
+          </Link>
+          <button
+            type="submit"
+            disabled={isPending || isSubmitting}
+            className="px-6 py-2 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-2xs cursor-pointer flex items-center gap-2 disabled:opacity-50"
+          >
+            {isPending || isSubmitting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>กำลังบันทึก…</span>
+              </>
+            ) : (
+              <span>✓ บันทึกการแก้ไข</span>
+            )}
           </button>
         </div>
       </div>

@@ -14,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   CalendarPlus,
   ArrowLeft,
@@ -94,6 +95,7 @@ export function PatientBookAppointmentClient({
   const [schedules] = useState<WorkingScheduleResponseDTO[]>(initialSchedules);
   const [doctors] = useState<DoctorResponseDTO[]>(initialDoctors);
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | "ALL">("ALL");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const initialDate = useMemo(() => {
     if (initialSchedules.length > 0) {
@@ -249,18 +251,21 @@ export function PatientBookAppointmentClient({
 
   async function handleBook() {
     if (!selectedSlotId) {
+      toast.error("กรุณาเลือกช่วงเวลาที่ต้องการนัดหมาย");
       setErrorMessage("กรุณาเลือกช่วงเวลาที่ต้องการนัดหมาย");
       return;
     }
 
     const currentSlot = slots.find((s) => s.slotId === selectedSlotId);
     if (currentSlot && new Date(currentSlot.startTime) <= new Date()) {
+      toast.error("ช่วงเวลาที่เลือกได้ผ่านไปแล้ว กรุณาเลือกช่วงเวลาอื่น");
       setErrorMessage("ช่วงเวลาที่เลือกได้ผ่านไปแล้ว กรุณาเลือกช่วงเวลาอื่น");
       return;
     }
 
     setErrorMessage(null);
     setSuccessMessage(null);
+    setIsSubmitting(true);
 
     try {
       const res = await fetch("/api/appointments", {
@@ -274,12 +279,13 @@ export function PatientBookAppointmentClient({
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        setErrorMessage(
-          body?.message || "ไม่สามารถจองคิวนัดหมายได้ กรุณาลองใหม่อีกครั้ง"
-        );
+        const msg = body?.message || "ไม่สามารถจองคิวนัดหมายได้ กรุณาลองใหม่อีกครั้ง";
+        toast.error(msg);
+        setErrorMessage(msg);
         return;
       }
 
+      toast.success("จองคิวนัดหมายสำเร็จ! กำลังนำท่านไปยังหน้ารายการนัดหมาย…");
       setSuccessMessage("จองคิวนัดหมายสำเร็จ! กำลังนำท่านไปยังหน้ารายการนัดหมาย…");
       startTransition(() => {
         setTimeout(() => {
@@ -288,7 +294,10 @@ export function PatientBookAppointmentClient({
         }, 1200);
       });
     } catch {
+      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
       setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -653,11 +662,11 @@ export function PatientBookAppointmentClient({
                   variant="terracotta"
                   size="lg"
                   onClick={handleBook}
-                  disabled={!selectedSlotId || isPending}
+                  disabled={!selectedSlotId || isPending || isSubmitting}
                   className="w-full sm:w-auto font-semibold gap-1.5 shadow-sm"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>{isPending ? "กำลังบันทึกการจอง…" : "ยืนยันการจองคิวตรวจ"}</span>
+                  <span>{isPending || isSubmitting ? "กำลังบันทึกการจอง…" : "ยืนยันการจองคิวตรวจ"}</span>
                 </Button>
               </div>
             </CardContent>

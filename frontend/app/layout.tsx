@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { sarabun, taviraj } from '@/lib/fonts';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'พิมพ์วิมาน คลินิกการแพทย์แผนไทย',
@@ -14,7 +15,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${sarabun.variable} ${taviraj.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          duration={3500}
+        />
+      </body>
     </html>
   );
-}
+}

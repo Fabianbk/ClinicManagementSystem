@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileCheck, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface MedicalCertificateDialogProps {
   recordTreatmentId: number;
@@ -122,10 +124,11 @@ export function MedicalCertificateDialog({
       a.remove();
       window.URL.revokeObjectURL(url);
 
+      toast.success("สร้างและดาวน์โหลดใบรับรองแพทย์เรียบร้อยแล้ว");
       setOpen(false);
     } catch (err: unknown) {
       console.error("Medical certificate download error:", err);
-      alert(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร");
+      toast.error(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร");
     } finally {
       setLoading(false);
     }
@@ -220,20 +223,18 @@ export function MedicalCertificateDialog({
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label className="text-[11px] text-clinic-ink-soft">ตั้งแต่วันที่:</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={sickLeaveFrom}
-                      onChange={(e) => handleFromDateChange(e.target.value)}
-                      className="h-8 text-xs bg-white"
+                      onChange={(val) => handleFromDateChange(val)}
+                      placeholder="ตั้งแต่วันที่"
                     />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[11px] text-clinic-ink-soft">ถึงวันที่:</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={sickLeaveTo}
-                      onChange={(e) => setSickLeaveTo(e.target.value)}
-                      className="h-8 text-xs bg-white"
+                      onChange={(val) => setSickLeaveTo(val)}
+                      placeholder="ถึงวันที่"
                     />
                   </div>
                 </div>
