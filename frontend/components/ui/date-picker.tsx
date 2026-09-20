@@ -129,8 +129,10 @@ export function DatePicker({
       });
     }
 
-    // Next month padding to complete 35 or 42 grid cells
-    const remaining = (7 - (days.length % 7)) % 7;
+    // Next month padding to always complete exactly 42 grid cells (6 full rows)
+    // This guarantees the calendar height never jumps between 5 and 6 rows, keeping buttons stable!
+    const targetTotalDays = 42;
+    const remaining = targetTotalDays - days.length;
     for (let d = 1; d <= remaining; d++) {
       const nextDate = new Date(viewYear, viewMonth + 1, d);
       const iso = formatToIso(nextDate);
@@ -252,22 +254,22 @@ export function DatePicker({
               className="z-50 w-80 rounded-card border border-clinic-line bg-white p-3.5 shadow-xl animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
             >
               {/* Header: Month & Year Jump Selectors */}
-              <div className="flex items-center justify-between gap-1.5 pb-3 border-b border-clinic-line">
+              <div className="flex items-center justify-between gap-1 pb-3 border-b border-clinic-line">
                 <button
                   type="button"
                   onClick={handlePrevMonth}
-                  className="p-1 rounded-control text-clinic-ink-soft hover:bg-clinic-bg hover:text-clinic-ink cursor-pointer transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-control text-clinic-ink-soft hover:bg-clinic-bg hover:text-clinic-ink cursor-pointer transition-colors shrink-0"
                   title="เดือนก่อนหน้า"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                <div className="flex items-center gap-1.5 flex-1 justify-center">
-                  {/* Month Dropdown */}
+                <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0">
+                  {/* Month Dropdown with fixed width so buttons never shift */}
                   <select
                     value={viewMonth}
                     onChange={(e) => setViewMonth(Number(e.target.value))}
-                    className="px-2 py-1 bg-clinic-bg/50 border border-clinic-line rounded-control text-xs font-semibold text-clinic-ink cursor-pointer focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                    className="w-[116px] px-2 py-1 bg-clinic-bg/50 border border-clinic-line rounded-control text-xs font-semibold text-clinic-ink cursor-pointer focus:outline-none focus:ring-1 focus:ring-clinic-primary shrink-0"
                   >
                     {THAI_MONTH_FULL.map((m, idx) => (
                       <option key={m} value={idx}>
@@ -276,11 +278,11 @@ export function DatePicker({
                     ))}
                   </select>
 
-                  {/* Year Dropdown (พ.ศ. with ค.ศ. in brackets) */}
+                  {/* Year Dropdown with fixed width */}
                   <select
                     value={viewYear}
                     onChange={(e) => setViewYear(Number(e.target.value))}
-                    className="px-2 py-1 bg-clinic-bg/50 border border-clinic-line rounded-control text-xs font-bold text-clinic-primary-deep cursor-pointer focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+                    className="w-[110px] px-2 py-1 bg-clinic-bg/50 border border-clinic-line rounded-control text-xs font-bold text-clinic-primary-deep cursor-pointer focus:outline-none focus:ring-1 focus:ring-clinic-primary shrink-0"
                   >
                     {yearOptions.map((y) => (
                       <option key={y} value={y}>
@@ -293,7 +295,7 @@ export function DatePicker({
                 <button
                   type="button"
                   onClick={handleNextMonth}
-                  className="p-1 rounded-control text-clinic-ink-soft hover:bg-clinic-bg hover:text-clinic-ink cursor-pointer transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-control text-clinic-ink-soft hover:bg-clinic-bg hover:text-clinic-ink cursor-pointer transition-colors shrink-0"
                   title="เดือนถัดไป"
                 >
                   <ChevronRight className="w-4 h-4" />
