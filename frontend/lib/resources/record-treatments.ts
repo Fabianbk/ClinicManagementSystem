@@ -3,6 +3,7 @@ import type {
   PageResponse,
   RecordTreatmentRequestDTO,
   RecordTreatmentResponseDTO,
+  HealthProfileResponseDTO,
 } from "@/lib/types";
 
 export const createRecordTreatment = (dto: RecordTreatmentRequestDTO) =>
@@ -21,8 +22,11 @@ export const getRecordTreatmentsByPatientId = (patientId: number, page = 0, size
     params: { page, size },
   });
 
+export const getLatestHealthProfileByPatientId = (patientId: number) =>
+  apiGet<HealthProfileResponseDTO>(`/api/record-treatments/patient/${patientId}/latest-health-profile`);
+
 export const getRecordTreatmentByAppointmentId = (appointmentId: number) =>
   apiGet<RecordTreatmentResponseDTO>(`/api/record-treatments/appointment/${appointmentId}`);
 
 export const updateRecordTreatment = (id: number, dto: RecordTreatmentRequestDTO) =>
-  apiPut<RecordTreatmentResponseDTO>(`/api/record-treatments/${id}`, dto);
+  apiPut<RecordTreatmentResponseDTO>(`/api/record-treatments/${id}`, dto);

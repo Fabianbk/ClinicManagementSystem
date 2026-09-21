@@ -8,6 +8,7 @@ import { FormField } from "@/components/ui/form-field";
 import { scrollToFirstError } from "@/lib/form-utils";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { Loader2 } from "lucide-react";
+import { MedicineCombobox } from "@/components/doctor/MedicineCombobox";
 import type {
   RecordTreatmentResponseDTO,
   PatientResponseDTO,
@@ -910,29 +911,15 @@ export function RecordTreatmentEditClient({
         <div className="bg-clinic-bg/40 p-3 rounded-control border border-clinic-line flex flex-col sm:flex-row items-end gap-3">
           <div className="flex-1">
             <label className="block text-[11px] font-semibold text-clinic-ink-soft mb-1">
-              เพิ่มยาจากคลัง
+              เพิ่มยาจากคลัง (ค้นหาแบบ Real-time)
             </label>
-            <select
-              value={selectedMedId}
-              onChange={(e) => setSelectedMedId(Number(e.target.value))}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-white"
-            >
-              {medicines.map((m) => {
-                const isOutOfStock = (m.stockRemaining ?? 0) <= 0;
-                const expiryBadge = m.hasExpired
-                  ? " [⚠️ มีล็อตหมดอายุ]"
-                  : m.hasExpiringSoon
-                  ? ` [⏳ ใกล้หมด: ${m.earliestExpiryDate ?? ""}]`
-                  : m.earliestExpiryDate
-                  ? ` [Exp: ${m.earliestExpiryDate}]`
-                  : "";
-                return (
-                  <option key={m.medicineId} value={m.medicineId} disabled={isOutOfStock}>
-                    {m.medicineName} (฿{m.unitPrice}) · คงเหลือ {m.stockRemaining ?? 0}{expiryBadge} {isOutOfStock ? "(หมดสต็อก)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <MedicineCombobox
+              medicines={medicines}
+              selectedMedicineId={selectedMedId}
+              onSelectMedicine={(med) => setSelectedMedId(med.medicineId)}
+              onClear={() => setSelectedMedId(0)}
+              placeholder="พิมพ์ค้นหาชื่อยา, รหัส, หมวดหมู่, สรรพคุณ..."
+            />
           </div>
 
           <div className="w-24">
