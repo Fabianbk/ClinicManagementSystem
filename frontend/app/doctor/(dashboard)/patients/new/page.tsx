@@ -47,27 +47,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-const PROVINCES = [
-  "แม่ฮ่องสอน",
-  "เชียงใหม่",
-  "เชียงราย",
-  "ลำพูน",
-  "ลำปาง",
-  "พะเยา",
-  "แพร่",
-  "น่าน",
-  "กรุงเทพมหานคร",
-  "นนทบุรี",
-  "ปทุมธานี",
-  "สมุทรปราการ",
-  "ชลบุรี",
-  "นครราชสีมา",
-  "ขอนแก่น",
-  "ภูเก็ต",
-  "สงขลา",
-  "อื่นๆ (Other)",
-];
-
 export default function NewPatientPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -113,7 +92,7 @@ export default function NewPatientPage() {
   const [road, setRoad] = useState("");
   const [subDistrict, setSubDistrict] = useState("");
   const [district, setDistrict] = useState("");
-  const [province, setProvince] = useState("แม่ฮ่องสอน");
+  const [province, setProvince] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -215,6 +194,25 @@ export default function NewPatientPage() {
     setEmergencyContacts((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const getPatientFullAddressString = () => {
+    const isBkk = province && (province.includes("กรุงเทพ") || province.toLowerCase().includes("bangkok"));
+    const subPrefix = isBkk ? "แขวง " : "ตำบล ";
+    const distPrefix = isBkk ? "เขต " : "อำเภอ ";
+
+    return [
+      houseNo ? `บ้านเลขที่ ${houseNo}` : "",
+      moo ? `หมู่ ${moo}` : "",
+      soi ? `ซอย ${soi}` : "",
+      road ? `ถนน ${road}` : "",
+      subDistrict ? `${subPrefix}${subDistrict}` : "",
+      district ? `${distPrefix}${district}` : "",
+      province ? `จ. ${province}` : "",
+      zipCode || "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  };
+
   const updateEmergencyContact = (
     index: number,
     field: keyof ContactPersonRequestDTO,
@@ -252,6 +250,16 @@ export default function NewPatientPage() {
     const cleanPhone = stripNonDigits(mobileNumber);
     if (!cleanPhone || cleanPhone.length < 9) {
       newErrors.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+    }
+
+    for (let i = 0; i < emergencyContacts.length; i++) {
+      const c = emergencyContacts[i];
+      if (c.mobileNumber) {
+        const cleanEmergencyPhone = stripNonDigits(c.mobileNumber);
+        if (cleanEmergencyPhone.length < 9 || cleanEmergencyPhone.length > 10) {
+          newErrors[`emergency_${i}_phone`] = "เบอร์โทรผู้ติดต่อฉุกเฉินต้องมี 9-10 หลัก";
+        }
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -303,7 +311,12 @@ export default function NewPatientPage() {
       mobileNumber: stripNonDigits(mobileNumber),
       email: email.trim() || undefined,
 
-      contactPersons: emergencyContacts.filter((c) => c.contactName.trim() !== ""),
+      contactPersons: emergencyContacts
+        .filter((c) => c.contactName.trim() !== "")
+        .map((c) => ({
+          ...c,
+          mobileNumber: stripNonDigits(c.mobileNumber || ""),
+        })),
     };
 
     try {
@@ -681,7 +694,7 @@ export default function NewPatientPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="subDistrict">ตำบล / แขวง</Label>
+                <Label htmlFor="subDistrict">ตำบล</Label>
                 <Input
                   id="subDistrict"
                   placeholder="เช่น เวียงใต้"
@@ -691,7 +704,7 @@ export default function NewPatientPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="district">อำเภอ / เขต</Label>
+                <Label htmlFor="district">อำเภอ</Label>
                 <Input
                   id="district"
                   placeholder="เช่น ปาย"
@@ -702,17 +715,12 @@ export default function NewPatientPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="province">จังหวัด</Label>
-                <Select
+                <Input
                   id="province"
+                  placeholder="เช่น แม่ฮ่องสอน"
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
-                >
-                  {PROVINCES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </Select>
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -739,7 +747,7 @@ export default function NewPatientPage() {
                     id="mobileNumber"
                     type="tel"
                     maxLength={12}
-                    placeholder="เช่น 081-935-8026"
+                    placeholder="08X-XXX-XXXX"
                     value={mobileNumber}
                     onChange={(e) => {
                       setMobileNumber(formatPhoneNumber(e.target.value));
@@ -755,7 +763,7 @@ export default function NewPatientPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="patient@example.com"
+                  placeholder="example@domain.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -770,7 +778,7 @@ export default function NewPatientPage() {
             <CardHeader className="pb-3 border-b border-clinic-line">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-clinic-terracotta" />
-                <span>5. ข้อมูลประวัติเฉพาะผู้ป่วยไทย & โหราศาสตร์แผนไทย (Thai Master Data)</span>
+                <span>5. ข้อมูลประวัติเฉพาะ & ฤกษ์กำเนิดแผนไทย (Master Data)</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
@@ -779,7 +787,7 @@ export default function NewPatientPage() {
                   <Label htmlFor="originalDomicile">ภูมิลำเนาเดิม</Label>
                   <Input
                     id="originalDomicile"
-                    placeholder="เช่น อ.ปาย จ.แม่ฮ่องสอน"
+                    placeholder="เช่น เชียงใหม่"
                     value={originalDomicile}
                     onChange={(e) => setOriginalDomicile(e.target.value)}
                   />
@@ -789,19 +797,48 @@ export default function NewPatientPage() {
                   <Label htmlFor="birthPlace">สถานที่เกิด</Label>
                   <Input
                     id="birthPlace"
-                    placeholder="เช่น รพ.ปาย"
+                    placeholder="เช่น โรงพยาบาลปาย"
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="education">วุฒิการศึกษา</Label>
+                  <Label htmlFor="thaiCalendarBirthDate">วันเกิดทางจันทรคติ</Label>
                   <Input
-                    id="education"
-                    placeholder="เช่น ปริญญาตรี"
-                    value={education}
-                    onChange={(e) => setEducation(e.target.value)}
+                    id="thaiCalendarBirthDate"
+                    placeholder="เช่น วันเพ็ญเดือน ๑๒ ปีฉลู"
+                    value={thaiCalendarBirthDate}
+                    onChange={(e) => setThaiCalendarBirthDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="fatherName">ชื่อ-นามสกุลบิดา</Label>
+                  <Input
+                    id="fatherName"
+                    value={fatherName}
+                    onChange={(e) => setFatherName(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="motherName">ชื่อ-นามสกุลมารดา</Label>
+                  <Input
+                    id="motherName"
+                    value={motherName}
+                    onChange={(e) => setMotherName(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="spouseName">ชื่อ-นามสกุลคู่สมรส</Label>
+                  <Input
+                    id="spouseName"
+                    value={spouseName}
+                    onChange={(e) => setSpouseName(e.target.value)}
                   />
                 </div>
 
@@ -810,55 +847,23 @@ export default function NewPatientPage() {
                   <Select
                     id="householdStatus"
                     value={householdStatus}
-                    onChange={(e) => setHouseholdStatus(e.target.value as HouseholdStatus | "")}
+                    onChange={(e) => setHouseholdStatus(e.target.value as HouseholdStatus)}
                   >
-                    <option value="">-- ไม่ระบุ --</option>
-                    <option value="HEAD_OF_HOUSEHOLD">เจ้าบ้าน (Head of Household)</option>
-                    <option value="RESIDENT">ผู้อาศัย (Resident)</option>
+                    <option value="">-- ระบุสถานภาพ --</option>
+                    <option value="HEAD_OF_HOUSEHOLD">เจ้าบ้าน</option>
+                    <option value="RESIDENT">ผู้อาศัย</option>
                   </Select>
                 </div>
+              </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="fatherName">ชื่อบิดา</Label>
-                  <Input
-                    id="fatherName"
-                    placeholder="ชื่อ-นามสกุล บิดา"
-                    value={fatherName}
-                    onChange={(e) => setFatherName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="motherName">ชื่อมารดา</Label>
-                  <Input
-                    id="motherName"
-                    placeholder="ชื่อ-นามสกุล มารดา"
-                    value={motherName}
-                    onChange={(e) => setMotherName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="spouseName">ชื่อคู่สมรส</Label>
-                  <Input
-                    id="spouseName"
-                    placeholder="ชื่อ-นามสกุล คู่สมรส"
-                    value={spouseName}
-                    onChange={(e) => setSpouseName(e.target.value)}
-                  />
-                </div>
-
-                <div className="sm:col-span-2 space-y-1.5">
-                  <Label htmlFor="thaiCalendarBirthDate">
-                    วันเดือนปีเกิดทางจันทรคติ (เช่น 1ฯ 8- 12)
-                  </Label>
-                  <Input
-                    id="thaiCalendarBirthDate"
-                    placeholder="เช่น 1ฯ 8- 12"
-                    value={thaiCalendarBirthDate}
-                    onChange={(e) => setThaiCalendarBirthDate(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-1.5 max-w-sm">
+                <Label htmlFor="education">ระดับการศึกษาสูงสุด</Label>
+                <Input
+                  id="education"
+                  placeholder="เช่น มัธยมศึกษา, ปริญญาตรี"
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>
@@ -909,37 +914,69 @@ export default function NewPatientPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>เบอร์โทรศัพท์</Label>
+                  <Label>เบอร์โทรศัพท์ (9-10 หลัก)</Label>
                   <Input
-                    placeholder="089xxxxxxx"
+                    placeholder="08X-XXX-XXXX"
+                    maxLength={12}
                     value={contact.mobileNumber || ""}
                     onChange={(e) =>
-                      updateEmergencyContact(index, "mobileNumber", e.target.value)
+                      updateEmergencyContact(
+                        index,
+                        "mobileNumber",
+                        formatPhoneNumber(e.target.value)
+                      )
                     }
                   />
-                </div>
-                <div className="space-y-1.5 flex items-end gap-2">
-                  <div className="flex-1">
-                    <Label>ที่อยู่ผู้ติดต่อ</Label>
-                    <Input
-                      placeholder="ที่อยู่ (ถ้ามี)"
-                      value={contact.contactAddress || ""}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "contactAddress", e.target.value)
-                      }
-                    />
-                  </div>
-                  {emergencyContacts.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="danger"
-                      size="icon"
-                      onClick={() => removeEmergencyContact(index)}
-                      className="shrink-0 h-9 w-9"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  {errors[`emergency_${index}_phone`] && (
+                    <p className="text-[11px] text-clinic-danger font-medium mt-0.5">
+                      {errors[`emergency_${index}_phone`]}
+                    </p>
                   )}
+                </div>
+                <div className="space-y-1.5 flex flex-col justify-end">
+                  <div className="flex items-center justify-between">
+                    <Label>ที่อยู่ผู้ติดต่อ</Label>
+                    <label className="inline-flex items-center gap-1.5 text-xs text-clinic-ink-soft cursor-pointer hover:text-clinic-ink select-none">
+                      <input
+                        type="checkbox"
+                        className="rounded border-clinic-line text-clinic-primary focus:ring-clinic-primary/20 h-3.5 w-3.5 cursor-pointer"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const fullAddr = getPatientFullAddressString();
+                            updateEmergencyContact(
+                              index,
+                              "contactAddress",
+                              fullAddr || "ที่อยู่เดียวกับผู้ป่วย"
+                            );
+                          }
+                        }}
+                      />
+                      <span>ที่อยู่เดียวกับผู้ป่วย</span>
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="ที่อยู่ (ถ้ามี)"
+                        value={contact.contactAddress || ""}
+                        onChange={(e) =>
+                          updateEmergencyContact(index, "contactAddress", e.target.value)
+                        }
+                      />
+                    </div>
+                    {emergencyContacts.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="icon"
+                        onClick={() => removeEmergencyContact(index)}
+                        className="shrink-0 h-9 w-9"
+                        title="ลบผู้ติดต่อ"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

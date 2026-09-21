@@ -300,19 +300,23 @@ export default async function PatientDetailPage({
               <dt className="font-semibold text-clinic-ink-soft">ที่อยู่ตามเวชระเบียน</dt>
               <dd className="font-medium text-clinic-ink mt-0.5 leading-relaxed">
                 {patient.address ||
-                  [
-                    patient.houseNo ? `บ้านเลขที่ ${patient.houseNo}` : "",
-                    patient.moo ? `หมู่ ${patient.moo}` : "",
-                    patient.soi ? `ซอย ${patient.soi}` : "",
-                    patient.road ? `ถนน ${patient.road}` : "",
-                    patient.subDistrict ? `ต. ${patient.subDistrict}` : "",
-                    patient.district ? `อ. ${patient.district}` : "",
-                    patient.province ? `จ. ${patient.province}` : "",
-                    patient.zipCode,
-                  ]
-                    .filter(Boolean)
-                    .join(" ") ||
-                  "-"}
+                  (() => {
+                    const isBkk = patient.province && (patient.province.includes("กรุงเทพ") || patient.province.toLowerCase().includes("bangkok"));
+                    const subPrefix = isBkk ? "แขวง " : "ตำบล ";
+                    const distPrefix = isBkk ? "เขต " : "อำเภอ ";
+                    return [
+                      patient.houseNo ? `บ้านเลขที่ ${patient.houseNo}` : "",
+                      patient.moo ? `หมู่ ${patient.moo}` : "",
+                      patient.soi ? `ซอย ${patient.soi}` : "",
+                      patient.road ? `ถนน ${patient.road}` : "",
+                      patient.subDistrict ? `${subPrefix}${patient.subDistrict}` : "",
+                      patient.district ? `${distPrefix}${patient.district}` : "",
+                      patient.province ? `จ. ${patient.province}` : "",
+                      patient.zipCode,
+                    ]
+                      .filter(Boolean)
+                      .join(" ") || "-";
+                  })()}
               </dd>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-1">

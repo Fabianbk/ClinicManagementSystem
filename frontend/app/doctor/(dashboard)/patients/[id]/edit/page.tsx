@@ -48,27 +48,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-const PROVINCES = [
-  "แม่ฮ่องสอน",
-  "เชียงใหม่",
-  "เชียงราย",
-  "ลำพูน",
-  "ลำปาง",
-  "พะเยา",
-  "แพร่",
-  "น่าน",
-  "กรุงเทพมหานคร",
-  "นนทบุรี",
-  "ปทุมธานี",
-  "สมุทรปราการ",
-  "ชลบุรี",
-  "นครราชสีมา",
-  "ขอนแก่น",
-  "ภูเก็ต",
-  "สงขลา",
-  "อื่นๆ (Other)",
-];
-
 export default function EditPatientPage({
   params,
 }: {
@@ -270,6 +249,25 @@ export default function EditPatientPage({
     setEmergencyContacts((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const getPatientFullAddressString = () => {
+    const isBkk = province && (province.includes("กรุงเทพ") || province.toLowerCase().includes("bangkok"));
+    const subPrefix = isBkk ? "แขวง " : "ตำบล ";
+    const distPrefix = isBkk ? "เขต " : "อำเภอ ";
+
+    return [
+      houseNo ? `บ้านเลขที่ ${houseNo}` : "",
+      moo ? `หมู่ ${moo}` : "",
+      soi ? `ซอย ${soi}` : "",
+      road ? `ถนน ${road}` : "",
+      subDistrict ? `${subPrefix}${subDistrict}` : "",
+      district ? `${distPrefix}${district}` : "",
+      province ? `จ. ${province}` : "",
+      zipCode || "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  };
+
   const updateEmergencyContact = (
     index: number,
     field: keyof ContactPersonRequestDTO,
@@ -308,6 +306,16 @@ export default function EditPatientPage({
     const cleanPhone = stripNonDigits(mobileNumber);
     if (!cleanPhone || cleanPhone.length < 9) {
       newErrors.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+    }
+
+    for (let i = 0; i < emergencyContacts.length; i++) {
+      const c = emergencyContacts[i];
+      if (c.mobileNumber) {
+        const cleanEmergencyPhone = stripNonDigits(c.mobileNumber);
+        if (cleanEmergencyPhone.length < 9 || cleanEmergencyPhone.length > 10) {
+          newErrors[`emergency_${i}_phone`] = "เบอร์โทรผู้ติดต่อฉุกเฉินต้องมี 9-10 หลัก";
+        }
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -359,7 +367,12 @@ export default function EditPatientPage({
       mobileNumber: stripNonDigits(mobileNumber),
       email: email.trim() || undefined,
 
-      contactPersons: emergencyContacts.filter((c) => c.contactName.trim() !== ""),
+      contactPersons: emergencyContacts
+        .filter((c) => c.contactName.trim() !== "")
+        .map((c) => ({
+          ...c,
+          mobileNumber: stripNonDigits(c.mobileNumber || ""),
+        })),
     };
 
     try {
@@ -747,36 +760,40 @@ export default function EditPatientPage({
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="subDistrict">ตำบล / แขวง</Label>
+                <Label htmlFor="subDistrict">ตำบล</Label>
                 <Input
                   id="subDistrict"
                   value={subDistrict}
-                  onChange={(e) => setSubDistrict(e.target.value)}
+                  onChange={(e) => {
+                    setIsDirty(true);
+                    setSubDistrict(e.target.value);
+                  }}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="district">อำเภอ / เขต</Label>
+                <Label htmlFor="district">อำเภอ</Label>
                 <Input
                   id="district"
                   value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
+                  onChange={(e) => {
+                    setIsDirty(true);
+                    setDistrict(e.target.value);
+                  }}
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="province">จังหวัด</Label>
-                <Select
+                <Input
                   id="province"
+                  placeholder="เช่น แม่ฮ่องสอน"
                   value={province}
-                  onChange={(e) => setProvince(e.target.value)}
-                >
-                  {PROVINCES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={(e) => {
+                    setIsDirty(true);
+                    setProvince(e.target.value);
+                  }}
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -785,7 +802,10 @@ export default function EditPatientPage({
                   id="zipCode"
                   maxLength={10}
                   value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
+                  onChange={(e) => {
+                    setIsDirty(true);
+                    setZipCode(e.target.value);
+                  }}
                 />
               </div>
             </div>
@@ -965,35 +985,69 @@ export default function EditPatientPage({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>เบอร์โทรศัพท์</Label>
+                  <Label>เบอร์โทรศัพท์ (9-10 หลัก)</Label>
                   <Input
+                    placeholder="08X-XXX-XXXX"
+                    maxLength={12}
                     value={contact.mobileNumber || ""}
                     onChange={(e) =>
-                      updateEmergencyContact(index, "mobileNumber", e.target.value)
+                      updateEmergencyContact(
+                        index,
+                        "mobileNumber",
+                        formatPhoneNumber(e.target.value)
+                      )
                     }
                   />
-                </div>
-                <div className="space-y-1.5 flex items-end gap-2">
-                  <div className="flex-1">
-                    <Label>ที่อยู่ผู้ติดต่อ</Label>
-                    <Input
-                      value={contact.contactAddress || ""}
-                      onChange={(e) =>
-                        updateEmergencyContact(index, "contactAddress", e.target.value)
-                      }
-                    />
-                  </div>
-                  {emergencyContacts.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="danger"
-                      size="icon"
-                      onClick={() => removeEmergencyContact(index)}
-                      className="shrink-0 h-9 w-9"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  {errors[`emergency_${index}_phone`] && (
+                    <p className="text-[11px] text-clinic-danger font-medium mt-0.5">
+                      {errors[`emergency_${index}_phone`]}
+                    </p>
                   )}
+                </div>
+                <div className="space-y-1.5 flex flex-col justify-end">
+                  <div className="flex items-center justify-between">
+                    <Label>ที่อยู่ผู้ติดต่อ</Label>
+                    <label className="inline-flex items-center gap-1.5 text-xs text-clinic-ink-soft cursor-pointer hover:text-clinic-ink select-none">
+                      <input
+                        type="checkbox"
+                        className="rounded border-clinic-line text-clinic-primary focus:ring-clinic-primary/20 h-3.5 w-3.5 cursor-pointer"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const fullAddr = getPatientFullAddressString();
+                            updateEmergencyContact(
+                              index,
+                              "contactAddress",
+                              fullAddr || "ที่อยู่เดียวกับผู้ป่วย"
+                            );
+                          }
+                        }}
+                      />
+                      <span>ที่อยู่เดียวกับผู้ป่วย</span>
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="ที่อยู่ (ถ้ามี)"
+                        value={contact.contactAddress || ""}
+                        onChange={(e) =>
+                          updateEmergencyContact(index, "contactAddress", e.target.value)
+                        }
+                      />
+                    </div>
+                    {emergencyContacts.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="icon"
+                        onClick={() => removeEmergencyContact(index)}
+                        className="shrink-0 h-9 w-9"
+                        title="ลบผู้ติดต่อ"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

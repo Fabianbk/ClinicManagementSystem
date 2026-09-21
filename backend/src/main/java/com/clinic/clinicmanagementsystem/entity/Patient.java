@@ -136,7 +136,7 @@ public class Patient {
     @JoinColumn(name = "patient_id")
     private List<ContactPerson> contactPersons = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "patient")
+    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, mappedBy = "patient")
     private List<Appointment> appointments;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -153,15 +153,19 @@ public class Patient {
 
     /** Helper for single unified full address string. */
     public String getFullAddress() {
+        boolean isBkk = province != null && (province.contains("กรุงเทพ") || province.equalsIgnoreCase("Bangkok"));
+        String subPrefix = isBkk ? "แขวง " : "ตำบล ";
+        String distPrefix = isBkk ? "เขต " : "อำเภอ ";
+
         return Stream.of(
                 houseNo != null && !houseNo.isBlank() ? "บ้านเลขที่ " + houseNo : null,
                 moo != null && !moo.isBlank() ? "หมู่ " + moo : null,
                 soi != null && !soi.isBlank() ? "ซอย " + soi : null,
                 road != null && !road.isBlank() ? "ถนน " + road : null,
-                subDistrict != null && !subDistrict.isBlank() ? "ต./แขวง " + subDistrict : null,
-                district != null && !district.isBlank() ? "อ./เขต " + district : null,
-                province != null && !province.isBlank() ? "จ. " + province : null,
-                zipCode != null && !zipCode.isBlank() ? zipCode : null
-        ).filter(s -> s != null && !s.isBlank()).collect(Collectors.joining(" "));
+                subDistrict != null && !subDistrict.isBlank() ? subPrefix + subDistrict : null,
+                district != null && !district.isBlank() ? distPrefix + district : null,
+                province != null && !province.isBlank() ? "จังหวัด " + province : null,
+                zipCode != null && !zipCode.isBlank() ? zipCode : null).filter(s -> s != null && !s.isBlank())
+                .collect(Collectors.joining(" "));
     }
 }

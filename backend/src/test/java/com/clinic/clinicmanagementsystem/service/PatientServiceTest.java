@@ -219,4 +219,32 @@ class PatientServiceTest {
         assertThat(result.getContent()).hasSize(1);
         verify(patientRepository).searchPatientsWithId(eq("P-00101"), eq(101), any(Pageable.class));
     }
+
+    @Test
+    void getFullAddress_provincial_shouldUseTambonAndAmphoe() {
+        Patient patient = new Patient();
+        patient.setHouseNo("123/4");
+        patient.setMoo("2");
+        patient.setSubDistrict("ทุ่งยาว");
+        patient.setDistrict("ปาย");
+        patient.setProvince("แม่ฮ่องสอน");
+        patient.setZipCode("58130");
+
+        assertThat(patient.getFullAddress())
+                .isEqualTo("บ้านเลขที่ 123/4 หมู่ 2 ตำบล ทุ่งยาว อำเภอ ปาย จ. แม่ฮ่องสอน 58130");
+    }
+
+    @Test
+    void getFullAddress_bangkok_shouldUseKhwaengAndKhet() {
+        Patient patient = new Patient();
+        patient.setHouseNo("99");
+        patient.setRoad("สุขุมวิท");
+        patient.setSubDistrict("คลองเตย");
+        patient.setDistrict("คลองเตย");
+        patient.setProvince("กรุงเทพมหานคร");
+        patient.setZipCode("10110");
+
+        assertThat(patient.getFullAddress())
+                .isEqualTo("บ้านเลขที่ 99 ถนน สุขุมวิท แขวง คลองเตย เขต คลองเตย จ. กรุงเทพมหานคร 10110");
+    }
 }
