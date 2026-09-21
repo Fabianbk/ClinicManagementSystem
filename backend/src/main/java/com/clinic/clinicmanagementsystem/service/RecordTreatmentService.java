@@ -23,6 +23,7 @@ import com.clinic.clinicmanagementsystem.enums.AppointmentSlotStatus;
 import com.clinic.clinicmanagementsystem.enums.TreatmentProgramType;
 import com.clinic.clinicmanagementsystem.repository.AppointmentSlotRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
+import com.clinic.clinicmanagementsystem.repository.ReceiptRepository;
 import com.clinic.clinicmanagementsystem.repository.WorkingScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,6 +48,7 @@ public class RecordTreatmentService {
     private final WorkingScheduleRepository workingScheduleRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    private final ReceiptRepository receiptRepository;
     private final RecordTreatmentMapper recordTreatmentMapper;
     private final PrincipleMapper principleMapper;
     private final HealthProfileMapper healthProfileMapper;
@@ -194,7 +196,15 @@ public class RecordTreatmentService {
     /** Edit Record Treatment */
     public RecordTreatmentResponseDTO update(int recordTreatmentId, RecordTreatmentRequestDTO dto) {
         RecordTreatment existing = findRecordTreatmentOrThrow(recordTreatmentId);
+        Date originalRecordDate = existing.getRecordDate();
+        boolean hasReceipt = receiptRepository.findByRecordTreatment_RecordTreatmentId(recordTreatmentId).isPresent();
+
         recordTreatmentMapper.updateEntityFromDto(dto, existing);
+
+        if (hasReceipt && originalRecordDate != null) {
+            // Once a receipt has been issued, preserve original record date for financial/audit integrity
+            existing.setRecordDate(originalRecordDate);
+        }
 
         Patient patient = existing.getAppointment().getPatient();
         if (dto.getPrinciple() != null && patient != null) {

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { FormField } from "@/components/ui/form-field";
 import { scrollToFirstError } from "@/lib/form-utils";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { MedicineCombobox } from "@/components/doctor/MedicineCombobox";
 import type {
   RecordTreatmentResponseDTO,
@@ -64,6 +64,9 @@ export function RecordTreatmentEditClient({
 }: RecordTreatmentEditClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // Receipt lockdown status
+  const isLocked = Boolean(treatment.receipt);
 
   // Clinical fields
   const [symptoms, setSymptoms] = useState(treatment.symptoms || "");
@@ -184,6 +187,10 @@ export function RecordTreatmentEditClient({
 
   // Handle Add Medicine to active record
   const handleAddMedicine = async () => {
+    if (isLocked) {
+      toast.error("ไม่สามารถเพิ่มรายการยาได้ เนื่องจากออกใบเสร็จรับเงินแล้ว");
+      return;
+    }
     if (!selectedMedId || medQuantity <= 0) return;
     try {
       setIsAddingMed(true);
@@ -225,6 +232,10 @@ export function RecordTreatmentEditClient({
 
   // Handle Remove Medicine
   const handleRemoveMedicine = async (recordTreatmentMedicineId: number) => {
+    if (isLocked) {
+      toast.error("ไม่สามารถลบรายการยาได้ เนื่องจากออกใบเสร็จรับเงินแล้ว");
+      return;
+    }
     if (!confirm("ยืนยันการลบรายการยานี้และคืนสต็อกล็อตยาเข้าคลัง?")) return;
     try {
       setErrorMsg(null);
@@ -338,6 +349,27 @@ export function RecordTreatmentEditClient({
 
   return (
     <form onSubmit={handleUpdate} className="max-w-5xl mx-auto space-y-6 pb-20 font-body text-clinic-ink">
+      {/* Receipt Lockdown Notice Banner */}
+      {isLocked && (
+        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-card shadow-2xs flex items-start gap-3">
+          <Lock className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+          <div className="text-xs space-y-1">
+            <div className="font-bold text-amber-900 flex flex-wrap items-center gap-2">
+              <span>🔒 ใบเสร็จออกแล้ว — ไม่อนุญาตให้แก้ไขรายการยาและการเงิน</span>
+              {treatment.receipt && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-200/80 text-amber-900 border border-amber-300">
+                  ใบเสร็จ #{treatment.receipt.receiptId} · ยอดชำระสุทธิ ฿{treatment.receipt.totalPrice?.toLocaleString()} บาท
+                </span>
+              )}
+            </div>
+            <p className="text-amber-800 leading-relaxed">
+              เนื่องจากเวชระเบียนนี้ได้ทำการคิดเงินและออกใบเสร็จรับเงินอย่างเป็นทางการแล้ว รายการยาสมุนไพรและค่าบริการทั้งหมดจึงถูกล็อคถาวรเพื่อความถูกต้องทางบัญชีและสต็อกยา
+              ท่านยังสามารถแก้ไขและบันทึกข้อมูลอาการ, ผลการตรวจร่างกาย, แผนการรักษา, คำแนะนำแพทย์ และการนัดหมายติดตามผลได้ตามปกติ
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -347,9 +379,17 @@ export function RecordTreatmentEditClient({
           >
             ← กลับไปดูเวชระเบียน
           </Link>
-          <h1 className="font-display text-2xl font-bold text-clinic-primary-deep mt-1">
-            ✏️ แก้ไขข้อมูลเวชระเบียน #{treatment.recordTreatmentId}
-          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            <h1 className="font-display text-2xl font-bold text-clinic-primary-deep">
+              ✏️ แก้ไขข้อมูลเวชระเบียน #{treatment.recordTreatmentId}
+            </h1>
+            {isLocked && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                <Lock className="w-3 h-3 text-amber-700" />
+                การเงินและยาล็อคแล้ว
+              </span>
+            )}
+          </div>
           <p className="text-xs text-clinic-ink-soft mt-0.5">
             ผู้ป่วย: <strong>{treatment.patientFullname}</strong> (HN: #{treatment.patientId}) · นัดหมาย: #{treatment.appointmentId}
           </p>
@@ -848,9 +888,24 @@ export function RecordTreatmentEditClient({
 
       {/* Prescribed Medicines Management */}
       <div className="bg-white border border-clinic-line rounded-card p-6 shadow-2xs space-y-4">
-        <h2 className="font-display font-bold text-sm text-clinic-primary-deep border-b border-clinic-line pb-3">
-          💊 รายการยาสมุนไพรที่จ่าย
-        </h2>
+        <div className="flex items-center justify-between border-b border-clinic-line pb-3">
+          <h2 className="font-display font-bold text-sm text-clinic-primary-deep flex items-center gap-2">
+            <span>💊 รายการยาสมุนไพรที่จ่าย</span>
+            {isLocked && (
+              <span className="text-[11px] font-normal text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
+                <Lock className="w-3 h-3" /> ล็อคตามใบเสร็จ
+              </span>
+            )}
+          </h2>
+          {isLocked && treatment.receipt && (
+            <Link
+              href={`/doctor/treatments/${treatment.recordTreatmentId}`}
+              className="text-xs text-clinic-primary hover:underline font-semibold"
+            >
+              ดูใบเสร็จรับเงิน #{treatment.receipt.receiptId} →
+            </Link>
+          )}
+        </div>
 
         {/* Existing Dispensed Medicines */}
         {dispensedMedicines.length > 0 ? (
@@ -863,7 +918,7 @@ export function RecordTreatmentEditClient({
                   <th className="px-4 py-2 text-right">ราคา/หน่วย</th>
                   <th className="px-4 py-2 text-center">จำนวน</th>
                   <th className="px-4 py-2 text-right">รวม (บาท)</th>
-                  <th className="px-4 py-2 text-right">การจัดการ</th>
+                  <th className="px-4 py-2 text-right">{isLocked ? "สถานะ" : "การจัดการ"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-clinic-line bg-white">
@@ -890,13 +945,19 @@ export function RecordTreatmentEditClient({
                       ฿{m.subTotal.toLocaleString()}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveMedicine(m.recordTreatmentMedicineId)}
-                        className="text-xs text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
-                      >
-                        ลบ
-                      </button>
+                      {isLocked ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                          <Lock className="w-3 h-3" /> ล็อคแล้ว
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMedicine(m.recordTreatmentMedicineId)}
+                          className="text-xs text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+                        >
+                          ลบ
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -907,47 +968,70 @@ export function RecordTreatmentEditClient({
           <p className="text-xs text-clinic-ink-soft italic text-center py-2">ไม่มีรายการยา</p>
         )}
 
-        {/* Add new medicine line */}
-        <div className="bg-clinic-bg/40 p-3 rounded-control border border-clinic-line flex flex-col sm:flex-row items-end gap-3">
-          <div className="flex-1">
-            <label className="block text-[11px] font-semibold text-clinic-ink-soft mb-1">
-              เพิ่มยาจากคลัง (ค้นหาแบบ Real-time)
-            </label>
-            <MedicineCombobox
-              medicines={medicines}
-              selectedMedicineId={selectedMedId}
-              onSelectMedicine={(med) => setSelectedMedId(med.medicineId)}
-              onClear={() => setSelectedMedId(0)}
-              placeholder="พิมพ์ค้นหาชื่อยา, รหัส, หมวดหมู่, สรรพคุณ..."
-            />
+        {/* Add new medicine line or Locked Box */}
+        {isLocked ? (
+          <div className="bg-amber-50/60 p-3.5 rounded-control border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                <strong>ล็อคการจ่ายยา:</strong> ไม่สามารถจ่ายยาเพิ่มหรือยกเลิกรายการยาได้ เนื่องจากออกใบเสร็จรับเงินแล้ว
+                {treatment.receipt?.totalPrice !== undefined && ` (ยอดชำระ ฿${treatment.receipt.totalPrice.toLocaleString()} บาท)`}
+              </span>
+            </div>
+            <Link
+              href={`/doctor/treatments/${treatment.recordTreatmentId}`}
+              className="font-semibold text-amber-800 hover:text-amber-950 underline shrink-0"
+            >
+              เปิดดูหน้าเวชระเบียน / ใบเสร็จ →
+            </Link>
           </div>
+        ) : (
+          <div className="bg-clinic-bg/40 p-3 rounded-control border border-clinic-line flex flex-col sm:flex-row items-end gap-3">
+            <div className="flex-1">
+              <label className="block text-[11px] font-semibold text-clinic-ink-soft mb-1">
+                เพิ่มยาจากคลัง (ค้นหาแบบ Real-time)
+              </label>
+              <MedicineCombobox
+                medicines={medicines}
+                selectedMedicineId={selectedMedId}
+                onSelectMedicine={(med) => setSelectedMedId(med.medicineId)}
+                onClear={() => setSelectedMedId(0)}
+                placeholder="พิมพ์ค้นหาชื่อยา, รหัส, หมวดหมู่, สรรพคุณ..."
+              />
+            </div>
 
-          <div className="w-24">
-            <label className="block text-[11px] font-semibold text-clinic-ink-soft mb-1">จำนวน</label>
-            <input
-              type="number"
-              min={1}
-              value={medQuantity}
-              onChange={(e) => setMedQuantity(Number(e.target.value))}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-white font-mono text-center"
-            />
+            <div className="w-24">
+              <label className="block text-[11px] font-semibold text-clinic-ink-soft mb-1">จำนวน</label>
+              <input
+                type="number"
+                min={1}
+                value={medQuantity}
+                onChange={(e) => setMedQuantity(Number(e.target.value))}
+                className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-white font-mono text-center"
+              />
+            </div>
+
+            <button
+              type="button"
+              disabled={isAddingMed}
+              onClick={handleAddMedicine}
+              className="px-4 py-1.5 bg-clinic-primary hover:bg-clinic-primary-deep text-white font-bold text-xs rounded-control transition-all cursor-pointer shadow-2xs"
+            >
+              + จ่ายยาเพิ่ม
+            </button>
           </div>
-
-          <button
-            type="button"
-            disabled={isAddingMed}
-            onClick={handleAddMedicine}
-            className="px-4 py-1.5 bg-clinic-primary hover:bg-clinic-primary-deep text-white font-bold text-xs rounded-control transition-all cursor-pointer shadow-2xs"
-          >
-            + จ่ายยาเพิ่ม
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Sticky Bottom Action Bar */}
       <div className="bg-white border border-clinic-line rounded-card p-4 shadow-md flex items-center justify-between gap-4 sticky bottom-4 z-20">
-        <div className="text-xs text-clinic-ink-soft">
+        <div className="text-xs text-clinic-ink-soft flex items-center gap-3">
           <span>เวชระเบียน #{treatment.recordTreatmentId} · {treatment.patientFullname}</span>
+          {isLocked && (
+            <span className="text-amber-800 font-medium inline-flex items-center gap-1 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200 text-[11px]">
+              <Lock className="w-3 h-3 text-amber-600" /> การเงินล็อคแล้ว (แก้ไขข้อมูลการรักษาได้)
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Link

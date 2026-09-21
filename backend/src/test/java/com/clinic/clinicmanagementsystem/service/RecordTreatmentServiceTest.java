@@ -43,6 +43,8 @@ class RecordTreatmentServiceTest {
     @Mock
     private DoctorRepository doctorRepository;
     @Mock
+    private ReceiptRepository receiptRepository;
+    @Mock
     private RecordTreatmentMapper recordTreatmentMapper;
     @Mock
     private PrincipleMapper principleMapper;
@@ -176,5 +178,99 @@ class RecordTreatmentServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getDrugAllergy()).isEqualTo("Penicillin");
         assertThat(result.getUnderlyingDisease()).isEqualTo("Diabetes");
+    }
+
+    @Test
+    void update_whenReceiptIssued_shouldPreserveOriginalRecordDateAndAllowClinicalUpdates() {
+        Date originalDate = new Date(1700000000000L);
+        Date attemptedNewDate = new Date(1705000000000L);
+
+        RecordTreatment existing = new RecordTreatment();
+        existing.setRecordTreatmentId(50);
+        existing.setRecordDate(originalDate);
+        existing.setSymptoms("Old Symptoms");
+        existing.setAppointment(appointment);
+
+        RecordTreatmentRequestDTO updateDto = RecordTreatmentRequestDTO.builder()
+                .doctorId(1)
+                .recordDate(attemptedNewDate)
+                .symptoms("Updated Clinical Notes")
+                .suggestions("Rest and stretch")
+                .build();
+
+        Receipt receipt = new Receipt();
+        receipt.setReceiptId(101);
+
+        when(recordTreatmentRepository.findById(50)).thenReturn(Optional.of(existing));
+        when(receiptRepository.findByRecordTreatment_RecordTreatmentId(50)).thenReturn(Optional.of(receipt));
+        doAnswer(invocation -> {
+            RecordTreatmentRequestDTO dtoArg = invocation.getArgument(0);
+            RecordTreatment target = invocation.getArgument(1);
+            target.setRecordDate(dtoArg.getRecordDate());
+            target.setSymptoms(dtoArg.getSymptoms());
+            target.setSuggestions(dtoArg.getSuggestions());
+            return null;
+        }).when(recordTreatmentMapper).updateEntityFromDto(updateDto, existing);
+
+        when(recordTreatmentRepository.save(existing)).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RecordTreatmentResponseDTO responseDTO = RecordTreatmentResponseDTO.builder()
+                .recordTreatmentId(50)
+                .symptoms("Updated Clinical Notes")
+                .suggestions("Rest and stretch")
+                .build();
+        when(recordTreatmentMapper.toResponseDTO(existing)).thenReturn(responseDTO);
+
+        RecordTreatmentResponseDTO result = recordTreatmentService.update(50, updateDto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSymptoms()).isEqualTo("Updated Clinical Notes");
+        assertThat(result.getSuggestions()).isEqualTo("Rest and stretch");
+        // Verify recordDate remained the original date because receipt was present
+        assertThat(existing.getRecordDate()).isEqualTo(originalDate);
+        verify(recordTreatmentRepository).save(existing);
+    }
+
+    @Test
+    void update_whenNoReceipt_shouldAllowDateAndClinicalUpdates() {
+        Date originalDate = new Date(1700000000000L);
+        Date attemptedNewDate = new Date(1705000000000L);
+
+        RecordTreatment existing = new RecordTreatment();
+        existing.setRecordTreatmentId(51);
+        existing.setRecordDate(originalDate);
+        existing.setSymptoms("Old Symptoms");
+        existing.setAppointment(appointment);
+
+        RecordTreatmentRequestDTO updateDto = RecordTreatmentRequestDTO.builder()
+                .doctorId(1)
+                .recordDate(attemptedNewDate)
+                .symptoms("Updated Clinical Notes")
+                .build();
+
+        when(recordTreatmentRepository.findById(51)).thenReturn(Optional.of(existing));
+        when(receiptRepository.findByRecordTreatment_RecordTreatmentId(51)).thenReturn(Optional.empty());
+        doAnswer(invocation -> {
+            RecordTreatmentRequestDTO dtoArg = invocation.getArgument(0);
+            RecordTreatment target = invocation.getArgument(1);
+            target.setRecordDate(dtoArg.getRecordDate());
+            target.setSymptoms(dtoArg.getSymptoms());
+            return null;
+        }).when(recordTreatmentMapper).updateEntityFromDto(updateDto, existing);
+
+        when(recordTreatmentRepository.save(existing)).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RecordTreatmentResponseDTO responseDTO = RecordTreatmentResponseDTO.builder()
+                .recordTreatmentId(51)
+                .symptoms("Updated Clinical Notes")
+                .build();
+        when(recordTreatmentMapper.toResponseDTO(existing)).thenReturn(responseDTO);
+
+        RecordTreatmentResponseDTO result = recordTreatmentService.update(51, updateDto);
+
+        assertThat(result).isNotNull();
+        // Since no receipt was present, new date is accepted
+        assertThat(existing.getRecordDate()).isEqualTo(attemptedNewDate);
+        verify(recordTreatmentRepository).save(existing);
     }
 }
