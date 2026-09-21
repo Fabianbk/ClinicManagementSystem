@@ -29,7 +29,7 @@ export default async function NewTreatmentPage({
       getDoctor(session.id).catch(() => null),
       getAppointmentsByDoctorId(session.id, 0, 100).catch(() => ({ content: [] })),
       getPatients(0, 100).catch(() => ({ content: [] })),
-      getAllMedicines(0, 100).catch(() => ({ content: [] })),
+      getAllMedicines(0, 100, true).catch(() => ({ content: [] })),
       getAllRecordTreatments(0, 200).catch(() => ({ content: [] })),
     ]);
 

@@ -231,7 +231,7 @@ class PatientServiceTest {
         patient.setZipCode("58130");
 
         assertThat(patient.getFullAddress())
-                .isEqualTo("บ้านเลขที่ 123/4 หมู่ 2 ตำบล ทุ่งยาว อำเภอ ปาย จ. แม่ฮ่องสอน 58130");
+                .isEqualTo("บ้านเลขที่ 123/4 หมู่ 2 ตำบล ทุ่งยาว อำเภอ ปาย จังหวัด แม่ฮ่องสอน 58130");
     }
 
     @Test
@@ -245,6 +245,6 @@ class PatientServiceTest {
         patient.setZipCode("10110");
 
         assertThat(patient.getFullAddress())
-                .isEqualTo("บ้านเลขที่ 99 ถนน สุขุมวิท แขวง คลองเตย เขต คลองเตย จ. กรุงเทพมหานคร 10110");
+                .isEqualTo("บ้านเลขที่ 99 ถนน สุขุมวิท แขวง คลองเตย เขต คลองเตย จังหวัด กรุงเทพมหานคร 10110");
     }
 }

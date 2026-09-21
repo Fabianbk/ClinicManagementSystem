@@ -487,6 +487,7 @@ export interface MedicineRequestDTO {
   stockReceived?: number;
   stockIssued?: number;
   note?: string;
+  isActive?: boolean;
 }
 
 export interface MedicineResponseDTO {
@@ -500,6 +501,7 @@ export interface MedicineResponseDTO {
   stockReceived: number | null;
   stockIssued: number | null;
   note: string | null;
+  isActive?: boolean;
   activeLotCount?: number;
   earliestExpiryDate?: string | null;
   hasExpiringSoon?: boolean;

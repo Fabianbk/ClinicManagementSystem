@@ -28,5 +28,6 @@ public class MedicineResponseDTO {
     private LocalDate earliestExpiryDate;
     private Boolean hasExpiringSoon;
     private Boolean hasExpired;
+    private Boolean isActive;
     private List<MedicineLotResponseDTO> lots;
 }

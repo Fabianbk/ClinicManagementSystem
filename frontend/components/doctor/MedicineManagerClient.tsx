@@ -52,6 +52,8 @@ import {
   SlidersHorizontal,
   Clock,
   ShieldAlert,
+  Ban,
+  RotateCcw,
 } from "lucide-react";
 
 interface MedicineManagerClientProps {
@@ -93,6 +95,7 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ทั้งหมด");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "LOW_STOCK" | "EXPIRING_SOON" | "EXPIRED">("ALL");
+  const [activeFilter, setActiveFilter] = useState<"ALL" | "ACTIVE" | "DISCONTINUED">("ALL");
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -117,6 +120,7 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
   const [unitPrice, setUnitPrice] = useState<number>(0);
   const [unitType, setUnitType] = useState("เม็ด");
   const [note, setNote] = useState("");
+  const [medIsActive, setMedIsActive] = useState(true);
 
   // Form states: Receive Stock (Add Lot)
   const [receiveMedId, setReceiveMedId] = useState<number>(0);
@@ -195,6 +199,7 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
     setUnitPrice(med.unitPrice ?? 0);
     setUnitType(med.unitType || "เม็ด");
     setNote(med.note || "");
+    setMedIsActive(med.isActive !== false);
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsEditModalOpen(true);
@@ -298,6 +303,7 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
       unitPrice: Number(unitPrice),
       unitType: unitType.trim() || undefined,
       note: note.trim() || undefined,
+      isActive: medIsActive,
     };
 
     try {
@@ -418,21 +424,51 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
     }
   };
 
-  // Delete Medicine Master
-  const handleDeleteMedicine = async (medicineId: number, name: string) => {
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบยา "${name}" ออกจากระบบ? (หากมียานี้ในประวัติการรักษาแล้วจะไม่สามารถลบได้)`)) return;
+  // Deactivate Medicine Master (Soft delete)
+  const handleDeactivateMedicine = async (medicineId: number, name: string) => {
+    if (
+      !confirm(
+        `คุณแน่ใจหรือไม่ว่าต้องการระงับการใช้/เลิกจำหน่ายยา "${name}"?\n\n(ยานี้จะไม่สามารถเลือกสั่งจ่ายในการรักษาใหม่ได้ แต่ข้อมูลสต็อก ล็อตยา และประวัติการรักษาเดิมจะยังคงอยู่ครบถ้วน)`
+      )
+    )
+      return;
 
     try {
       setLoading(true);
       const res = await fetch(`/api/medicines/${medicineId}`, { method: "DELETE" });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.message || "ไม่สามารถลบยาได้");
+        throw new Error(errBody.message || "ไม่สามารถระงับการใช้ยาได้");
       }
-      setSuccessMsg(`ลบยา "${name}" เรียบร้อยแล้ว`);
+      toast.success(`ระงับการใช้ยา "${name}" เรียบร้อยแล้ว`);
+      setSuccessMsg(`ระงับการใช้ยา "${name}" เรียบร้อยแล้ว (เปลี่ยนสถานะเป็นเลิกจำหน่าย)`);
       refreshMedicines();
     } catch (err: any) {
-      setErrorMsg(err.message || "เกิดข้อผิดพลาดในการลบยา");
+      toast.error(err.message || "เกิดข้อผิดพลาดในการระงับการใช้ยา");
+      setErrorMsg(err.message || "เกิดข้อผิดพลาดในการระงับการใช้ยา");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reactivate / Toggle Medicine status
+  const handleToggleMedicine = async (medicineId: number, name: string, willActivate: boolean) => {
+    const actionText = willActivate ? "เปิดใช้งานยา" : "ระงับการใช้ยา";
+    if (!confirm(`ยืนยันการ${actionText} "${name}"?`)) return;
+
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/medicines/${medicineId}/toggle-status`, { method: "PATCH" });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || `ไม่สามารถ${actionText}ได้`);
+      }
+      toast.success(`${actionText} "${name}" เรียบร้อยแล้ว`);
+      setSuccessMsg(`${actionText} "${name}" เรียบร้อยแล้ว`);
+      refreshMedicines();
+    } catch (err: any) {
+      toast.error(err.message || `เกิดข้อผิดพลาดในการ${actionText}`);
+      setErrorMsg(err.message || `เกิดข้อผิดพลาดในการ${actionText}`);
     } finally {
       setLoading(false);
     }
@@ -464,6 +500,13 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
   // Filtered medicines
   const filteredMedicines = useMemo(() => {
     return medicines.filter((med) => {
+      // Availability filter
+      if (activeFilter === "ACTIVE" && med.isActive === false) {
+        return false;
+      }
+      if (activeFilter === "DISCONTINUED" && med.isActive !== false) {
+        return false;
+      }
       // Category filter
       if (selectedCategory !== "ทั้งหมด" && med.medicineCategory !== selectedCategory) {
         return false;
@@ -488,9 +531,11 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
       }
       return true;
     });
-  }, [medicines, selectedCategory, statusFilter, searchQuery]);
+  }, [medicines, activeFilter, selectedCategory, statusFilter, searchQuery]);
 
   // Counts
+  const activeCount = medicines.filter((m) => m.isActive !== false).length;
+  const discontinuedCount = medicines.filter((m) => m.isActive === false).length;
   const lowStockCount = medicines.filter((m) => (m.stockRemaining ?? 0) <= 20).length;
   const expiringSoonCount = medicines.filter((m) => m.hasExpiringSoon).length;
   const expiredCount = medicines.filter((m) => m.hasExpired).length;
@@ -676,6 +721,18 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
             </select>
           </div>
 
+          <div className="w-full sm:w-52">
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value as any)}
+              className="w-full rounded-control border border-clinic-border bg-white py-1.5 px-3 text-xs text-clinic-ink focus:border-clinic-primary focus:outline-none focus:ring-1 focus:ring-clinic-primary"
+            >
+              <option value="ALL">สถานะจำหน่าย: ทั้งหมด ({medicines.length})</option>
+              <option value="ACTIVE">เฉพาะจำหน่ายปกติ ({activeCount})</option>
+              <option value="DISCONTINUED">เลิกจำหน่ายแล้ว ({discontinuedCount})</option>
+            </select>
+          </div>
+
           {statusFilter !== "ALL" && (
             <Button
               type="button"
@@ -717,9 +774,26 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
                   </TableCell>
                   <TableCell>
                     <div className="space-y-0.5">
-                      <span className="font-semibold text-clinic-ink block">
-                        {med.medicineName}
-                      </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`font-semibold block ${
+                            med.isActive === false
+                              ? "text-clinic-ink-muted line-through opacity-80"
+                              : "text-clinic-ink"
+                          }`}
+                        >
+                          {med.medicineName}
+                        </span>
+                        {med.isActive === false ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300">
+                            เลิกจำหน่าย
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            จำหน่ายปกติ
+                          </span>
+                        )}
+                      </div>
                       {med.note && (
                         <span className="text-xs text-clinic-ink-soft block line-clamp-1">
                           {med.note}
@@ -819,21 +893,36 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
                         size="sm"
                         onClick={() => openEditModal(med)}
                         className="h-7 px-2 text-xs text-clinic-primary gap-1"
-                        title="แก้ไขชื่อยา สรรพคุณ ราคา"
+                        title="แก้ไขชื่อยา สรรพคุณ ราคา สถานะ"
                       >
                         <Edit className="w-3.5 h-3.5" />
                         <span>แก้ไข</span>
                       </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteMedicine(med.medicineId, med.medicineName)}
-                        className="h-7 px-2 text-xs text-clinic-danger hover:bg-clinic-danger-bg gap-1"
-                        title="ลบยาออกจากระบบ"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      {med.isActive === false ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleMedicine(med.medicineId, med.medicineName, true)}
+                          className="h-7 px-2 text-xs text-emerald-700 hover:bg-emerald-50 gap-1 font-semibold"
+                          title="เปิดใช้งาน/นำกลับมาจำหน่าย"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>เปิดใช้งาน</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeactivateMedicine(med.medicineId, med.medicineName)}
+                          className="h-7 px-2 text-xs text-rose-600 hover:bg-rose-50 gap-1"
+                          title="ระงับการใช้/เลิกจำหน่าย (Soft Delete)"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          <span>ระงับการใช้</span>
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1035,6 +1124,21 @@ export function MedicineManagerClient({ initialData }: MedicineManagerClientProp
                 onChange={(e) => setNote(e.target.value)}
                 rows={3}
               />
+            </div>
+
+            <div className="pt-2 border-t border-clinic-line">
+              <label className="flex items-center gap-2 text-xs font-semibold text-clinic-ink cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={medIsActive}
+                  onChange={(e) => setMedIsActive(e.target.checked)}
+                  className="rounded border-clinic-line text-clinic-primary focus:ring-clinic-primary/20 h-4 w-4"
+                />
+                <span>สถานะจำหน่ายปกติ (เปิดให้สามารถเลือกสั่งจ่ายยาได้ในระบบ)</span>
+              </label>
+              <p className="text-[11px] text-clinic-ink-muted pl-6 mt-0.5">
+                หากยกเลิกการเลือก ยานี้จะถูกตั้งเป็น "เลิกจำหน่าย" และไม่แสดงในหน้าห้องตรวจรักษา
+              </p>
             </div>
 
             <DialogFooter>

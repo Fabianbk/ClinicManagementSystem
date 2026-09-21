@@ -8,8 +8,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = Number(searchParams.get("page") ?? 0);
     const size = Number(searchParams.get("size") ?? 100);
+    const activeOnlyParam = searchParams.get("activeOnly");
+    const activeOnly = activeOnlyParam !== null ? activeOnlyParam === "true" : undefined;
 
-    const data = await getAllMedicines(page, size);
+    const data = await getAllMedicines(page, size, activeOnly);
     return NextResponse.json(data);
   } catch (err) {
     if (err instanceof ApiError) {

@@ -43,4 +43,6 @@ public class MedicineRequestDTO {
 
     @Size(max = 255)
     private String note;
+
+    private Boolean isActive;
 }

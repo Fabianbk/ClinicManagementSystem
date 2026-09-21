@@ -46,6 +46,9 @@ public class Medicine {
     @Column(name = "note", length = 255)
     private String note;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "medicine")
     private List<RecordTreatmentMedicine> recordTreatmentMedicines;
 

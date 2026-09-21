@@ -40,8 +40,9 @@ public class MedicineController {
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<PageResponse<MedicineResponseDTO>>> getAll(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Page<MedicineResponseDTO> result = medicineService.getAll(PageRequest.of(page, size));
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Boolean activeOnly) {
+        Page<MedicineResponseDTO> result = medicineService.getAll(activeOnly, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }
 
@@ -53,10 +54,17 @@ public class MedicineController {
                 medicineService.update(id, dto), "Medicine updated successfully"));
     }
 
+    @PatchMapping("/{id}/toggle-status")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<ApiResponse<MedicineResponseDTO>> toggleStatus(@PathVariable int id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                medicineService.toggleStatus(id), "Medicine status updated successfully"));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable int id) {
         medicineService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Medicine deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Medicine deactivated successfully"));
     }
 }

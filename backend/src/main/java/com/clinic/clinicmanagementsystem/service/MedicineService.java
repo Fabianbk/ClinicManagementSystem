@@ -37,6 +37,9 @@ public class MedicineService {
         }
 
         Medicine medicine = medicineMapper.toEntity(dto);
+        if (medicine.getIsActive() == null) {
+            medicine.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : true);
+        }
         if (medicine.getStockRemaining() == null) medicine.setStockRemaining(0);
         if (medicine.getStockReceived() == null) medicine.setStockReceived(0);
         if (medicine.getStockIssued() == null) medicine.setStockIssued(0);
@@ -53,13 +56,20 @@ public class MedicineService {
     }
 
     @Transactional(readOnly = true)
+    public Page<MedicineResponseDTO> getAll(Boolean activeOnly, Pageable pageable) {
+        Page<Medicine> page = Boolean.TRUE.equals(activeOnly)
+                ? medicineRepository.findByIsActiveTrue(pageable)
+                : medicineRepository.findAll(pageable);
+        return page.map(m -> enrichMedicine(medicineMapper.toResponseDTO(m), m.getMedicineId()));
+    }
+
+    @Transactional(readOnly = true)
     public Page<MedicineResponseDTO> getAll(Pageable pageable) {
-        return medicineRepository.findAll(pageable)
-                .map(m -> enrichMedicine(medicineMapper.toResponseDTO(m), m.getMedicineId()));
+        return getAll(false, pageable);
     }
 
     /**
-     * Updates editable master fields (name, category, price, unit, note).
+     * Updates editable master fields (name, category, price, unit, note, isActive).
      */
     public MedicineResponseDTO update(int medicineId, MedicineRequestDTO dto) {
         Medicine existing = findMedicineOrThrow(medicineId);
@@ -70,11 +80,12 @@ public class MedicineService {
                     "A medicine named '" + dto.getMedicineName() + "' already exists");
         }
 
-        // Preserve stock counts from existing if not explicitly provided
+        // Preserve stock counts and active status from existing if not explicitly provided
         Integer existingRemaining = existing.getStockRemaining();
         Integer existingReceived = existing.getStockReceived();
         Integer existingIssued = existing.getStockIssued();
         Integer existingBrought = existing.getStockBroughtForward();
+        Boolean existingIsActive = existing.getIsActive();
 
         medicineMapper.updateEntityFromDto(dto, existing);
 
@@ -82,14 +93,31 @@ public class MedicineService {
         if (dto.getStockReceived() == null) existing.setStockReceived(existingReceived);
         if (dto.getStockIssued() == null) existing.setStockIssued(existingIssued);
         if (dto.getStockBroughtForward() == null) existing.setStockBroughtForward(existingBrought);
+        if (dto.getIsActive() == null) existing.setIsActive(existingIsActive != null ? existingIsActive : true);
 
         Medicine saved = medicineRepository.save(existing);
         return enrichMedicine(medicineMapper.toResponseDTO(saved), saved.getMedicineId());
     }
 
+    /**
+     * Soft-delete: Marks the medicine as inactive instead of deleting the row,
+     * preserving historical ledger entries, lot tracking, and past prescriptions.
+     */
     public void delete(int medicineId) {
         Medicine medicine = findMedicineOrThrow(medicineId);
-        medicineRepository.delete(medicine);
+        medicine.setIsActive(false);
+        medicineRepository.save(medicine);
+    }
+
+    /**
+     * Reactivates or deactivates a medicine catalog entry.
+     */
+    public MedicineResponseDTO toggleStatus(int medicineId) {
+        Medicine medicine = findMedicineOrThrow(medicineId);
+        boolean nextState = medicine.getIsActive() == null || !medicine.getIsActive();
+        medicine.setIsActive(nextState);
+        Medicine saved = medicineRepository.save(medicine);
+        return enrichMedicine(medicineMapper.toResponseDTO(saved), saved.getMedicineId());
     }
 
     private Medicine findMedicineOrThrow(int medicineId) {
