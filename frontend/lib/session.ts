@@ -7,6 +7,7 @@ export interface Session {
   role: "DOCTOR" | "PATIENT";
   id: number;
   username: string;
+  fullname?: string;
 }
 
 /** Reads the current session for use in Server Components/layouts (e.g. "Hi, {username}"). */
@@ -18,5 +19,10 @@ export async function getSession(): Promise<Session | null> {
   const payload = decodeJwtPayload(token);
   if (!payload || isJwtExpired(payload)) return null;
 
-  return { role: payload.role, id: payload.id, username: payload.sub };
+  return {
+    role: payload.role,
+    id: payload.id,
+    username: payload.sub,
+    fullname: payload.fullname,
+  };
 }

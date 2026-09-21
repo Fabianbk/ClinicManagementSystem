@@ -35,9 +35,11 @@ import {
 } from "lucide-react";
 import { WeeklyScheduleDialog } from "@/components/doctor/WeeklyScheduleDialog";
 import type { WeeklyBatchResponse } from "@/app/api/working-schedules/weekly-batch/route";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 interface ScheduleManagerClientProps {
   doctorId: number;
+  doctorName?: string;
   doctorUsername?: string;
   initialSchedules: WorkingScheduleResponseDTO[];
 }
@@ -73,6 +75,7 @@ function getTodayLocalDate(): string {
 
 export function ScheduleManagerClient({
   doctorId,
+  doctorName,
   doctorUsername,
   initialSchedules,
 }: ScheduleManagerClientProps) {
@@ -333,7 +336,11 @@ export function ScheduleManagerClient({
       <PageHeader
         icon={<Clock className="w-5 h-5 text-clinic-primary" />}
         title="จัดการตารางเวรแพทย์ (Duty Schedule)"
-        subtitle="กำหนดวันออกตรวจ เวลาทำงาน และสร้างช่วงเวลานัดหมาย (Slots) สำหรับคนไข้จองออนไลน์"
+        subtitle={
+          doctorName
+            ? `กำหนดวันออกตรวจและช่วงเวลานัดหมาย (Slots) สำหรับ ${formatDoctorDisplayName(doctorName)}`
+            : "กำหนดวันออกตรวจ เวลาทำงาน และสร้างช่วงเวลานัดหมาย (Slots) สำหรับคนไข้จองออนไลน์"
+        }
         actions={
           <div className="flex items-center gap-2">
             <Button

@@ -79,3 +79,18 @@ export function formatThaiShortDate(dateInput: string | Date | undefined): {
     monthName: THAI_MONTH_SHORT[d.getMonth()] || "",
   };
 }
+
+/**
+ * Formats a doctor's full name with proper traditional medicine prefix (e.g. "พท.ว. พิมพ์วิมาน").
+ * Avoids duplicate prefixes if the name already contains "พท.", "นพ.", or "พญ.".
+ */
+export function formatDoctorDisplayName(fullname?: string | null, fallbackUsername?: string | null): string {
+  if (!fullname && !fallbackUsername) return "";
+  const name = (fullname || fallbackUsername || "").trim();
+  if (!name) return "";
+  if (name.startsWith("พท.") || name.startsWith("นพ.") || name.startsWith("พญ.")) {
+    return name;
+  }
+  return `พท.ว. ${name}`;
+}
+

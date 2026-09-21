@@ -33,7 +33,7 @@ export default async function NewTreatmentPage({
       getAllRecordTreatments(0, 200).catch(() => ({ content: [] })),
     ]);
 
-  const doctorFullname = doctorData?.fullname || session.username;
+  const doctorFullname = doctorData?.fullname || session.fullname || session.username;
   const existingTreatments = treatmentsData.content || [];
 
   return (

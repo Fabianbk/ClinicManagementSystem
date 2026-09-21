@@ -26,7 +26,9 @@ import {
   AlertCircle,
   Calendar,
   Sparkles,
+  HelpCircle,
 } from "lucide-react";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 interface PatientBookAppointmentClientProps {
   patientId: number;
@@ -354,7 +356,7 @@ export function PatientBookAppointmentClient({
                 <option value="ALL">✨ แพทย์แผนไทยทุกคน (ทั้งหมด)</option>
                 {doctors.map((doc) => (
                   <option key={doc.doctorId} value={doc.doctorId}>
-                    พท. {doc.fullname} {doc.physicianLicenseNo ? `(ว.${doc.physicianLicenseNo})` : ""}
+                    {formatDoctorDisplayName(doc.fullname)} {doc.physicianLicenseNo ? `(ว.${doc.physicianLicenseNo})` : ""}
                   </option>
                 ))}
               </Select>
@@ -495,7 +497,7 @@ export function PatientBookAppointmentClient({
                   <p>
                     แพทย์ผู้ตรวจ:{" "}
                     <strong className="text-clinic-ink">
-                      พท. {selectedSchedule.doctorFullname}
+                      {formatDoctorDisplayName(selectedSchedule.doctorFullname)}
                     </strong>
                   </p>
                   <p className="text-[11px]">
@@ -526,7 +528,7 @@ export function PatientBookAppointmentClient({
                   onClick={() => setSelectedScheduleId(sch.scheduleId)}
                   className="h-7 text-xs shrink-0"
                 >
-                  พท. {sch.doctorFullname}
+                  {formatDoctorDisplayName(sch.doctorFullname)}
                 </Button>
               ))}
             </div>

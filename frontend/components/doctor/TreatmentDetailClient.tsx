@@ -8,6 +8,7 @@ import { ArrowLeft, Printer, Edit, Leaf, ShieldAlert } from "lucide-react";
 import { DownloadDocxButton } from "@/components/doctor/DownloadDocxButton";
 import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
 import { MedicalCertificateDialog } from "@/components/doctor/MedicalCertificateDialog";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 interface TreatmentDetailClientProps {
   treatment: RecordTreatmentResponseDTO;
@@ -581,7 +582,7 @@ export function TreatmentDetailClient({
           </div>
           <div className="space-y-8">
             <p className="text-clinic-ink-soft">ลงชื่อแพทย์แผนไทยผู้ตรวจรักษา</p>
-            <p className="text-clinic-ink font-semibold">(พท. {treatment.doctorFullname})</p>
+            <p className="text-clinic-ink font-semibold">({formatDoctorDisplayName(treatment.doctorFullname)})</p>
           </div>
         </div>
       </div>

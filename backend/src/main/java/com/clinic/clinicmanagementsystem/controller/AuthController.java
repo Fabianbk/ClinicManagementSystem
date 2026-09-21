@@ -37,7 +37,7 @@ public class AuthController {
             throw new BadCredentialsException("Invalid username or password");
         }
 
-        String token = jwtService.generateToken(doctor.getUsername(), "DOCTOR", doctor.getDoctorId());
+        String token = jwtService.generateToken(doctor.getUsername(), "DOCTOR", doctor.getDoctorId(), doctor.getFullname());
 
         return ResponseEntity.ok(ApiResponse.success(AuthResponseDTO.builder()
                 .token(token)
@@ -58,7 +58,7 @@ public class AuthController {
         }
 
         String token = jwtService.generateToken(
-                account.getUsername(), "PATIENT", account.getPatient().getPatientId());
+                account.getUsername(), "PATIENT", account.getPatient().getPatientId(), account.getPatient().getFullname());
 
         return ResponseEntity.ok(ApiResponse.success(AuthResponseDTO.builder()
                 .token(token)

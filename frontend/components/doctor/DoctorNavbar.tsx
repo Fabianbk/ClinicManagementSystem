@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Users, Calendar, Clock, FileText, Pill, Star } from "lucide-react";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 interface NavItem {
   label: string;
@@ -21,8 +22,15 @@ const NAV_ITEMS: NavItem[] = [
   { label: "รีวิว", href: "/doctor/reviews", icon: Star },
 ];
 
-export function DoctorNavbar({ username }: { username?: string }) {
+export function DoctorNavbar({
+  username,
+  doctorName,
+}: {
+  username?: string;
+  doctorName?: string;
+}) {
   const pathname = usePathname();
+  const displayName = formatDoctorDisplayName(doctorName, username);
 
   return (
     <header className="bg-clinic-primary-deep text-white shadow-sm sticky top-0 z-30 border-b border-white/10">
@@ -75,10 +83,10 @@ export function DoctorNavbar({ username }: { username?: string }) {
 
           {/* Right side: Doctor Profile & Logout */}
           <div className="flex items-center gap-3 shrink-0">
-            {username && (
+            {displayName && (
               <div className="hidden md:flex items-center gap-2 text-xs font-medium text-white/90 bg-white/10 px-3 py-1.5 rounded-full border border-white/15">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>พท. {username}</span>
+                <span>{displayName}</span>
               </div>
             )}
             <LogoutButton redirectTo="/doctor/login" />

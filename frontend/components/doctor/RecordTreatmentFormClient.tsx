@@ -8,6 +8,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/ui/form-field";
 import { scrollToFirstError } from "@/lib/form-utils";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
+import { formatDoctorDisplayName } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import type {
   AppointmentResponseDTO,
@@ -798,7 +799,7 @@ export function RecordTreatmentFormClient({
             <span>แบบบันทึกข้อมูลผู้รับบริการ (Client Intake & Treatment Record)</span>
           </h1>
           <p className="text-xs text-clinic-ink-soft mt-0.5">
-            พิมพ์วิมานคลินิกการแพทย์แผนไทย Pimvimaan Thai Traditional Clinic · แพทย์ผู้ตรวจ: <strong>{doctorFullname}</strong>
+            พิมพ์วิมานคลินิกการแพทย์แผนไทย Pimvimaan Thai Traditional Clinic · แพทย์ผู้ตรวจ: <strong>{formatDoctorDisplayName(doctorFullname)}</strong>
           </p>
         </div>
 

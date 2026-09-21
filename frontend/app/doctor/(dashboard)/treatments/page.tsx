@@ -19,7 +19,7 @@ export default async function DoctorTreatmentsPage() {
   return (
     <TreatmentListClient
       doctorId={session.id}
-      doctorName={doctorData?.fullname || session.username}
+      doctorName={doctorData?.fullname || session.fullname || session.username}
       initialData={treatmentsData}
     />
   );

@@ -29,18 +29,27 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username, String role, int id) {
+    public String generateToken(String username, String role, int id, String fullname) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(username)
                 .claim("role", role)
                 .claim("id", id)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(signingKey())
-                .compact();
+                .signWith(signingKey());
+
+        if (fullname != null && !fullname.isBlank()) {
+            builder.claim("fullname", fullname);
+        }
+
+        return builder.compact();
+    }
+
+    public String generateToken(String username, String role, int id) {
+        return generateToken(username, role, id, null);
     }
 
     public Claims parseClaims(String token) {

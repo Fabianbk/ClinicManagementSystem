@@ -6,6 +6,7 @@ export interface JwtPayload {
   sub: string; // username
   role: "DOCTOR" | "PATIENT";
   id: number;
+  fullname?: string;
   iat: number;
   exp: number;
 }

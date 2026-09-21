@@ -18,6 +18,7 @@ import {
   Calendar,
   Star,
 } from "lucide-react";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 const SYMPTOM_CAUSE_MAP: Record<string, string> = {
   FOOD: "อาหาร (Food)",
@@ -95,7 +96,7 @@ export default async function PatientTreatmentsPage() {
 
                   <div className="text-left sm:text-right text-xs text-clinic-ink-soft">
                     <p>แพทย์ผู้ตรวจรักษา:</p>
-                    <p className="font-semibold text-sm text-clinic-ink">พท. {treatment.doctorFullname}</p>
+                    <p className="font-semibold text-sm text-clinic-ink">{formatDoctorDisplayName(treatment.doctorFullname)}</p>
                   </div>
                 </CardHeader>
 

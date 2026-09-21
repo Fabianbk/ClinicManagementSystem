@@ -23,9 +23,11 @@ import {
   User,
   CalendarDays,
 } from "lucide-react";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 interface AppointmentListClientProps {
   doctorId: number;
+  doctorName?: string;
   initialData: PageResponse<AppointmentResponseDTO> | null;
 }
 
@@ -58,7 +60,11 @@ function formatTimeRange(startStr?: string, endStr?: string): string {
   return `${startFormatted} - ${endFormatted} น.`;
 }
 
-export function AppointmentListClient({ doctorId, initialData }: AppointmentListClientProps) {
+export function AppointmentListClient({
+  doctorId,
+  doctorName,
+  initialData,
+}: AppointmentListClientProps) {
   const [appointments, setAppointments] = useState<AppointmentResponseDTO[]>(
     initialData?.content ?? []
   );
@@ -165,7 +171,11 @@ export function AppointmentListClient({ doctorId, initialData }: AppointmentList
       <PageHeader
         icon={<Calendar className="w-5 h-5 text-clinic-primary" />}
         title="รายการนัดหมายตรวจรักษา (Appointments)"
-        subtitle="ตรวจสอบคิวผู้ป่วย นัดหมายที่กำลังมาถึง และบันทึกผลการตรวจรักษา"
+        subtitle={
+          doctorName
+            ? `ตรวจสอบคิวผู้ป่วย นัดหมายที่กำลังมาถึงของ ${formatDoctorDisplayName(doctorName)}`
+            : "ตรวจสอบคิวผู้ป่วย นัดหมายที่กำลังมาถึง และบันทึกผลการตรวจรักษา"
+        }
         actions={
           <Button
             type="button"

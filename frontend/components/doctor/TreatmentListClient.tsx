@@ -31,6 +31,7 @@ import {
   Calendar,
   Pill,
 } from "lucide-react";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 interface TreatmentListClientProps {
   doctorId: number;
@@ -172,7 +173,7 @@ export function TreatmentListClient({
           <CardContent className="p-4">
             <p className="text-[11px] font-semibold text-clinic-primary">แพทย์ผู้ตรวจหลัก</p>
             <p className="text-lg font-bold font-display text-clinic-primary mt-1 truncate">
-              {doctorName || `พท. ID: ${doctorId}`}
+              {formatDoctorDisplayName(doctorName) || `พท. ID: ${doctorId}`}
             </p>
           </CardContent>
         </Card>
