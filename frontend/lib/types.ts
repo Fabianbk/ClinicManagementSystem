@@ -340,6 +340,7 @@ export type TreatmentProgramType =
 
 export interface RecordTreatmentRequestDTO {
   appointmentId?: number;
+  slotId?: number;
   patientId?: number;
   doctorId: number;
   recordDate: string;

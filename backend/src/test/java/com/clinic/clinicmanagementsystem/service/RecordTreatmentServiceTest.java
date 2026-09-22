@@ -23,7 +23,11 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 
+import com.clinic.clinicmanagementsystem.enums.AppointmentSlotStatus;
+import com.clinic.clinicmanagementsystem.exception.BadRequestException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -272,5 +276,176 @@ class RecordTreatmentServiceTest {
         // Since no receipt was present, new date is accepted
         assertThat(existing.getRecordDate()).isEqualTo(attemptedNewDate);
         verify(recordTreatmentRepository).save(existing);
+    }
+
+    @Test
+    void create_walkIn_whenNoDoctorScheduleOnDate_shouldThrowBadRequestException() {
+        Date recordDate = new Date();
+        RecordTreatmentRequestDTO requestDTO = RecordTreatmentRequestDTO.builder()
+                .patientId(10)
+                .doctorId(1)
+                .recordDate(recordDate)
+                .symptoms("Cough")
+                .build();
+
+        when(doctorRepository.findById(1)).thenReturn(Optional.of(doctor));
+        when(patientRepository.findById(10)).thenReturn(Optional.of(patient));
+        when(workingScheduleRepository.findByDoctor_DoctorId(1)).thenReturn(java.util.Collections.emptyList());
+
+        assertThatThrownBy(() -> recordTreatmentService.create(requestDTO))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("แพทย์ยังไม่มีตารางเวลาปฏิบัติงานในวันที่เลือก กรุณากำหนดตารางเวลาปฏิบัติงานก่อนบันทึกการรักษา");
+
+        verifyNoInteractions(appointmentSlotRepository);
+        verify(recordTreatmentRepository, never()).save(any());
+    }
+
+    @Test
+    void create_walkIn_whenScheduleExists_butSlotIdMissing_shouldThrowBadRequestException() {
+        Date recordDate = new Date();
+        WorkingSchedule schedule = new WorkingSchedule();
+        schedule.setScheduleId(1);
+        schedule.setDate(recordDate);
+        schedule.setDoctor(doctor);
+
+        RecordTreatmentRequestDTO requestDTO = RecordTreatmentRequestDTO.builder()
+                .patientId(10)
+                .doctorId(1)
+                .recordDate(recordDate)
+                .symptoms("Cough")
+                .slotId(null)
+                .build();
+
+        when(doctorRepository.findById(1)).thenReturn(Optional.of(doctor));
+        when(patientRepository.findById(10)).thenReturn(Optional.of(patient));
+        when(workingScheduleRepository.findByDoctor_DoctorId(1)).thenReturn(java.util.List.of(schedule));
+
+        assertThatThrownBy(() -> recordTreatmentService.create(requestDTO))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("กรุณาระบุช่วงเวลาตรวจ (slotId) สำหรับผู้ป่วย Walk-in");
+
+        verify(recordTreatmentRepository, never()).save(any());
+    }
+
+    @Test
+    void create_walkIn_whenSlotBelongsToAnotherDoctor_shouldThrowBadRequestException() {
+        Date recordDate = new Date();
+        WorkingSchedule schedule = new WorkingSchedule();
+        schedule.setScheduleId(1);
+        schedule.setDate(recordDate);
+        schedule.setDoctor(doctor);
+
+        Doctor otherDoctor = new Doctor();
+        otherDoctor.setDoctorId(2);
+
+        WorkingSchedule otherSchedule = new WorkingSchedule();
+        otherSchedule.setScheduleId(2);
+        otherSchedule.setDate(recordDate);
+        otherSchedule.setDoctor(otherDoctor);
+
+        AppointmentSlot slot = new AppointmentSlot();
+        slot.setSlotId(200);
+        slot.setWorkingSchedule(otherSchedule);
+        slot.setStatus(AppointmentSlotStatus.AVAILABLE);
+
+        RecordTreatmentRequestDTO requestDTO = RecordTreatmentRequestDTO.builder()
+                .patientId(10)
+                .doctorId(1)
+                .recordDate(recordDate)
+                .symptoms("Cough")
+                .slotId(200)
+                .build();
+
+        when(doctorRepository.findById(1)).thenReturn(Optional.of(doctor));
+        when(patientRepository.findById(10)).thenReturn(Optional.of(patient));
+        when(workingScheduleRepository.findByDoctor_DoctorId(1)).thenReturn(java.util.List.of(schedule));
+        when(appointmentSlotRepository.findById(200)).thenReturn(Optional.of(slot));
+
+        assertThatThrownBy(() -> recordTreatmentService.create(requestDTO))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("ช่วงเวลาที่เลือกไม่ใช่ของแพทย์ผู้ตรวจ");
+    }
+
+    @Test
+    void create_walkIn_whenSlotAlreadyBooked_shouldThrowBadRequestException() {
+        Date recordDate = new Date();
+        WorkingSchedule schedule = new WorkingSchedule();
+        schedule.setScheduleId(1);
+        schedule.setDate(recordDate);
+        schedule.setDoctor(doctor);
+
+        Appointment existingApp = new Appointment();
+        existingApp.setAppointmentId(999);
+
+        AppointmentSlot slot = new AppointmentSlot();
+        slot.setSlotId(200);
+        slot.setWorkingSchedule(schedule);
+        slot.setStatus(AppointmentSlotStatus.BOOKED);
+        slot.setAppointment(existingApp);
+
+        RecordTreatmentRequestDTO requestDTO = RecordTreatmentRequestDTO.builder()
+                .patientId(10)
+                .doctorId(1)
+                .recordDate(recordDate)
+                .symptoms("Cough")
+                .slotId(200)
+                .build();
+
+        when(doctorRepository.findById(1)).thenReturn(Optional.of(doctor));
+        when(patientRepository.findById(10)).thenReturn(Optional.of(patient));
+        when(workingScheduleRepository.findByDoctor_DoctorId(1)).thenReturn(java.util.List.of(schedule));
+        when(appointmentSlotRepository.findById(200)).thenReturn(Optional.of(slot));
+
+        assertThatThrownBy(() -> recordTreatmentService.create(requestDTO))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("ช่วงเวลาที่เลือกมีนัดหมายอื่นอยู่แล้ว กรุณาเลือกช่วงเวลาอื่น");
+    }
+
+    @Test
+    void create_walkIn_whenValidScheduleAndSlot_shouldCreateAppointmentAndRecordTreatment() {
+        Date recordDate = new Date();
+        WorkingSchedule schedule = new WorkingSchedule();
+        schedule.setScheduleId(1);
+        schedule.setDate(recordDate);
+        schedule.setDoctor(doctor);
+
+        AppointmentSlot slot = new AppointmentSlot();
+        slot.setSlotId(200);
+        slot.setWorkingSchedule(schedule);
+        slot.setStatus(AppointmentSlotStatus.AVAILABLE);
+
+        RecordTreatmentRequestDTO requestDTO = RecordTreatmentRequestDTO.builder()
+                .patientId(10)
+                .doctorId(1)
+                .recordDate(recordDate)
+                .symptoms("Cough and fever")
+                .slotId(200)
+                .build();
+
+        RecordTreatment entity = new RecordTreatment();
+        entity.setSymptoms("Cough and fever");
+
+        when(doctorRepository.findById(1)).thenReturn(Optional.of(doctor));
+        when(patientRepository.findById(10)).thenReturn(Optional.of(patient));
+        when(workingScheduleRepository.findByDoctor_DoctorId(1)).thenReturn(java.util.List.of(schedule));
+        when(appointmentSlotRepository.findById(200)).thenReturn(Optional.of(slot));
+        when(appointmentSlotRepository.save(slot)).thenReturn(slot);
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(recordTreatmentMapper.toEntity(requestDTO)).thenReturn(entity);
+        when(recordTreatmentRepository.save(any(RecordTreatment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RecordTreatmentResponseDTO responseDTO = RecordTreatmentResponseDTO.builder()
+                .recordTreatmentId(1)
+                .symptoms("Cough and fever")
+                .build();
+        when(recordTreatmentMapper.toResponseDTO(any(RecordTreatment.class))).thenReturn(responseDTO);
+
+        RecordTreatmentResponseDTO result = recordTreatmentService.create(requestDTO);
+
+        assertThat(result).isNotNull();
+        assertThat(slot.getStatus()).isEqualTo(AppointmentSlotStatus.BOOKED);
+        verify(appointmentSlotRepository).save(slot);
+        verify(appointmentRepository, atLeastOnce()).save(any(Appointment.class));
+        verify(recordTreatmentRepository).save(entity);
     }
 }

@@ -20,6 +20,8 @@ public class RecordTreatmentRequestDTO {
 
     private Integer appointmentId;
 
+    private Integer slotId;
+
     private Integer patientId;
 
     @NotNull(message = "Doctor ID is required")

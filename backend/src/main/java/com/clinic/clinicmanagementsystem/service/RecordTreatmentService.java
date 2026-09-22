@@ -78,7 +78,7 @@ public class RecordTreatmentService {
                         "Appointment " + dto.getAppointmentId() + " already has a treatment record");
             }
         } else {
-            // Auto create walk-in appointment for patient
+            // Walk-in treatment flow: requires patientId and valid slotId from doctor's working schedule on recordDate
             if (dto.getPatientId() == null || dto.getPatientId() <= 0) {
                 throw new BadRequestException("Either appointmentId or patientId must be provided");
             }
@@ -86,32 +86,50 @@ public class RecordTreatmentService {
             Patient patient = patientRepository.findById(dto.getPatientId())
                     .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
 
-            Date now = dto.getRecordDate() != null ? dto.getRecordDate() : new Date();
-            java.time.LocalDate today = java.time.LocalDate.now();
-            Date scheduleDate = java.sql.Date.valueOf(today);
-            Date shiftStart = java.sql.Timestamp.valueOf(today.atTime(8, 0));
-            Date shiftEnd = java.sql.Timestamp.valueOf(today.atTime(20, 0));
+            Date recordDate = dto.getRecordDate() != null ? dto.getRecordDate() : new Date();
+            java.time.LocalDate recordLocalDate = java.time.Instant.ofEpochMilli(recordDate.getTime())
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
 
-            WorkingSchedule schedule = workingScheduleRepository
-                    .findByDoctor_DoctorId(doctor.getDoctorId()).stream()
-                    .filter(s -> s.getDate() != null && s.getDate().toString().startsWith(today.toString()))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        WorkingSchedule ws = new WorkingSchedule();
-                        ws.setDoctor(doctor);
-                        ws.setDate(scheduleDate);
-                        ws.setShiftStart(shiftStart);
-                        ws.setShiftEnd(shiftEnd);
-                        return workingScheduleRepository.save(ws);
-                    });
+            List<WorkingSchedule> doctorSchedules = workingScheduleRepository.findByDoctor_DoctorId(doctor.getDoctorId());
+            boolean hasScheduleOnDate = doctorSchedules.stream().anyMatch(s -> {
+                if (s.getDate() == null) return false;
+                java.time.LocalDate scheduleLocalDate = java.time.Instant.ofEpochMilli(s.getDate().getTime())
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                return scheduleLocalDate.isEqual(recordLocalDate);
+            });
 
-            Date slotStart = now;
-            Date slotEnd = new Date(now.getTime() + 30 * 60 * 1000);
+            if (!hasScheduleOnDate) {
+                throw new BadRequestException(
+                        "แพทย์ยังไม่มีตารางเวลาปฏิบัติงานในวันที่เลือก กรุณากำหนดตารางเวลาปฏิบัติงานก่อนบันทึกการรักษา");
+            }
 
-            AppointmentSlot slot = new AppointmentSlot();
-            slot.setWorkingSchedule(schedule);
-            slot.setStartTime(slotStart);
-            slot.setEndTime(slotEnd);
+            if (dto.getSlotId() == null || dto.getSlotId() <= 0) {
+                throw new BadRequestException(
+                        "กรุณาระบุช่วงเวลาตรวจ (slotId) สำหรับผู้ป่วย Walk-in");
+            }
+
+            AppointmentSlot slot = appointmentSlotRepository.findById(dto.getSlotId())
+                    .orElseThrow(() -> new ResourceNotFoundException("AppointmentSlot", dto.getSlotId()));
+
+            if (slot.getWorkingSchedule() == null || slot.getWorkingSchedule().getDoctor() == null ||
+                    slot.getWorkingSchedule().getDoctor().getDoctorId() != doctor.getDoctorId()) {
+                throw new BadRequestException("ช่วงเวลาที่เลือกไม่ใช่ของแพทย์ผู้ตรวจ");
+            }
+
+            java.time.LocalDate slotLocalDate = java.time.Instant.ofEpochMilli(slot.getWorkingSchedule().getDate().getTime())
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            if (!slotLocalDate.isEqual(recordLocalDate)) {
+                throw new BadRequestException("ช่วงเวลาที่เลือกไม่ตรงกับวันที่บันทึกการรักษา");
+            }
+
+            if (slot.getStatus() == AppointmentSlotStatus.BLOCKED) {
+                throw new BadRequestException("ช่วงเวลาที่เลือกถูกระงับการใช้งาน (BLOCKED)");
+            }
+
+            if (slot.getStatus() == AppointmentSlotStatus.BOOKED || slot.getAppointment() != null) {
+                throw new BadRequestException("ช่วงเวลาที่เลือกมีนัดหมายอื่นอยู่แล้ว กรุณาเลือกช่วงเวลาอื่น");
+            }
+
             slot.setStatus(AppointmentSlotStatus.BOOKED);
             slot = appointmentSlotRepository.save(slot);
 

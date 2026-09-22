@@ -9,10 +9,20 @@ import { FormField } from "@/components/ui/form-field";
 import { scrollToFirstError } from "@/lib/form-utils";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { formatDoctorDisplayName } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, Calendar, Clock, ArrowRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { MedicineCombobox } from "@/components/doctor/MedicineCombobox";
 import type {
   AppointmentResponseDTO,
+  AppointmentSlotResponseDTO,
+  WorkingScheduleResponseDTO,
   PatientResponseDTO,
   MedicineResponseDTO,
   RecordTreatmentRequestDTO,
@@ -184,6 +194,13 @@ export function RecordTreatmentFormClient({
     return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   });
 
+  // Walk-in Working Schedule & Slot management
+  const [walkInSlots, setWalkInSlots] = useState<AppointmentSlotResponseDTO[]>([]);
+  const [selectedSlotId, setSelectedSlotId] = useState<number | "">("");
+  const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
+  const [noScheduleForDate, setNoScheduleForDate] = useState<boolean>(false);
+  const [showNoScheduleDialog, setShowNoScheduleDialog] = useState<boolean>(false);
+
   // Symptoms & Present History
   const [symptoms, setSymptoms] = useState("");
   const [presentHistory, setPresentHistory] = useState("");
@@ -325,8 +342,113 @@ export function RecordTreatmentFormClient({
       if (app && app.patientId) {
         setSelectedPatientId(app.patientId);
       }
+      setSelectedSlotId("");
+      clearError("slotId");
     }
   };
+
+  // Fetch doctor's working schedules and slots for Walk-in on visitDate
+  useEffect(() => {
+    if (selectedAppointmentId !== "WALK_IN") {
+      setNoScheduleForDate(false);
+      setShowNoScheduleDialog(false);
+      return;
+    }
+
+    if (!doctorId || !visitDate) return;
+
+    let isMounted = true;
+    setIsLoadingSlots(true);
+
+    fetch(`/api/working-schedules/doctor/${doctorId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then(async (schedules: WorkingScheduleResponseDTO[]) => {
+        if (!isMounted) return;
+
+        // Match schedule for visitDate (format YYYY-MM-DD)
+        const matchedSchedules = (schedules || []).filter((s) => {
+          if (!s.date) return false;
+          const scheduleDateStr =
+            typeof s.date === "string"
+              ? s.date.split("T")[0]
+              : new Date(s.date).toISOString().split("T")[0];
+          return scheduleDateStr === visitDate;
+        });
+
+        if (matchedSchedules.length === 0) {
+          setNoScheduleForDate(true);
+          setShowNoScheduleDialog(true);
+          setWalkInSlots([]);
+          setSelectedSlotId("");
+          setIsLoadingSlots(false);
+          return;
+        }
+
+        setNoScheduleForDate(false);
+        setShowNoScheduleDialog(false);
+
+        // Fetch slots for matched schedules
+        try {
+          const slotPromises = matchedSchedules.map((ms) =>
+            fetch(`/api/appointment-slots/schedule/${ms.scheduleId}`).then((r) =>
+              r.ok ? r.json() : []
+            )
+          );
+          const allSlotsNested: AppointmentSlotResponseDTO[][] = await Promise.all(slotPromises);
+          const allSlots = allSlotsNested.flat();
+
+          // Sort slots by startTime
+          allSlots.sort(
+            (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+          );
+
+          if (!isMounted) return;
+          setWalkInSlots(allSlots);
+
+          // Smart auto-selection: find slot matching current time if today, or first available slot
+          const todayStr = new Date().toISOString().split("T")[0];
+          const availableSlots = allSlots.filter((s) => s.status !== "BLOCKED");
+
+          if (visitDate === todayStr) {
+            const now = new Date();
+            const currentSlot = availableSlots.find((s) => {
+              const st = new Date(s.startTime);
+              const et = new Date(s.endTime);
+              return now >= st && now <= et;
+            });
+            if (currentSlot) {
+              setSelectedSlotId(currentSlot.slotId);
+              return;
+            }
+          }
+
+          if (availableSlots.length > 0) {
+            setSelectedSlotId((prev) => (prev ? prev : availableSlots[0].slotId));
+          } else {
+            setSelectedSlotId("");
+          }
+        } catch {
+          if (isMounted) {
+            setWalkInSlots([]);
+            setSelectedSlotId("");
+          }
+        } finally {
+          if (isMounted) setIsLoadingSlots(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setNoScheduleForDate(true);
+          setWalkInSlots([]);
+          setSelectedSlotId("");
+          setIsLoadingSlots(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAppointmentId, doctorId, visitDate]);
 
   // Fetch patient previous treatment records and latest health profile for pre-filling
   useEffect(() => {
@@ -624,6 +746,19 @@ export function RecordTreatmentFormClient({
       newErrors.symptoms = "กรุณาระบุอาการสำคัญ (Symptoms/Condition)";
     }
 
+    if (selectedAppointmentId === "WALK_IN") {
+      if (noScheduleForDate) {
+        newErrors.slotId = "แพทย์ยังไม่มีตารางเวลาปฏิบัติงานในวันที่เลือก กรุณากำหนดตารางเวลาปฏิบัติงานก่อนบันทึกการรักษา";
+        toast.error("แพทย์ยังไม่มีตารางเวลาปฏิบัติงานในวันที่เลือก กรุณากำหนดตารางเวลาปฏิบัติงานก่อนบันทึกการรักษา");
+        setShowNoScheduleDialog(true);
+        setErrors(newErrors);
+        return;
+      }
+      if (!selectedSlotId) {
+        newErrors.slotId = "กรุณาเลือกช่วงเวลาตรวจ (Appointment Slot) สำหรับผู้ป่วย Walk-in";
+      }
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
@@ -646,6 +781,7 @@ export function RecordTreatmentFormClient({
 
       const treatmentDTO: RecordTreatmentRequestDTO = {
         appointmentId: selectedAppointmentId === "WALK_IN" ? undefined : selectedAppointmentId,
+        slotId: selectedAppointmentId === "WALK_IN" ? Number(selectedSlotId) : undefined,
         patientId: selectedPatientId,
         doctorId: Number(doctorId) || 1,
         recordDate: validRecordDateIso,
@@ -870,7 +1006,7 @@ export function RecordTreatmentFormClient({
               onChange={(e) => handleAppointmentChange(e.target.value)}
               className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/40 focus:ring-2 focus:ring-clinic-primary"
             >
-              <option value="WALK_IN">🚶 ผู้ป่วย Walk-in (บันทึกโดยตรง/สร้างนัดหมายอัตโนมัติ)</option>
+              <option value="WALK_IN">🚶 ผู้ป่วย Walk-in (บันทึกโดยตรง/ระบุช่วงเวลาตรวจ)</option>
               {availableAppointments.map((app) => (
                 <option key={app.appointmentId} value={app.appointmentId}>
                   #{app.appointmentId} - {app.patientFullname} (
@@ -932,6 +1068,110 @@ export function RecordTreatmentFormClient({
             </div>
           </div>
         </div>
+
+        {/* Walk-in Warning: No Doctor Working Schedule on Date */}
+        {selectedAppointmentId === "WALK_IN" && noScheduleForDate && (
+          <div className="p-4 bg-amber-50 border border-amber-300 rounded-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-2xs">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold text-sm text-amber-900">
+                  แพทย์ยังไม่มีตารางเวลาปฏิบัติงานในวันที่เลือก ({visitDate})
+                </div>
+                <p className="text-amber-800 mt-0.5">
+                  การบันทึกการรักษาผู้ป่วย Walk-in จำเป็นต้องเชื่อมโยงกับช่วงเวลาในตารางตรวจของแพทย์ กรุณากำหนดตารางเวลาปฏิบัติงานก่อนบันทึกการรักษา
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/doctor/schedule"
+              className="px-4 py-2 bg-clinic-primary hover:bg-clinic-primary-deep text-white font-bold text-xs rounded-control transition-all shadow-2xs shrink-0 flex items-center gap-1.5"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>กำหนดตารางตรวจที่นี่</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        )}
+
+        {/* Walk-in Slot Selector */}
+        {selectedAppointmentId === "WALK_IN" && !noScheduleForDate && (
+          <div className="bg-clinic-bg/40 p-4 rounded-control border border-clinic-line space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-clinic-primary-deep flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-clinic-primary" />
+                <span>เลือกช่วงเวลาตรวจของแพทย์ (Appointment Slot สำหรับผู้ป่วย Walk-in):</span>
+                <span className="text-rose-500">*</span>
+              </label>
+              {isLoadingSlots && (
+                <span className="text-[11px] text-clinic-ink-soft flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" /> กำลังโหลดช่วงเวลา...
+                </span>
+              )}
+            </div>
+
+            {walkInSlots.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-1">
+                {walkInSlots.map((slot) => {
+                  const isSelected = selectedSlotId === slot.slotId;
+                  const isBlocked = slot.status === "BLOCKED";
+                  const isBooked = slot.status === "BOOKED";
+                  const isUnavailable = isBlocked || isBooked;
+                  const startTimeStr = new Date(slot.startTime).toLocaleTimeString("th-TH", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  });
+                  const endTimeStr = new Date(slot.endTime).toLocaleTimeString("th-TH", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  });
+
+                  return (
+                    <button
+                      key={slot.slotId}
+                      type="button"
+                      disabled={isUnavailable}
+                      onClick={() => {
+                        setSelectedSlotId(slot.slotId);
+                        clearError("slotId");
+                        setVisitTime(startTimeStr);
+                      }}
+                      className={`p-2 rounded-control border text-left text-xs transition-all flex flex-col justify-between ${
+                        isSelected
+                          ? "bg-clinic-primary/10 border-clinic-primary ring-2 ring-clinic-primary/30 font-bold text-clinic-primary-deep shadow-2xs"
+                          : isUnavailable
+                          ? "bg-slate-100/70 border-slate-200 text-slate-400 cursor-not-allowed"
+                          : "bg-white border-clinic-line hover:border-clinic-primary hover:bg-clinic-primary-soft/10 text-clinic-ink cursor-pointer"
+                      }`}
+                    >
+                      <div className="font-mono text-[11px] font-semibold flex items-center justify-between">
+                        <span>{startTimeStr} - {endTimeStr}</span>
+                        {isSelected && <span className="text-clinic-primary font-bold">✓</span>}
+                      </div>
+                      <div className="text-[9px] text-clinic-ink-soft mt-0.5">
+                        {isBlocked ? "ระงับ (BLOCKED)" : isBooked ? "มีนัดหมาย (BOOKED)" : "ว่าง (AVAILABLE)"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              !isLoadingSlots && (
+                <p className="text-xs text-clinic-ink-soft italic py-1">
+                  ไม่พบช่วงเวลาตรวจในตารางของแพทย์ในวันที่เลือก
+                </p>
+              )
+            )}
+
+            {errors.slotId && (
+              <p className="text-xs text-clinic-danger font-medium mt-1">
+                {errors.slotId}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Patient Profile Card */}
         {currentPatient && (
@@ -2568,6 +2808,43 @@ export function RecordTreatmentFormClient({
           </button>
         </div>
       </div>
+
+      {/* No Doctor Working Schedule Dialog */}
+      <Dialog open={showNoScheduleDialog} onOpenChange={setShowNoScheduleDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-900 font-display">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+              <span>ยังไม่มีตารางเวลาปฏิบัติงานของแพทย์</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-clinic-ink-soft leading-relaxed pt-1">
+              แพทย์ยังไม่มีตารางเวลาปฏิบัติงานในวันที่เลือก ({visitDate}) ระบบกำหนดให้การบันทึกการรักษาผู้ป่วย Walk-in ต้องผูกกับช่วงเวลาตรวจในตารางปฏิบัติงานจริง กรุณากำหนดตารางเวลาปฏิบัติงานก่อนบันทึกการรักษา
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 text-xs text-clinic-ink space-y-2">
+            <p>
+              ท่านสามารถไปยังหน้าจัดการตารางตรวจ เพื่อสร้างตารางปฏิบัติงานประจำวันหรือสร้างรอบสัปดาห์ (Weekly Batch) ได้ทันที
+            </p>
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setShowNoScheduleDialog(false)}
+              className="px-4 py-2 rounded-control text-xs font-semibold text-clinic-ink bg-clinic-bg border border-clinic-line hover:bg-slate-100"
+            >
+              ปิด
+            </button>
+            <Link
+              href="/doctor/schedule"
+              className="px-4 py-2 rounded-control text-xs font-bold text-white bg-clinic-primary hover:bg-clinic-primary-deep transition-all shadow-2xs flex items-center gap-1.5"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>ไปที่หน้ากำหนดตารางตรวจ</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
