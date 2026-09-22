@@ -383,6 +383,11 @@ export interface RecordTreatmentRequestDTO {
   healthProfile?: HealthProfileRequestDTO;
 }
 
+export interface ChangePasswordRequestDTO {
+  oldPassword: string;
+  newPassword: string;
+}
+
 export interface RecordTreatmentMedicineRequestDTO {
   recordTreatmentId: number;
   medicineId: number;
@@ -396,6 +401,8 @@ export interface RecordTreatmentMedicineResponseDTO {
   subTotal: number;
   medicineId: number;
   medicineName: string;
+  unitType?: string | null;
+  note?: string | null;
   lotId?: number | null;
   lotNumber?: string | null;
   expiryDate?: string | null;

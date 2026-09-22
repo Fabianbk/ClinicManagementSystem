@@ -10,27 +10,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 import {
   FileText,
   CalendarPlus,
-  Activity,
-  Heart,
   Pill,
   Receipt,
-  User,
-  Calendar,
   Star,
+  HeartHandshake,
+  FileDown,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { formatDoctorDisplayName } from "@/lib/utils";
-
-const SYMPTOM_CAUSE_MAP: Record<string, string> = {
-  FOOD: "อาหาร (Food)",
-  POSTURE: "อิริยาบถ (Position/Posture)",
-  WEATHER: "ความร้อน-ความเย็น (Weather/Temperature)",
-  FASTING_LACK_SLEEP: "อดนอน อดข้าว อดน้ำ (Fasting & lack of sleep)",
-  SUPPRESS_URGES: "กลั้นอุจจาระปัสสาวะ (Incontinence)",
-  OVEREXERTION: "ทำงานเกินกำลัง (Overexertion)",
-  SADNESS: "ความเศร้าโศกเสียใจ (Sadness)",
-  ANGER: "ความโกรธ (Wrath/Anger)",
-  OTHER: "อื่นๆ (Other)",
-};
 
 export default async function PatientTreatmentsPage() {
   const session = await getSession();
@@ -50,7 +39,7 @@ export default async function PatientTreatmentsPage() {
       <PageHeader
         icon={<FileText className="w-5 h-5 text-clinic-primary" />}
         title="ประวัติการรักษาและยา (Treatment History)"
-        subtitle="บันทึกประวัติการตรวจรักษา คำวินิจฉัยทางการแพทย์แผนไทย และรายการยาสมุนไพรที่ได้รับ"
+        subtitle="บันทึกประวัติการตรวจรักษา คำแนะนำการปฏิบัติตัวจากแพทย์ รายการยาสมุนไพร และใบเสร็จรับเงิน"
         actions={
           <Button asChild variant="terracotta" size="sm" className="gap-1.5 shadow-xs">
             <Link href="/patient/book">
@@ -67,155 +56,113 @@ export default async function PatientTreatmentsPage() {
           {treatments.map((treatment) => {
             const visitDate = new Date(treatment.recordDate);
             const medicines = treatment.recordTreatmentMedicines || [];
+            const receipt = treatment.receipt;
 
             return (
               <Card
                 key={treatment.recordTreatmentId}
-                className="hover:border-clinic-primary/40 hover:shadow-sm transition-all"
+                className="hover:border-clinic-primary/40 hover:shadow-sm transition-all overflow-hidden"
               >
-                {/* Treatment Header */}
-                <CardHeader className="pb-3 border-b border-clinic-line flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Treatment Header: Visit Date & Attending Doctor */}
+                <CardHeader className="pb-3 border-b border-clinic-line bg-clinic-bg/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="default" className="text-xs font-bold">
                         การรักษา #{treatment.recordTreatmentId}
                       </Badge>
-                      <span className="text-xs text-clinic-ink-soft">
-                        นัดหมาย #{treatment.appointmentId}
-                      </span>
+                      {treatment.appointmentId && (
+                        <span className="text-xs text-clinic-ink-soft">
+                          นัดหมาย #{treatment.appointmentId}
+                        </span>
+                      )}
+                      {treatment.ttmDiagnosis && (
+                        <span className="text-xs bg-clinic-primary/10 text-clinic-primary-deep font-semibold px-2 py-0.5 rounded-full border border-clinic-primary/20">
+                          {treatment.ttmDiagnosis}
+                        </span>
+                      )}
                     </div>
-                    <h3 className="font-display font-bold text-base text-clinic-primary-deep">
-                      {visitDate.toLocaleDateString("th-TH", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                    <h3 className="font-display font-bold text-base text-clinic-primary-deep flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-clinic-primary shrink-0" />
+                      <span>
+                        {visitDate.toLocaleDateString("th-TH", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
                     </h3>
                   </div>
 
-                  <div className="text-left sm:text-right text-xs text-clinic-ink-soft">
-                    <p>แพทย์ผู้ตรวจรักษา:</p>
-                    <p className="font-semibold text-sm text-clinic-ink">{formatDoctorDisplayName(treatment.doctorFullname)}</p>
+                  <div className="text-left sm:text-right text-xs">
+                    <p className="text-clinic-ink-soft">แพทย์ผู้ตรวจรักษา:</p>
+                    <p className="font-bold text-sm text-clinic-primary-deep mt-0.5">
+                      {formatDoctorDisplayName(treatment.doctorFullname)}
+                    </p>
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-4 space-y-4">
-                  {/* Clinical Notes Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    {/* Symptoms & Vitals */}
-                    <div className="bg-clinic-bg/50 rounded-control p-4 space-y-3 border border-clinic-line">
-                      <h4 className="font-bold text-clinic-primary-deep flex items-center gap-1.5">
-                        <Activity className="w-4 h-4 text-clinic-primary" />
-                        <span>อาการและการตรวจร่างกาย</span>
-                      </h4>
-                      <p className="text-xs text-clinic-ink leading-relaxed">
-                        <strong className="text-clinic-ink-soft">อาการ:</strong>{" "}
-                        {treatment.symptoms || "-"}
-                      </p>
-
-                      {/* Vitals row */}
-                      <div className="flex flex-wrap gap-2 pt-1 font-mono text-[11px]">
-                        {treatment.temp && (
-                          <span className="px-2 py-0.5 rounded bg-white border border-clinic-line">
-                            อุณหภูมิ: {treatment.temp} °C
-                          </span>
-                        )}
-                        {treatment.bp && (
-                          <span className="px-2 py-0.5 rounded bg-white border border-clinic-line">
-                            ความดัน: {treatment.bp}
-                          </span>
-                        )}
-                        {treatment.pulse && (
-                          <span className="px-2 py-0.5 rounded bg-white border border-clinic-line">
-                            ชีพจร: {treatment.pulse} bpm
-                          </span>
-                        )}
+                <CardContent className="p-5 space-y-5">
+                  {/* Section 1: Doctor's Advice & Suggestions */}
+                  <div className="p-4 rounded-control bg-emerald-50/50 border border-emerald-200/70 space-y-2">
+                    <h4 className="font-bold text-xs text-emerald-900 flex items-center gap-2">
+                      <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>คำแนะนำและการปฏิบัติตัวจากแพทย์ (Doctor&apos;s Advice & Suggestions)</span>
+                    </h4>
+                    <p className="text-xs text-emerald-950 leading-relaxed pl-6">
+                      {treatment.suggestions || "ไม่มีคำแนะนำเพิ่มเติมพิเศษ กรุณาปฏิบัติตามวิธีใช้ยาอย่างเคร่งครัด"}
+                    </p>
+                    {treatment.followup && (
+                      <div className="pt-2 pl-6 text-xs text-emerald-900 font-medium flex items-center gap-1.5 border-t border-emerald-200/50">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>การติดตามอาการ: {treatment.followup}</span>
                       </div>
-
-                      {(treatment.bicepRt || treatment.kneeRt) && (
-                        <p className="text-[11px] text-clinic-ink-soft pt-1 font-mono">
-                          Reflexes: Bicep RT {treatment.bicepRt || "-"}/LT {treatment.bicepLt || "-"} · Knee RT {treatment.kneeRt || "-"}/LT {treatment.kneeLt || "-"}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Diagnoses & Treatment Plan */}
-                    <div className="bg-clinic-bg/50 rounded-control p-4 space-y-3 border border-clinic-line">
-                      <h4 className="font-bold text-clinic-primary-deep flex items-center gap-1.5">
-                        <Heart className="w-4 h-4 text-clinic-terracotta" />
-                        <span>การวินิจฉัยและแผนการรักษา</span>
-                      </h4>
-                      <div className="space-y-1.5">
-                        {treatment.ttmDiagnosis && (
-                          <p className="text-xs">
-                            <strong className="text-clinic-primary">การวินิจฉัยแผนไทย:</strong>{" "}
-                            <span className="text-clinic-ink font-semibold">{treatment.ttmDiagnosis}</span>
-                          </p>
-                        )}
-                        {((treatment.causesOfSymptoms && treatment.causesOfSymptoms.length > 0) || treatment.causeOfSymptomsOther) && (
-                          <div className="pt-1 space-y-1">
-                            <span className="text-xs font-semibold text-clinic-ink-soft block">มูลเหตุเกิดโรค:</span>
-                            <div className="flex flex-wrap gap-1">
-                              {treatment.causesOfSymptoms?.map((cause) => (
-                                <Badge key={cause} variant="outline" className="text-[10px] py-0 bg-white">
-                                  {SYMPTOM_CAUSE_MAP[cause] || cause}
-                                </Badge>
-                              ))}
-                            </div>
-                            {treatment.causeOfSymptomsOther && (
-                              <p className="text-[11px] text-clinic-ink-soft italic">
-                                ({treatment.causeOfSymptomsOther})
-                              </p>
-                            )}
-                          </div>
-                        )}
-                        {treatment.modernDiagnosis && (
-                          <p className="text-xs">
-                            <strong className="text-clinic-ink-soft">การวินิจฉัยแผนปัจจุบัน:</strong>{" "}
-                            <span className="text-clinic-ink">{treatment.modernDiagnosis}</span>
-                          </p>
-                        )}
-                        {treatment.suggestions && (
-                          <p className="text-xs pt-1 text-clinic-ink-soft">
-                            <strong className="text-clinic-ink">คำแนะนำ:</strong>{" "}
-                            {treatment.suggestions}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Prescribed Medicines */}
-                  {medicines.length > 0 && (
-                    <div className="space-y-2 pt-2 border-t border-clinic-line">
-                      <h4 className="font-bold text-xs text-clinic-primary-deep flex items-center gap-1.5">
-                        <Pill className="w-4 h-4 text-clinic-terracotta" />
-                        <span>ยาสมุนไพรและเวชภัณฑ์ที่ได้รับ</span>
-                      </h4>
-                      <div className="overflow-x-auto border border-clinic-line rounded-control">
+                  {/* Section 2: Prescribed Herbal Medicines Table */}
+                  <div className="space-y-2.5">
+                    <h4 className="font-bold text-xs text-clinic-primary-deep flex items-center gap-2">
+                      <Pill className="w-4 h-4 text-clinic-terracotta shrink-0" />
+                      <span>รายการยาสมุนไพรและวิธีรับประทาน (Prescribed Medicines & Instructions)</span>
+                    </h4>
+
+                    {medicines.length > 0 ? (
+                      <div className="overflow-x-auto border border-clinic-line rounded-control shadow-2xs">
                         <table className="w-full text-left text-xs border-collapse">
-                          <thead className="bg-clinic-bg text-clinic-ink-soft uppercase text-[10px] tracking-wider border-b border-clinic-line">
+                          <thead className="bg-clinic-bg/80 text-clinic-ink-soft uppercase text-[10px] tracking-wider border-b border-clinic-line">
                             <tr>
-                              <th className="px-3.5 py-2">รายการยา</th>
-                              <th className="px-3.5 py-2 text-center">จำนวน</th>
-                              <th className="px-3.5 py-2 text-right">ราคา/หน่วย</th>
-                              <th className="px-3.5 py-2 text-right">รวม (บาท)</th>
+                              <th className="px-3.5 py-2.5">ลำดับ</th>
+                              <th className="px-3.5 py-2.5">รายการยา</th>
+                              <th className="px-3.5 py-2.5">วิธีรับประทาน / คำแนะนำ</th>
+                              <th className="px-3.5 py-2.5 text-center">จำนวน</th>
+                              <th className="px-3.5 py-2.5 text-right">ราคา/หน่วย</th>
+                              <th className="px-3.5 py-2.5 text-right">รวม (บาท)</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-clinic-line bg-white">
-                            {medicines.map((m) => (
-                              <tr key={m.recordTreatmentMedicineId}>
-                                <td className="px-3.5 py-2 font-semibold text-clinic-ink">
+                            {medicines.map((m, idx) => (
+                              <tr key={m.recordTreatmentMedicineId} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-3.5 py-2.5 text-clinic-ink-soft font-mono text-center w-12">
+                                  {idx + 1}
+                                </td>
+                                <td className="px-3.5 py-2.5 font-bold text-clinic-ink">
                                   {m.medicineName}
                                 </td>
-                                <td className="px-3.5 py-2 text-center font-mono">
-                                  {m.quantity}
+                                <td className="px-3.5 py-2.5 text-clinic-ink-soft leading-relaxed max-w-xs">
+                                  {m.note ? (
+                                    <span className="text-clinic-ink font-medium">{m.note}</span>
+                                  ) : (
+                                    <span className="italic text-clinic-ink-muted">รับประทานตามที่แพทย์แนะนำ</span>
+                                  )}
                                 </td>
-                                <td className="px-3.5 py-2 text-right font-mono">
+                                <td className="px-3.5 py-2.5 text-center font-mono font-semibold text-clinic-ink">
+                                  {m.quantity} {m.unitType ? <span className="text-[11px] font-normal text-clinic-ink-soft">{m.unitType}</span> : ""}
+                                </td>
+                                <td className="px-3.5 py-2.5 text-right font-mono text-clinic-ink-soft">
                                   ฿{(m.priceAtTime ?? 0).toLocaleString()}
                                 </td>
-                                <td className="px-3.5 py-2 text-right font-mono font-bold text-clinic-primary">
+                                <td className="px-3.5 py-2.5 text-right font-mono font-bold text-clinic-primary">
                                   ฿{(m.subTotal ?? 0).toLocaleString()}
                                 </td>
                               </tr>
@@ -223,49 +170,96 @@ export default async function PatientTreatmentsPage() {
                           </tbody>
                         </table>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-xs text-clinic-ink-soft italic p-3 bg-clinic-bg/40 border border-clinic-line rounded-control text-center">
+                        ไม่มีรายการจ่ายยาสมุนไพรสำหรับการรักษานี้
+                      </p>
+                    )}
+                  </div>
 
-                  {/* Additional Fee Items */}
-                  {treatment.receipt?.additionalItems && treatment.receipt.additionalItems.length > 0 && (
-                    <div className="space-y-1.5 pt-2 border-t border-clinic-line text-xs">
-                      <h4 className="font-bold text-clinic-primary-deep text-[11px]">
-                        รายการค่าบริการและค่าใช้จ่ายเพิ่มเติม:
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {treatment.receipt.additionalItems.map((item, idx) => (
-                          <span key={idx} className="px-2.5 py-1 rounded bg-clinic-bg/70 border border-clinic-line text-[11px] text-clinic-ink">
-                            {item.itemName}: <strong className="font-mono text-clinic-primary">฿{item.amount.toLocaleString()}</strong>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Section 3: Receipt Status, Fee Summary & Receipt Document Link */}
+                  <div className="pt-3 border-t border-clinic-line">
+                    {receipt ? (
+                      <div className="p-4 rounded-control bg-slate-50/70 border border-clinic-line space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Receipt className="w-4 h-4 text-clinic-primary shrink-0" />
+                            <span className="font-bold text-xs text-clinic-ink">
+                              ใบเสร็จรับเงิน #{receipt.receiptId}
+                            </span>
+                            <PaymentStatusBadge status={receipt.paymentStatus} />
+                            {receipt.paymentMethod && (
+                              <span className="text-[11px] text-clinic-ink-soft font-mono">
+                                ({receipt.paymentMethod})
+                              </span>
+                            )}
+                          </div>
 
-                  {/* Receipt & Review Footer */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-clinic-line text-xs">
-                    {treatment.receipt ? (
-                      <div className="flex items-center gap-2">
-                        <Receipt className="w-3.5 h-3.5 text-clinic-primary" />
-                        <span className="text-clinic-ink-soft">
-                          ใบเสร็จรับเงิน #{treatment.receipt.receiptId} ·
-                        </span>
-                        <PaymentStatusBadge status={treatment.receipt.paymentStatus} />
-                        <span className="font-bold text-xs text-clinic-primary-deep font-mono ml-1">
-                          (฿{(treatment.receipt.totalPrice ?? 0).toLocaleString()} บาท)
-                        </span>
+                          {/* Link to Receipt Document (PDF) */}
+                          <a
+                            href={`/api/receipts/record-treatment/${treatment.recordTreatmentId}/print`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-white hover:bg-clinic-primary hover:text-white text-clinic-primary border border-clinic-primary/30 text-xs font-semibold shadow-2xs transition-all w-fit"
+                          >
+                            <FileDown className="w-3.5 h-3.5" />
+                            <span>ดูใบเสร็จรับเงิน (PDF)</span>
+                          </a>
+                        </div>
+
+                        {/* Fee Summary Breakdown */}
+                        <div className="pt-2 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-clinic-ink-soft">
+                            {receipt.medicineTotal !== undefined && receipt.medicineTotal !== null && (
+                              <span>
+                                ค่ายาสมุนไพร: <strong className="font-mono text-clinic-ink">฿{receipt.medicineTotal.toLocaleString()}</strong>
+                              </span>
+                            )}
+                            {receipt.additionalItems && receipt.additionalItems.length > 0 && (
+                              <span>
+                                ค่าบริการเพิ่มเติม:{" "}
+                                <strong className="font-mono text-clinic-ink">
+                                  ฿{receipt.additionalItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}
+                                </strong>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-xs text-clinic-ink-soft">ยอดชำระสุทธิ: </span>
+                            <span className="font-mono font-bold text-sm text-clinic-primary-deep">
+                              ฿{(receipt.totalPrice ?? 0).toLocaleString()} บาท
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-clinic-ink-soft text-[11px]">การตรวจรักษาเสร็จสมบูรณ์</span>
+                      <div className="flex items-center justify-between gap-2 p-3 rounded-control bg-clinic-bg/40 border border-clinic-line text-xs">
+                        <span className="text-clinic-ink-soft flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-clinic-ink-muted" />
+                          <span>ยังไม่มีใบเสร็จรับเงินสำหรับการรักษานี้</span>
+                        </span>
+                        <Link
+                          href="/patient/reviews"
+                          className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline flex items-center gap-1 shrink-0"
+                        >
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span>ให้คะแนน / รีวิวบริการ →</span>
+                        </Link>
+                      </div>
                     )}
 
-                    <Link
-                      href="/patient/reviews"
-                      className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline flex items-center gap-1 shrink-0"
-                    >
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>ให้คะแนน / รีวิวบริการ →</span>
-                    </Link>
+                    {receipt && (
+                      <div className="pt-2 flex justify-end">
+                        <Link
+                          href="/patient/reviews"
+                          className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline flex items-center gap-1 shrink-0"
+                        >
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span>ให้คะแนน / รีวิวบริการ →</span>
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -276,7 +270,7 @@ export default async function PatientTreatmentsPage() {
         <EmptyState
           icon={<FileText className="w-6 h-6 text-clinic-primary" />}
           title="ยังไม่มีประวัติการบันทึกการรักษา"
-          description="เมื่อท่านเข้ารับการตรวจรักษาที่คลินิก ประวัติการตรวจ วินิจฉัย และรายการยาจะแสดงที่นี่"
+          description="เมื่อท่านเข้ารับการตรวจรักษาที่คลินิก ประวัติการตรวจ วินิจฉัย รายการยา และใบเสร็จรับเงินจะแสดงที่นี่"
           action={
             <Button asChild variant="terracotta" size="sm">
               <Link href="/patient/book">

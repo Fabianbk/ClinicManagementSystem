@@ -15,6 +15,7 @@ import {
   MapPin,
   CreditCard,
 } from "lucide-react";
+import { ChangePasswordCard } from "@/components/patient/ChangePasswordCard";
 
 export default async function PatientProfilePage() {
   const session = await getSession();
@@ -58,80 +59,85 @@ export default async function PatientProfilePage() {
 
       {/* Grid: 3 Main Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Basic Information */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3 border-b border-clinic-line">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-clinic-primary" />
-              <span>ข้อมูลทั่วไป (General Info)</span>
-            </CardTitle>
-          </CardHeader>
+        {/* Left Column: Basic Information & Password Change */}
+        <div className="space-y-6 lg:col-span-1">
+          <Card>
+            <CardHeader className="pb-3 border-b border-clinic-line">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-clinic-primary" />
+                <span>ข้อมูลทั่วไป (General Info)</span>
+              </CardTitle>
+            </CardHeader>
 
-          <CardContent className="pt-4">
-            <dl className="divide-y divide-clinic-line text-xs">
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">ชื่อ-นามสกุล</dt>
-                <dd className="font-semibold text-clinic-ink text-right">{patient.fullname}</dd>
-              </div>
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">เพศ</dt>
-                <dd className="font-semibold text-clinic-ink">
-                  {patient.gender === "MALE" ? "ชาย" : patient.gender === "FEMALE" ? "หญิง" : patient.gender || "-"}
-                </dd>
-              </div>
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">วันเกิด</dt>
-                <dd className="font-semibold text-clinic-ink">
-                  {patient.dateOfBirth
-                    ? new Date(patient.dateOfBirth).toLocaleDateString("th-TH")
-                    : "-"}
-                </dd>
-              </div>
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">กรุ๊ปเลือด</dt>
-                <dd className="font-semibold text-clinic-primary-deep">{patient.bloodGroup || "-"}</dd>
-              </div>
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">อาชีพ</dt>
-                <dd className="font-semibold text-clinic-ink">{patient.occupation || "-"}</dd>
-              </div>
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">สถานภาพ</dt>
-                <dd className="font-semibold text-clinic-ink">
-                  {patient.maritalStatus === "SINGLE"
-                    ? "โสด"
-                    : patient.maritalStatus === "IN_RELATIONSHIP"
-                    ? "มีคู่ / อยู่ด้วยกัน"
-                    : patient.maritalStatus === "MARRIED"
-                    ? "สมรส"
-                    : patient.maritalStatus === "WIDOWED"
-                    ? "หม้าย"
-                    : patient.maritalStatus === "SEPARATED"
-                    ? "แยกกันอยู่"
-                    : patient.maritalStatus === "DIVORCED"
-                    ? "หย่า"
-                    : patient.maritalStatus === "MONK"
-                    ? "สมณะ / นักบวช"
-                    : patient.maritalStatus || "-"}
-                </dd>
-              </div>
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">สัญชาติ / เชื้อชาติ</dt>
-                <dd className="font-semibold text-clinic-ink">
-                  {patient.citizenship || "ไทย"} / {patient.ethnicity || "ไทย"}
-                </dd>
-              </div>
-              <div className="py-2.5 flex justify-between">
-                <dt className="text-clinic-ink-soft">ศาสนา</dt>
-                <dd className="font-semibold text-clinic-ink">{patient.religion || "-"}</dd>
-              </div>
-              <div className="py-2.5 flex flex-col gap-1">
-                <dt className="text-clinic-ink-soft">ที่อยู่ตามสำเนา</dt>
-                <dd className="font-medium text-clinic-ink leading-relaxed">{patient.address || "-"}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
+            <CardContent className="pt-4">
+              <dl className="divide-y divide-clinic-line text-xs">
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">ชื่อ-นามสกุล</dt>
+                  <dd className="font-semibold text-clinic-ink text-right">{patient.fullname}</dd>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">เพศ</dt>
+                  <dd className="font-semibold text-clinic-ink">
+                    {patient.gender === "MALE" ? "ชาย" : patient.gender === "FEMALE" ? "หญิง" : patient.gender || "-"}
+                  </dd>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">วันเกิด</dt>
+                  <dd className="font-semibold text-clinic-ink">
+                    {patient.dateOfBirth
+                      ? new Date(patient.dateOfBirth).toLocaleDateString("th-TH")
+                      : "-"}
+                  </dd>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">กรุ๊ปเลือด</dt>
+                  <dd className="font-semibold text-clinic-primary-deep">{patient.bloodGroup || "-"}</dd>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">อาชีพ</dt>
+                  <dd className="font-semibold text-clinic-ink">{patient.occupation || "-"}</dd>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">สถานภาพ</dt>
+                  <dd className="font-semibold text-clinic-ink">
+                    {patient.maritalStatus === "SINGLE"
+                      ? "โสด"
+                      : patient.maritalStatus === "IN_RELATIONSHIP"
+                      ? "มีคู่ / อยู่ด้วยกัน"
+                      : patient.maritalStatus === "MARRIED"
+                      ? "สมรส"
+                      : patient.maritalStatus === "WIDOWED"
+                      ? "หม้าย"
+                      : patient.maritalStatus === "SEPARATED"
+                      ? "แยกกันอยู่"
+                      : patient.maritalStatus === "DIVORCED"
+                      ? "หย่า"
+                      : patient.maritalStatus === "MONK"
+                      ? "สมณะ / นักบวช"
+                      : patient.maritalStatus || "-"}
+                  </dd>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">สัญชาติ / เชื้อชาติ</dt>
+                  <dd className="font-semibold text-clinic-ink">
+                    {patient.citizenship || "ไทย"} / {patient.ethnicity || "ไทย"}
+                  </dd>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <dt className="text-clinic-ink-soft">ศาสนา</dt>
+                  <dd className="font-semibold text-clinic-ink">{patient.religion || "-"}</dd>
+                </div>
+                <div className="py-2.5 flex flex-col gap-1">
+                  <dt className="text-clinic-ink-soft">ที่อยู่ตามสำเนา</dt>
+                  <dd className="font-medium text-clinic-ink leading-relaxed">{patient.address || "-"}</dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          {/* Security & Password Card */}
+          <ChangePasswordCard />
+        </div>
 
         {/* Middle Column: Health Profile & Allergies */}
         <Card className="lg:col-span-1">

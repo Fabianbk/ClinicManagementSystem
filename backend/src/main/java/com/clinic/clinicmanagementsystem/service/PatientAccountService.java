@@ -1,10 +1,12 @@
 package com.clinic.clinicmanagementsystem.service;
 
 import com.clinic.clinicmanagementsystem.security.CurrentUser;
+import com.clinic.clinicmanagementsystem.dto.ChangePasswordRequestDTO;
 import com.clinic.clinicmanagementsystem.dto.PatientAccountRequestDTO;
 import com.clinic.clinicmanagementsystem.dto.PatientAccountResponseDTO;
 import com.clinic.clinicmanagementsystem.entity.Patient;
 import com.clinic.clinicmanagementsystem.entity.PatientAccount;
+import com.clinic.clinicmanagementsystem.exception.BadRequestException;
 import com.clinic.clinicmanagementsystem.exception.DuplicateResourceException;
 import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
 import com.clinic.clinicmanagementsystem.mapper.PatientAccountMapper;
@@ -53,5 +55,23 @@ public class PatientAccountService {
         return patientAccountRepository.findByPatient_PatientId(patientId)
                 .map(patientAccountMapper::toResponseDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("PatientAccount for patient", patientId));
+    }
+
+    public void changePassword(int patientId, ChangePasswordRequestDTO dto) {
+        currentUser.requireSelfOrDoctor(patientId);
+
+        PatientAccount account = patientAccountRepository.findByPatient_PatientId(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("PatientAccount for patient", patientId));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), account.getPassword())) {
+            throw new BadRequestException("รหัสผ่านปัจจุบันไม่ถูกต้อง (Current password is incorrect)");
+        }
+
+        if (passwordEncoder.matches(dto.getNewPassword(), account.getPassword())) {
+            throw new BadRequestException("รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม (New password must be different from current password)");
+        }
+
+        account.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        patientAccountRepository.save(account);
     }
 }

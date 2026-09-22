@@ -4,6 +4,7 @@ import com.clinic.clinicmanagementsystem.dto.RecordTreatmentMedicineResponseDTO;
 import com.clinic.clinicmanagementsystem.dto.RecordTreatmentResponseDTO;
 import com.clinic.clinicmanagementsystem.dto.ReceiptResponseDTO;
 import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
+import com.clinic.clinicmanagementsystem.security.CurrentUser;
 import com.clinic.clinicmanagementsystem.service.ReceiptService;
 import com.clinic.clinicmanagementsystem.service.RecordTreatmentMedicineService;
 import com.clinic.clinicmanagementsystem.service.RecordTreatmentService;
@@ -30,13 +31,16 @@ public class ReceiptPrintController {
     private final RecordTreatmentService recordTreatmentService;
     private final RecordTreatmentMedicineService recordTreatmentMedicineService;
     private final ReportService reportService;
+    private final CurrentUser currentUser;
 
     /** Print Receipt (SRS 3.1.25) — driven by recordTreatmentId, matching the rest of the Receipt API. */
     @GetMapping("/api/receipts/record-treatment/{recordTreatmentId}/print")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'PATIENT')")
     public ResponseEntity<byte[]> printReceipt(@PathVariable int recordTreatmentId) {
-        ReceiptResponseDTO receipt = receiptService.getByRecordTreatmentId(recordTreatmentId);
         RecordTreatmentResponseDTO treatment = recordTreatmentService.getById(recordTreatmentId);
+        currentUser.requireSelfOrDoctor(treatment.getPatientId());
+
+        ReceiptResponseDTO receipt = receiptService.getByRecordTreatmentId(recordTreatmentId);
         List<RecordTreatmentMedicineResponseDTO> lines =
                 recordTreatmentMedicineService.getByRecordTreatmentId(recordTreatmentId);
 

@@ -18,6 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.clinic.clinicmanagementsystem.dto.ChangePasswordRequestDTO;
+import com.clinic.clinicmanagementsystem.security.CurrentUser;
+import com.clinic.clinicmanagementsystem.service.PatientAccountService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PutMapping;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -27,6 +33,8 @@ public class AuthController {
     private final PatientAccountRepository patientAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final PatientAccountService patientAccountService;
+    private final CurrentUser currentUser;
 
     @PostMapping("/login/doctor")
     public ResponseEntity<ApiResponse<AuthResponseDTO>> loginDoctor(@Valid @RequestBody LoginRequestDTO dto) {
@@ -67,5 +75,13 @@ public class AuthController {
                 .username(account.getUsername())
                 .fullname(account.getPatient().getFullname())
                 .build(), "Login successful"));
+    }
+
+    @PutMapping("/patient/change-password")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<ApiResponse<Void>> changePatientPassword(
+            @Valid @RequestBody ChangePasswordRequestDTO dto) {
+        patientAccountService.changePassword(currentUser.id(), dto);
+        return ResponseEntity.ok(ApiResponse.success(null, "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว"));
     }
 }

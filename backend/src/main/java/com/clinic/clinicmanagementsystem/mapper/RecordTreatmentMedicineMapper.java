@@ -19,6 +19,8 @@ public interface RecordTreatmentMedicineMapper {
 
     @Mapping(target = "medicineId", source = "medicine.medicineId")
     @Mapping(target = "medicineName", source = "medicine.medicineName")
+    @Mapping(target = "unitType", source = "medicine.unitType")
+    @Mapping(target = "note", source = "medicine.note")
     @Mapping(target = "lotId", source = "medicineLot.lotId")
     @Mapping(target = "lotNumber", source = "medicineLot.lotNumber")
     @Mapping(target = "expiryDate", source = "medicineLot.expiryDate")

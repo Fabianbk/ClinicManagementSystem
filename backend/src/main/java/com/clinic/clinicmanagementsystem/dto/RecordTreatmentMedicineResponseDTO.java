@@ -19,6 +19,8 @@ public class RecordTreatmentMedicineResponseDTO {
 
     private int medicineId;
     private String medicineName;
+    private String unitType;
+    private String note;
 
     private Integer lotId;
     private String lotNumber;
