@@ -67,6 +67,38 @@ export const SYMPTOM_CAUSE_OPTIONS: { value: SymptomCause; label: string; sub: s
   { value: "OTHER", label: "อื่นๆ", sub: "Other" },
 ];
 
+function matchesDate(dateInput: string | Date | undefined, targetDate: string): boolean {
+  if (!dateInput || !targetDate) return false;
+  if (typeof dateInput === "string") {
+    if (dateInput === targetDate || dateInput.startsWith(targetDate)) {
+      return true;
+    }
+    if (dateInput.split("T")[0] === targetDate) {
+      return true;
+    }
+  }
+
+  try {
+    const d = new Date(dateInput);
+    if (!isNaN(d.getTime())) {
+      const ly = d.getFullYear();
+      const lm = String(d.getMonth() + 1).padStart(2, "0");
+      const ld = String(d.getDate()).padStart(2, "0");
+      if (`${ly}-${lm}-${ld}` === targetDate) {
+        return true;
+      }
+      const uy = d.getUTCFullYear();
+      const um = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const ud = String(d.getUTCDate()).padStart(2, "0");
+      if (`${uy}-${um}-${ud}` === targetDate) {
+        return true;
+      }
+    }
+  } catch {}
+
+  return false;
+}
+
 interface RecordTreatmentFormClientProps {
   doctorId: number;
   doctorFullname: string;
@@ -366,14 +398,7 @@ export function RecordTreatmentFormClient({
         if (!isMounted) return;
 
         // Match schedule for visitDate (format YYYY-MM-DD)
-        const matchedSchedules = (schedules || []).filter((s) => {
-          if (!s.date) return false;
-          const scheduleDateStr =
-            typeof s.date === "string"
-              ? s.date.split("T")[0]
-              : new Date(s.date).toISOString().split("T")[0];
-          return scheduleDateStr === visitDate;
-        });
+        const matchedSchedules = (schedules || []).filter((s) => matchesDate(s.date, visitDate));
 
         if (matchedSchedules.length === 0) {
           setNoScheduleForDate(true);

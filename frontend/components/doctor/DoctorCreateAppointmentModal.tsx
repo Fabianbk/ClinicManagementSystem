@@ -43,6 +43,51 @@ interface DoctorCreateAppointmentModalProps {
   onSuccess: () => void;
 }
 
+function getTodayLocalDate(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function matchesDate(dateInput: string | Date | undefined, targetDate: string): boolean {
+  if (!dateInput || !targetDate) return false;
+  if (typeof dateInput === "string") {
+    // 1. Direct match or starts with targetDate (e.g. "2026-09-23T...")
+    if (dateInput === targetDate || dateInput.startsWith(targetDate)) {
+      return true;
+    }
+    // 2. Split on 'T'
+    if (dateInput.split("T")[0] === targetDate) {
+      return true;
+    }
+  }
+
+  // 3. Date instance checking with local & UTC components
+  try {
+    const d = new Date(dateInput);
+    if (!isNaN(d.getTime())) {
+      // Local calendar date
+      const ly = d.getFullYear();
+      const lm = String(d.getMonth() + 1).padStart(2, "0");
+      const ld = String(d.getDate()).padStart(2, "0");
+      if (`${ly}-${lm}-${ld}` === targetDate) {
+        return true;
+      }
+      // UTC calendar date
+      const uy = d.getUTCFullYear();
+      const um = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const ud = String(d.getUTCDate()).padStart(2, "0");
+      if (`${uy}-${um}-${ud}` === targetDate) {
+        return true;
+      }
+    }
+  } catch {}
+
+  return false;
+}
+
 export function DoctorCreateAppointmentModal({
   isOpen,
   onClose,
@@ -54,7 +99,7 @@ export function DoctorCreateAppointmentModal({
 }: DoctorCreateAppointmentModalProps) {
   // Date State
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    return initialDate || new Date().toISOString().split("T")[0];
+    return initialDate || getTodayLocalDate();
   });
 
   // Patient Autocomplete State
@@ -139,23 +184,29 @@ export function DoctorCreateAppointmentModal({
         if (!res.ok) throw new Error("ไม่สามารถโหลดตารางแพทย์ได้");
         const schedules: WorkingScheduleResponseDTO[] = await res.json();
 
-        // 2. Find schedule for selected date
-        const matched = schedules.find((s) => s.date === selectedDate);
+        // 2. Find all schedules for selected date
+        const matchedSchedules = (schedules || []).filter((s) => matchesDate(s.date, selectedDate));
         if (!isMounted) return;
 
-        if (!matched) {
+        if (matchedSchedules.length === 0) {
           setSchedule(null);
           setNoScheduleForDate(true);
           setSelectedSlotId(null);
           return;
         }
 
-        setSchedule(matched);
+        setSchedule(matchedSchedules[0]);
 
-        // 3. Fetch slots for this schedule
-        const slotRes = await fetch(`/api/appointment-slots/schedule/${matched.scheduleId}`);
-        if (!slotRes.ok) throw new Error("ไม่สามารถโหลดช่วงเวลาตรวจได้");
-        const slotData: AppointmentSlotResponseDTO[] = await slotRes.json();
+        // 3. Fetch slots for all schedules on this date
+        const slotResponses = await Promise.all(
+          matchedSchedules.map((ms) =>
+            fetch(`/api/appointment-slots/schedule/${ms.scheduleId}`).then((r) =>
+              r.ok ? r.json() : []
+            )
+          )
+        );
+        const slotData: AppointmentSlotResponseDTO[] = slotResponses.flat();
+        slotData.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
         if (!isMounted) return;
         setSlots(slotData);

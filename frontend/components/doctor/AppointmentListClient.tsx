@@ -66,6 +66,14 @@ function formatTimeRange(startStr?: string, endStr?: string): string {
   return `${startFormatted} - ${endFormatted} น.`;
 }
 
+function getTodayLocalDate(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function AppointmentListClient({
   doctorId,
   doctorName,
@@ -224,7 +232,7 @@ export function AppointmentListClient({
             <Button
               type="button"
               onClick={() => {
-                setCreateInitialDate(new Date().toISOString().split("T")[0]);
+                setCreateInitialDate(getTodayLocalDate());
                 setCreateInitialHour(undefined);
                 setCreateInitialSlotId(undefined);
                 setIsCreateOpen(true);
