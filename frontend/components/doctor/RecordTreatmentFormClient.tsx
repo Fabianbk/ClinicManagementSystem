@@ -1391,49 +1391,97 @@ export function RecordTreatmentFormClient({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* ธาตุเจ้าเรือนหลัก */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-clinic-ink">
-                  ธาตุเจ้าเรือนหลัก (Principal Dhatu - chao - ruan):
-                </label>
-                <select
-                  value={principalDhatu}
-                  onChange={(e) => {
-                    setPrincipalDhatu(e.target.value as Dhatu);
-                    clearError("principalDhatu");
-                  }}
-                  className="w-full px-3 py-2 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                >
-                  <option value="">-- กรุณาเลือก --</option>
-                  {DHATU_OPTIONS.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label} ({item.sub})
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-1.5 p-3 rounded border border-clinic-line bg-clinic-bg/20">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-clinic-ink">
+                    ธาตุเจ้าเรือนหลัก (Principal Dhatu - chao - ruan):
+                  </label>
+                  {principalDhatu && (
+                    <button
+                      type="button"
+                      onClick={() => setPrincipalDhatu("" as Dhatu)}
+                      className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                    >
+                      ล้างค่า
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {DHATU_OPTIONS.map((item) => {
+                    const isChecked = principalDhatu === item.value;
+                    return (
+                      <label
+                        key={item.value}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded border text-xs cursor-pointer transition-all ${
+                          isChecked
+                            ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                            : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="principalDhatu"
+                          value={item.value}
+                          checked={isChecked}
+                          onChange={() => {
+                            setPrincipalDhatu(item.value);
+                            clearError("principalDhatu");
+                          }}
+                          className="accent-clinic-primary cursor-pointer"
+                        />
+                        <span>{item.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* ธาตุเจ้าเรือนรอง */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-clinic-ink">
-                  ธาตุเจ้าเรือนรอง (Secondary Dhatu - chao - ruan):
-                </label>
-                <select
-                  value={secondaryDhatu}
-                  onChange={(e) => {
-                    setSecondaryDhatu(e.target.value as Dhatu);
-                    clearError("secondaryDhatu");
-                  }}
-                  className="w-full px-3 py-2 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                >
-                  <option value="">-- กรุณาเลือก --</option>
-                  {DHATU_OPTIONS.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label} ({item.sub})
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-1.5 p-3 rounded border border-clinic-line bg-clinic-bg/20">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-clinic-ink">
+                    ธาตุเจ้าเรือนรอง (Secondary Dhatu - chao - ruan):
+                  </label>
+                  {secondaryDhatu && (
+                    <button
+                      type="button"
+                      onClick={() => setSecondaryDhatu("" as Dhatu)}
+                      className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                    >
+                      ล้างค่า
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {DHATU_OPTIONS.map((item) => {
+                    const isChecked = secondaryDhatu === item.value;
+                    return (
+                      <label
+                        key={item.value}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded border text-xs cursor-pointer transition-all ${
+                          isChecked
+                            ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                            : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="secondaryDhatu"
+                          value={item.value}
+                          checked={isChecked}
+                          onChange={() => {
+                            setSecondaryDhatu(item.value);
+                            clearError("secondaryDhatu");
+                          }}
+                          className="accent-clinic-primary cursor-pointer"
+                        />
+                        <span>{item.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -2265,157 +2313,388 @@ export function RecordTreatmentFormClient({
               </div>
             </div>
           ) : (
-            <div className="space-y-3 bg-white p-4 rounded border border-clinic-line">
+            <div className="space-y-4 bg-white p-4 rounded border border-clinic-line">
               {/* 1. ธาตุสมุฏฐาน */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <span className="font-bold text-clinic-ink block">● ธาตุสมุฏฐาน (Elementary principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิ/ตอนเกิด (Dhatu):</label>
-                    <select
-                      value={conceptionDhatu}
-                      onChange={(e) => setConceptionDhatu(e.target.value as Dhatu | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {DHATU_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">ปฏิสนธิ/ตอนเกิด (Dhatu):</label>
+                      {conceptionDhatu && (
+                        <button
+                          type="button"
+                          onClick={() => setConceptionDhatu("" as Dhatu)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {DHATU_OPTIONS.map((item) => {
+                        const isChecked = conceptionDhatu === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="conceptionDhatu"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setConceptionDhatu(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิลักษณะ (TriDosha):</label>
-                    <select
-                      value={conceptionCharacteristic}
-                      onChange={(e) => setConceptionCharacteristic(e.target.value as TriDosha | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {TRIDOSHA_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">ปฏิสนธิลักษณะ (TriDosha):</label>
+                      {conceptionCharacteristic && (
+                        <button
+                          type="button"
+                          onClick={() => setConceptionCharacteristic("" as TriDosha)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {TRIDOSHA_OPTIONS.map((item) => {
+                        const isChecked = conceptionCharacteristic === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="conceptionCharacteristic"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setConceptionCharacteristic(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* 2. อุตุสมุฏฐาน */}
-              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
                 <span className="font-bold text-clinic-ink block">● อุตุสมุฏฐาน (Seasonal principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อเริ่มเจ็บป่วย:</label>
-                    <select
-                      value={seasonalOnset}
-                      onChange={(e) => setSeasonalOnset(e.target.value as TriDosha | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {TRIDOSHA_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">เมื่อเริ่มเจ็บป่วย:</label>
+                      {seasonalOnset && (
+                        <button
+                          type="button"
+                          onClick={() => setSeasonalOnset("" as TriDosha)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {TRIDOSHA_OPTIONS.map((item) => {
+                        const isChecked = seasonalOnset === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="seasonalOnset"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setSeasonalOnset(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</label>
-                    <select
-                      value={seasonalCurrent}
-                      onChange={(e) => setSeasonalCurrent(e.target.value as TriDosha | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {TRIDOSHA_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">เมื่อมาพบแพทย์:</label>
+                      {seasonalCurrent && (
+                        <button
+                          type="button"
+                          onClick={() => setSeasonalCurrent("" as TriDosha)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {TRIDOSHA_OPTIONS.map((item) => {
+                        const isChecked = seasonalCurrent === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="seasonalCurrent"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setSeasonalCurrent(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* 3. อายุสมุฏฐาน */}
-              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
-                <span className="font-bold text-clinic-ink block">● อายุสมุฏฐาน (Age principles)</span>
-                <div className="pl-3 max-w-sm">
-                  <label className="text-[11px] text-clinic-ink-soft block mb-1">ช่วงวัย:</label>
-                  <select
-                    value={agePrinciple}
-                    onChange={(e) => setAgePrinciple(e.target.value as AgePrinciple | "")}
-                    className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                  >
-                    <option value="">-- กรุณาเลือก --</option>
-                    {AGE_OPTIONS.map((item) => (
-                      <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                    ))}
-                  </select>
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-clinic-ink block">● อายุสมุฏฐาน (Age principles)</span>
+                  {agePrinciple && (
+                    <button
+                      type="button"
+                      onClick={() => setAgePrinciple("" as AgePrinciple)}
+                      className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline mr-3 cursor-pointer"
+                    >
+                      ล้างค่า
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2.5 pl-3">
+                  {AGE_OPTIONS.map((item) => {
+                    const isChecked = agePrinciple === item.value;
+                    return (
+                      <label
+                        key={item.value}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs cursor-pointer transition-all ${
+                          isChecked
+                            ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                            : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="agePrinciple"
+                          value={item.value}
+                          checked={isChecked}
+                          onChange={() => setAgePrinciple(item.value)}
+                          className="accent-clinic-primary cursor-pointer"
+                        />
+                        <span>{item.label} ({item.sub})</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* 4. กาลสมุฏฐาน */}
-              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
                 <span className="font-bold text-clinic-ink block">● กาลสมุฏฐาน (Time principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่ออาการกำเริบ:</label>
-                    <select
-                      value={timeOnset}
-                      onChange={(e) => setTimeOnset(e.target.value as TriDosha | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {TRIDOSHA_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">เมื่ออาการกำเริบ:</label>
+                      {timeOnset && (
+                        <button
+                          type="button"
+                          onClick={() => setTimeOnset("" as TriDosha)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {TRIDOSHA_OPTIONS.map((item) => {
+                        const isChecked = timeOnset === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="timeOnset"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setTimeOnset(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</label>
-                    <select
-                      value={timeCurrent}
-                      onChange={(e) => setTimeCurrent(e.target.value as TriDosha | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {TRIDOSHA_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">เมื่อมาพบแพทย์:</label>
+                      {timeCurrent && (
+                        <button
+                          type="button"
+                          onClick={() => setTimeCurrent("" as TriDosha)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {TRIDOSHA_OPTIONS.map((item) => {
+                        const isChecked = timeCurrent === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="timeCurrent"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setTimeCurrent(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* 5. ประเทศสมุฏฐาน */}
-              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
                 <span className="font-bold text-clinic-ink block">● ประเทศสมุฏฐาน (Geographical principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ภูมิลำเนา (Place of birth):</label>
-                    <select
-                      value={geoBirthplace}
-                      onChange={(e) => setGeoBirthplace(e.target.value as Dhatu | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {DHATU_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">ภูมิลำเนา (Place of birth):</label>
+                      {geoBirthplace && (
+                        <button
+                          type="button"
+                          onClick={() => setGeoBirthplace("" as Dhatu)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {DHATU_OPTIONS.map((item) => {
+                        const isChecked = geoBirthplace === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="geoBirthplace"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setGeoBirthplace(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ปัจจุบัน (Present address):</label>
-                    <select
-                      value={geoCurrent}
-                      onChange={(e) => setGeoCurrent(e.target.value as Dhatu | "")}
-                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
-                    >
-                      <option value="">-- กรุณาเลือก --</option>
-                      {DHATU_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
-                      ))}
-                    </select>
+                  <div className="p-2.5 rounded border border-clinic-line/60 bg-clinic-bg/20">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-clinic-ink">ปัจจุบัน (Present address):</label>
+                      {geoCurrent && (
+                        <button
+                          type="button"
+                          onClick={() => setGeoCurrent("" as Dhatu)}
+                          className="text-[10px] text-clinic-ink-soft hover:text-clinic-danger underline cursor-pointer"
+                        >
+                          ล้างค่า
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {DHATU_OPTIONS.map((item) => {
+                        const isChecked = geoCurrent === item.value;
+                        return (
+                          <label
+                            key={item.value}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-clinic-primary/10 border-clinic-primary text-clinic-primary-deep font-semibold shadow-2xs"
+                                : "bg-white border-clinic-line text-clinic-ink hover:bg-clinic-bg/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="geoCurrent"
+                              value={item.value}
+                              checked={isChecked}
+                              onChange={() => setGeoCurrent(item.value)}
+                              className="accent-clinic-primary cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
