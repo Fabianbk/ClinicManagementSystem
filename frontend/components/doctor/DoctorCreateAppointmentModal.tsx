@@ -97,9 +97,12 @@ export function DoctorCreateAppointmentModal({
   initialSlotId,
   onSuccess,
 }: DoctorCreateAppointmentModalProps) {
-  // Date State
+  // Date State - default to today or initialDate if not in the past
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    return initialDate || getTodayLocalDate();
+    if (initialDate && initialDate >= getTodayLocalDate()) {
+      return initialDate;
+    }
+    return getTodayLocalDate();
   });
 
   // Patient Autocomplete State
@@ -124,7 +127,11 @@ export function DoctorCreateAppointmentModal({
   // Sync initial props when opened
   useEffect(() => {
     if (isOpen) {
-      if (initialDate) setSelectedDate(initialDate);
+      if (initialDate && initialDate >= getTodayLocalDate()) {
+        setSelectedDate(initialDate);
+      } else {
+        setSelectedDate(getTodayLocalDate());
+      }
       if (initialSlotId) setSelectedSlotId(initialSlotId);
       setErrorMessage(null);
     } else {
@@ -211,10 +218,11 @@ export function DoctorCreateAppointmentModal({
         if (!isMounted) return;
         setSlots(slotData);
 
-        // Auto-select slot if initialHour or initialSlotId provided
+        // Auto-select slot if initialHour or initialSlotId provided (only if AVAILABLE and NOT in the past)
         if (initialSlotId) {
           const found = slotData.find((s) => s.slotId === initialSlotId);
-          if (found && found.status === "AVAILABLE") {
+          const isPast = found ? new Date(found.startTime).getTime() <= Date.now() : false;
+          if (found && found.status === "AVAILABLE" && !isPast) {
             setSelectedSlotId(found.slotId);
             return;
           }
@@ -224,7 +232,8 @@ export function DoctorCreateAppointmentModal({
           const hourNum = parseInt(initialHour.split(":")[0], 10);
           const matchedHourSlot = slotData.find((s) => {
             const startH = new Date(s.startTime).getHours();
-            return startH === hourNum && s.status === "AVAILABLE";
+            const isPast = new Date(s.startTime).getTime() <= Date.now();
+            return startH === hourNum && s.status === "AVAILABLE" && !isPast;
           });
           if (matchedHourSlot) {
             setSelectedSlotId(matchedHourSlot.slotId);
@@ -232,9 +241,13 @@ export function DoctorCreateAppointmentModal({
           }
         }
 
-        // If currently selected slot is not valid in new slots, reset
-        if (selectedSlotId && !slotData.some((s) => s.slotId === selectedSlotId && s.status === "AVAILABLE")) {
-          setSelectedSlotId(null);
+        // If currently selected slot is not valid in new slots or is past, reset
+        if (selectedSlotId) {
+          const cur = slotData.find((s) => s.slotId === selectedSlotId);
+          const isPast = cur ? new Date(cur.startTime).getTime() <= Date.now() : false;
+          if (!cur || cur.status !== "AVAILABLE" || isPast) {
+            setSelectedSlotId(null);
+          }
         }
       } catch (err: any) {
         console.error("Error loading doctor schedule/slots:", err);
@@ -259,8 +272,19 @@ export function DoctorCreateAppointmentModal({
       return;
     }
 
+    if (selectedDate < getTodayLocalDate()) {
+      setErrorMessage("ไม่สามารถเลือกวันที่ในอดีตได้ กรุณาเลือกวันปัจจุบันหรือในอนาคต");
+      return;
+    }
+
     if (!selectedSlotId) {
       setErrorMessage("กรุณาเลือกช่วงเวลาตรวจ (Appointment Slot)");
+      return;
+    }
+
+    const slotToBook = slots.find((s) => s.slotId === selectedSlotId);
+    if (slotToBook && new Date(slotToBook.startTime).getTime() <= Date.now()) {
+      setErrorMessage("ไม่สามารถเลือกช่วงเวลาตรวจในอดีตได้ กรุณาเลือกช่วงเวลาในอนาคต");
       return;
     }
 
@@ -427,7 +451,14 @@ export function DoctorCreateAppointmentModal({
             </label>
             <DatePicker
               value={selectedDate}
-              onChange={(val) => setSelectedDate(val)}
+              onChange={(val) => {
+                if (val && val < getTodayLocalDate()) {
+                  toast.error("ไม่สามารถเลือกวันที่ในอดีตได้");
+                  return;
+                }
+                setSelectedDate(val);
+              }}
+              minDate={getTodayLocalDate()}
               className="text-xs"
             />
           </div>
@@ -472,6 +503,8 @@ export function DoctorCreateAppointmentModal({
                   const isAvailable = slot.status === "AVAILABLE";
                   const isBooked = slot.status === "BOOKED";
                   const isBlocked = slot.status === "BLOCKED";
+                  const isPastSlot = new Date(slot.startTime).getTime() <= Date.now();
+                  const canSelect = isAvailable && !isPastSlot;
 
                   const startTimeStr = new Date(slot.startTime).toLocaleTimeString("th-TH", {
                     hour: "2-digit",
@@ -488,12 +521,12 @@ export function DoctorCreateAppointmentModal({
                     <button
                       key={slot.slotId}
                       type="button"
-                      disabled={!isAvailable}
+                      disabled={!canSelect}
                       onClick={() => setSelectedSlotId(slot.slotId)}
                       className={`p-2 rounded-control border text-left text-xs transition-all flex flex-col justify-between ${
                         isSelected
                           ? "bg-clinic-primary/10 border-clinic-primary ring-2 ring-clinic-primary/30 font-bold text-clinic-primary-deep shadow-2xs"
-                          : !isAvailable
+                          : !canSelect
                           ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60"
                           : "bg-white border-clinic-line hover:border-clinic-primary hover:bg-clinic-primary-soft/10 text-clinic-ink cursor-pointer"
                       }`}
@@ -509,6 +542,8 @@ export function DoctorCreateAppointmentModal({
                           ? "มีนัดแล้ว (BOOKED)"
                           : isBlocked
                           ? "ระงับ (BLOCKED)"
+                          : isPastSlot
+                          ? "เลยเวลาแล้ว (PAST)"
                           : "ว่าง (AVAILABLE)"}
                       </span>
                     </button>
@@ -522,6 +557,17 @@ export function DoctorCreateAppointmentModal({
                 </p>
               )
             )}
+
+            {/* Helper notice if all slots for selected date are passed or unavailable */}
+            {slots.length > 0 &&
+              slots.every(
+                (s) => s.status !== "AVAILABLE" || new Date(s.startTime).getTime() <= Date.now()
+              ) && (
+                <div className="p-2.5 rounded-control bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2 mt-1">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>ช่วงเวลาตรวจของวันนี้ผ่านไปแล้วหรือถูกจองเต็มทั้งหมด กรุณาเลือกวันที่อื่น</span>
+                </div>
+              )}
           </div>
 
           {/* Summary Details */}
@@ -564,7 +610,13 @@ export function DoctorCreateAppointmentModal({
             <Button
               type="submit"
               size="sm"
-              disabled={submitting || !selectedPatient || !selectedSlotId}
+              disabled={
+                submitting ||
+                !selectedPatient ||
+                !selectedSlotId ||
+                !selectedSlot ||
+                new Date(selectedSlot.startTime).getTime() <= Date.now()
+              }
               className="text-xs bg-clinic-primary hover:bg-clinic-primary-deep text-white font-bold gap-1.5 shadow-2xs"
             >
               {submitting ? (
