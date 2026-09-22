@@ -97,6 +97,35 @@ export default async function PatientDashboardPage() {
         </div>
       </section>
 
+      {/* 3-Day Advance Reminder Alert Banner */}
+      {upcomingAppointment?.isUrgent && (
+        <div className="rounded-card bg-amber-50 border border-amber-200 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs animate-in fade-in slide-in-from-top-1">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-amber-900">
+                  {upcomingAppointment.title || "เตือนนัดหมายตรวจรักษา"}
+                </span>
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 tracking-wide">
+                  ใกล้ถึงวันนัด
+                </span>
+              </div>
+              <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                {upcomingAppointment.message}
+              </p>
+            </div>
+          </div>
+          <Button asChild size="sm" variant="outline" className="bg-white border-amber-300 text-amber-900 hover:bg-amber-100 shrink-0 shadow-2xs">
+            <Link href="/patient/appointments">
+              ดูรายละเอียดนัดหมาย →
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* Upcoming Appointment Highlight */}
       <Card>
         <CardHeader className="pb-3 border-b border-clinic-line flex flex-row items-center justify-between">

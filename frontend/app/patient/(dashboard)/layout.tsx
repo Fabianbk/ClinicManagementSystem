@@ -23,7 +23,7 @@ export default async function PatientDashboardLayout({
 
   return (
     <div className="min-h-screen bg-clinic-bg flex flex-col font-body text-clinic-ink">
-      <PatientNavbar patientName={patientName} username={session.username} />
+      <PatientNavbar patientId={session.id} patientName={patientName} username={session.username} />
       <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-300">
         {children}
       </main>

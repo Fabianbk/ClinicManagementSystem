@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { NotificationBell } from "@/components/patient/NotificationBell";
 import { LayoutDashboard, Calendar, PlusCircle, History, User, Star, Menu, X } from "lucide-react";
 
 interface NavItem {
@@ -23,9 +24,11 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export function PatientNavbar({
+  patientId,
   patientName,
   username,
 }: {
+  patientId?: number;
   patientName?: string;
   username?: string;
 }) {
@@ -86,8 +89,9 @@ export function PatientNavbar({
             })}
           </nav>
 
-          {/* Right side: Patient Profile & Logout */}
-          <div className="hidden sm:flex items-center gap-3 shrink-0">
+          {/* Right side: Notifications, Patient Profile & Logout */}
+          <div className="hidden sm:flex items-center gap-2.5 sm:gap-3 shrink-0">
+            {patientId && <NotificationBell patientId={patientId} />}
             {(patientName || username) && (
               <div className="flex items-center gap-2 text-xs font-medium text-white/95 bg-white/10 px-3.5 py-1.5 rounded-full border border-white/15 shadow-inner">
                 <span className="w-2 h-2 rounded-full bg-clinic-terracotta-soft bg-emerald-400 animate-pulse" />
@@ -97,8 +101,21 @@ export function PatientNavbar({
             <LogoutButton redirectTo="/patient/login" />
           </div>
 
-          {/* Mobile Menu Toggle Button */}
-          <div className="flex items-center gap-2 md:hidden">
+          {/* Mobile Right Controls: Notification & Hamburger Menu */}
+          <div className="flex items-center gap-1 sm:hidden">
+            {patientId && <NotificationBell patientId={patientId} />}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label="Toggle navigation menu"
+              className="p-2 rounded-control bg-white/10 hover:bg-white/15 text-white focus:outline-none focus:ring-2 focus:ring-clinic-terracotta transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+
+          {/* Tablet Hamburger Menu (between sm and md) */}
+          <div className="hidden sm:flex md:hidden items-center">
             <button
               type="button"
               onClick={() => setMobileMenuOpen((v) => !v)}

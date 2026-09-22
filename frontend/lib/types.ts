@@ -578,11 +578,17 @@ export interface ReviewResponseDTO {
 // ---------- Notify Appointment ----------
 
 export interface NotifyAppointmentResponseDTO {
+  notificationId?: string;
   appointmentId: number;
   status: AppointmentStatus;
   slotStartTime: string;
   slotEndTime: string;
   doctorId: number;
   doctorFullname: string;
+  notificationType?: string;
+  title?: string;
   message: string;
+  isUrgent?: boolean;
+  linkUrl?: string;
+  createdAt?: string;
 }

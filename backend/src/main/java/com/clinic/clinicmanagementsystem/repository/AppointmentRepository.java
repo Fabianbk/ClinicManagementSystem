@@ -23,6 +23,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findByPatient_PatientIdAndStatusAndAppointmentSlot_StartTimeAfterOrderByAppointmentSlot_StartTimeAsc(
             int patientId, AppointmentStatus status, Date now);
 
+    List<Appointment> findByPatient_PatientIdAndStatusAndAppointmentSlot_StartTimeAfterOrderByAppointmentSlot_StartTimeDesc(
+            int patientId, AppointmentStatus status, Date afterTime);
+
     @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.patientId = :patientId " +
            "AND a.status = :status " +
            "AND a.appointmentSlot.startTime < :slotEnd " +
