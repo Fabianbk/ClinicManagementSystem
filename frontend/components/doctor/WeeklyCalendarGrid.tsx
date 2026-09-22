@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { AppointmentResponseDTO, AppointmentStatus } from "@/lib/types";
+import { useState, useMemo, useEffect } from "react";
+import type {
+  AppointmentResponseDTO,
+  AppointmentStatus,
+  WorkingScheduleResponseDTO,
+} from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
   Clock,
   Plus,
   User,
@@ -66,6 +69,54 @@ function formatDateISO(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function matchesDate(dateInput: string | Date | undefined, targetDate: string): boolean {
+  if (!dateInput || !targetDate) return false;
+  if (typeof dateInput === "string") {
+    if (dateInput === targetDate || dateInput.startsWith(targetDate)) {
+      return true;
+    }
+    if (dateInput.split("T")[0] === targetDate) {
+      return true;
+    }
+  }
+
+  try {
+    const d = new Date(dateInput);
+    if (!isNaN(d.getTime())) {
+      const ly = d.getFullYear();
+      const lm = String(d.getMonth() + 1).padStart(2, "0");
+      const ld = String(d.getDate()).padStart(2, "0");
+      if (`${ly}-${lm}-${ld}` === targetDate) {
+        return true;
+      }
+      const uy = d.getUTCFullYear();
+      const um = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const ud = String(d.getUTCDate()).padStart(2, "0");
+      if (`${uy}-${um}-${ud}` === targetDate) {
+        return true;
+      }
+    }
+  } catch {}
+
+  return false;
+}
+
+function isHourInShift(hour: number, shiftStart?: string, shiftEnd?: string): boolean {
+  if (!shiftStart || !shiftEnd) return false;
+  try {
+    const startH = parseInt(shiftStart.split(":")[0], 10);
+    const endParts = shiftEnd.split(":");
+    let endH = parseInt(endParts[0], 10);
+    const endM = parseInt(endParts[1] || "0", 10);
+    if (endM > 0) {
+      endH += 1;
+    }
+    return hour >= startH && hour < endH;
+  } catch {
+    return false;
+  }
+}
+
 export function WeeklyCalendarGrid({
   doctorId,
   appointments,
@@ -73,6 +124,31 @@ export function WeeklyCalendarGrid({
   onCreateAppointmentForSlot,
 }: WeeklyCalendarGridProps) {
   const [currentMonday, setCurrentMonday] = useState<Date>(() => getMonday(new Date()));
+  const [schedules, setSchedules] = useState<WorkingScheduleResponseDTO[]>([]);
+
+  // Load doctor's working schedules to identify scheduled vs non-scheduled slots
+  useEffect(() => {
+    if (!doctorId) return;
+    let isMounted = true;
+
+    const fetchDoctorSchedules = async () => {
+      try {
+        const res = await fetch(`/api/working-schedules/doctor/${doctorId}`);
+        if (res.ok) {
+          const data: WorkingScheduleResponseDTO[] = await res.json();
+          if (isMounted) setSchedules(data || []);
+        }
+      } catch (err) {
+        console.error("Error loading doctor schedules for calendar:", err);
+      }
+    };
+
+    fetchDoctorSchedules();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [doctorId, appointments]);
 
   // 7 days of the week starting from Monday
   const weekDays = useMemo(() => {
@@ -167,8 +243,8 @@ export function WeeklyCalendarGrid({
         // Green (User Story 14)
         return "bg-emerald-50 hover:bg-emerald-100/90 text-emerald-950 border-emerald-300 ring-emerald-500/20";
       case "CANCELLED":
-        // Gray (User Story 14)
-        return "bg-slate-100 hover:bg-slate-200/80 text-slate-500 border-slate-300 line-through opacity-70";
+        // Red with strikethrough (User Story 14 & user preference)
+        return "bg-rose-50 hover:bg-rose-100/90 text-rose-900 border-rose-300 line-through opacity-85 ring-rose-500/20";
       case "NO_SHOW":
         // Red (User Story 14)
         return "bg-rose-50 hover:bg-rose-100/90 text-rose-950 border-rose-300 ring-rose-500/20";
@@ -260,6 +336,10 @@ export function WeeklyCalendarGrid({
             <span className="w-2.5 h-2.5 rounded-xs bg-rose-500 inline-block" />
             <span>ไม่มา/ยกเลิก</span>
           </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-xs bg-slate-200 border border-slate-300 inline-block" />
+            <span>อดีต / ไม่มีตารางงาน</span>
+          </span>
         </div>
       </div>
 
@@ -277,27 +357,53 @@ export function WeeklyCalendarGrid({
             {weekDays.map((day, idx) => {
               const dateIso = formatDateISO(day);
               const isToday = dateIso === todayStr;
+              const isPastDay = dateIso < todayStr;
+              const daySchedules = schedules.filter((s) => matchesDate(s.date, dateIso));
+              const hasSchedule = daySchedules.length > 0;
 
               return (
                 <div
                   key={idx}
-                  className={`p-2.5 text-center border-r border-clinic-line last:border-r-0 transition-colors ${
-                    isToday ? "bg-clinic-primary/5 font-bold" : ""
+                  className={`p-2 text-center border-r border-clinic-line last:border-r-0 transition-colors ${
+                    isToday
+                      ? "bg-clinic-primary/5 font-bold"
+                      : isPastDay
+                      ? "bg-slate-100/50 text-slate-400"
+                      : !hasSchedule
+                      ? "bg-slate-100/40"
+                      : "bg-slate-50/70"
                   }`}
                 >
-                  <div className="text-[11px] text-clinic-ink-soft font-medium">
+                  <div
+                    className={`text-[11px] font-medium ${
+                      isPastDay ? "text-slate-400" : "text-clinic-ink-soft"
+                    }`}
+                  >
                     {THAI_DAY_NAMES[idx]}
                   </div>
-                  <div className="mt-1 flex items-center justify-center">
+                  <div className="mt-0.5 flex items-center justify-center">
                     <span
                       className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold font-display ${
                         isToday
                           ? "bg-clinic-primary text-white shadow-2xs"
+                          : isPastDay
+                          ? "text-slate-400"
                           : "text-clinic-ink"
                       }`}
                     >
                       {day.getDate()}
                     </span>
+                  </div>
+                  <div className="mt-0.5 text-[10px]">
+                    {isPastDay ? (
+                      <span className="text-slate-400">อดีต</span>
+                    ) : hasSchedule ? (
+                      <span className="text-emerald-700 font-medium bg-emerald-50 px-1.5 py-0.5 rounded-xs border border-emerald-200/60">
+                        มีตารางงาน
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">ไม่มีตารางงาน</span>
+                    )}
                   </div>
                 </div>
               );
@@ -323,6 +429,17 @@ export function WeeklyCalendarGrid({
                   {weekDays.map((day, dayIdx) => {
                     const dateIso = formatDateISO(day);
                     const isToday = dateIso === todayStr;
+                    const isPastDate = dateIso < todayStr;
+                    const isPastHour = isToday && hour < currentHour;
+                    const isPast = isPastDate || isPastHour;
+
+                    const daySchedules = schedules.filter((s) => matchesDate(s.date, dateIso));
+                    const hasScheduleOnDay = daySchedules.length > 0;
+                    const isHourScheduled = daySchedules.some((s) =>
+                      isHourInShift(hour, s.shiftStart, s.shiftEnd)
+                    );
+                    const isBookable = !isPast && isHourScheduled;
+
                     const cellKey = `${dateIso}_${hour}`;
                     const cellAppointments = appointmentsByDateAndHour.get(cellKey) || [];
 
@@ -332,16 +449,30 @@ export function WeeklyCalendarGrid({
                       ? Math.min(100, Math.max(0, (currentMinute / 60) * 100))
                       : null;
 
+                    let cellBgClass = "bg-white";
+                    let cellHoverClass = "hover:bg-clinic-primary-soft/10 cursor-pointer group/cell";
+
+                    if (isPast) {
+                      cellBgClass = "bg-slate-100/70 select-none";
+                      cellHoverClass = "cursor-default";
+                    } else if (!hasScheduleOnDay) {
+                      cellBgClass = "bg-slate-100/60 select-none";
+                      cellHoverClass = "cursor-default";
+                    } else if (!isHourScheduled) {
+                      cellBgClass = "bg-slate-50/70 select-none";
+                      cellHoverClass = "cursor-default";
+                    } else if (isToday) {
+                      cellBgClass = "bg-clinic-primary-soft/5";
+                    }
+
                     return (
                       <div
                         key={dayIdx}
                         onClick={() => {
-                          // Click empty slot opens Doctor Booking Modal
+                          if (!isBookable) return;
                           onCreateAppointmentForSlot(dateIso, hourLabel);
                         }}
-                        className={`border-r border-clinic-line last:border-r-0 p-1 relative transition-colors group/cell hover:bg-clinic-primary-soft/10 cursor-pointer ${
-                          isToday ? "bg-clinic-primary-soft/5" : "bg-white"
-                        }`}
+                        className={`border-r border-clinic-line last:border-r-0 p-1 relative transition-colors ${cellBgClass} ${cellHoverClass}`}
                       >
                         {/* Current Time Indicator Line (Google Calendar style) */}
                         {timeLineTopPercent !== null && (
@@ -407,8 +538,8 @@ export function WeeklyCalendarGrid({
                           })}
                         </div>
 
-                        {/* Subtle + indicator on empty cell hover */}
-                        {cellAppointments.length === 0 && (
+                        {/* Subtle + indicator on empty cell hover (Only for bookable slots) */}
+                        {isBookable && cellAppointments.length === 0 && (
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none">
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-control bg-clinic-primary/10 text-clinic-primary-deep text-[11px] font-semibold shadow-2xs border border-clinic-primary/20">
                               <Plus className="w-3 h-3" /> นัดหมาย
