@@ -26,6 +26,7 @@ import {
   Star,
 } from "lucide-react";
 import { LeafIcon } from "@/components/site/icons";
+import { formatDoctorDisplayName } from "@/lib/utils";
 
 export default async function PatientDashboardPage() {
   const session = await getSession();
@@ -118,7 +119,7 @@ export default async function PatientDashboardPage() {
                 <div className="flex items-center gap-2">
                   <AppointmentStatusBadge status={upcomingAppointment.status} />
                   <span className="text-xs text-clinic-ink-soft">
-                    รหัสนัดหมาย #{upcomingAppointment.appointmentId}
+                    คิวนัดหมายที่กำลังจะมาถึง
                   </span>
                 </div>
                 <p className="text-base sm:text-lg font-bold font-display text-clinic-primary-deep">
@@ -380,14 +381,14 @@ export default async function PatientDashboardPage() {
                             day: "numeric",
                           })}
                         </span>
-                        <span className="text-clinic-ink-soft">แพทย์ผู้ตรวจ: {treatment.doctorFullname}</span>
+                        <span className="text-clinic-ink-soft">แพทย์ผู้ตรวจ: {formatDoctorDisplayName(treatment.doctorFullname)}</span>
                       </div>
                       <p className="text-xs font-medium text-clinic-ink">
                         อาการ: {treatment.symptoms || "ตรวจสุขภาพทั่วไป"}
                       </p>
-                      {treatment.ttmDiagnosis && (
-                        <p className="text-xs text-clinic-primary font-semibold">
-                          การวินิจฉัยแผนไทย: {treatment.ttmDiagnosis}
+                      {treatment.suggestions && (
+                        <p className="text-xs text-emerald-800 line-clamp-1">
+                          คำแนะนำ: {treatment.suggestions}
                         </p>
                       )}
                     </div>
