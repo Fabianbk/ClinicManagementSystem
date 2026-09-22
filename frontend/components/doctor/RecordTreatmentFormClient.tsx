@@ -158,6 +158,40 @@ export function RecordTreatmentFormClient({
     });
   };
 
+  const renderError = (field: string) => {
+    if (!errors[field]) return null;
+    return (
+      <p className="text-[11px] text-clinic-danger mt-1 flex items-center gap-1 font-medium">
+        <AlertCircle className="w-3 h-3 shrink-0" />
+        <span>{errors[field]}</span>
+      </p>
+    );
+  };
+
+  const handleTextBlur = (field: string, val: string) => {
+    setIsDirty(true);
+    if (!val || !val.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: "กรุณากรอกข้อมูล หรือใส่ '-' หากไม่มีข้อมูล",
+      }));
+    } else {
+      clearError(field);
+    }
+  };
+
+  const handleVitalBlur = (field: string, val: number | string) => {
+    setIsDirty(true);
+    if (val === "" || val === undefined || val === null) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: "กรุณาระบุตัวเลข หรือใส่ '0' หากไม่ได้วัด",
+      }));
+    } else {
+      clearError(field);
+    }
+  };
+
   const handleBlur = (field: string, value?: any) => {
     if (!value || (typeof value === "string" && !value.trim()) || (typeof value === "number" && value <= 0)) {
       setErrors((prev) => ({
@@ -257,80 +291,78 @@ export function RecordTreatmentFormClient({
   const [personalHistory, setPersonalHistory] = useState("");
 
   // PART 3: Physical Examination & Pain Assessment
-  const [temp, setTemp] = useState<number | "">(36.5);
-  const [pulse, setPulse] = useState<number | "">(76);
-  const [respirationRate, setRespirationRate] = useState<number | "">(18);
-  const [bp, setBp] = useState("120/80");
-  const [height, setHeight] = useState<number | "">(165);
-  const [weight, setWeight] = useState<number | "">(60);
-  const [painScoreBefore, setPainScoreBefore] = useState<number>(4);
-  const [painScoreAfter, setPainScoreAfter] = useState<number>(2);
+  const [temp, setTemp] = useState<number | "">("");
+  const [pulse, setPulse] = useState<number | "">("");
+  const [respirationRate, setRespirationRate] = useState<number | "">("");
+  const [bp, setBp] = useState("");
+  const [height, setHeight] = useState<number | "">("");
+  const [weight, setWeight] = useState<number | "">("");
+  const [painScoreBefore, setPainScoreBefore] = useState<number | null>(null);
+  const [painScoreAfter, setPainScoreAfter] = useState<number | null>(null);
 
   // Modern Medical Diagnosis & Additional Symptoms
   const [modernDiagnosis, setModernDiagnosis] = useState("");
   const [additionalSymptoms, setAdditionalSymptoms] = useState("");
 
   // Reflexes (Bicep, Triceps, Knee, Ankle RT/LT)
-  const [bicepRT, setBicepRT] = useState("2+");
-  const [bicepLT, setBicepLT] = useState("2+");
-  const [tricepsRT, setTricepsRT] = useState("2+");
-  const [tricepsLT, setTricepsLT] = useState("2+");
-  const [kneeRT, setKneeRT] = useState("2+");
-  const [kneeLT, setKneeLT] = useState("2+");
-  const [ankleRT, setAnkleRT] = useState("2+");
-  const [ankleLT, setAnkleLT] = useState("2+");
+  const [bicepRT, setBicepRT] = useState("");
+  const [bicepLT, setBicepLT] = useState("");
+  const [tricepsRT, setTricepsRT] = useState("");
+  const [tricepsLT, setTricepsLT] = useState("");
+  const [kneeRT, setKneeRT] = useState("");
+  const [kneeLT, setKneeLT] = useState("");
+  const [ankleRT, setAnkleRT] = useState("");
+  const [ankleLT, setAnkleLT] = useState("");
 
   // Menstruation History
-  const [menstruationHistory, setMenstruationHistory] = useState("ปกติ ไม่ปวดประจำเดือน");
+  const [menstruationHistory, setMenstruationHistory] = useState("");
 
   // PART 2 & PART 4: DhatuPrinciple (ธาตุสมุฏฐาน 5 ด้าน & ธาตุเจ้าเรือน)
-  const [principalDhatu, setPrincipalDhatu] = useState<Dhatu>("PATHAVI");
-  const [secondaryDhatu, setSecondaryDhatu] = useState<Dhatu>("VAYO");
-  const [conceptionDhatu, setConceptionDhatu] = useState<Dhatu>("PATHAVI");
-  const [conceptionCharacteristic, setConceptionCharacteristic] = useState<TriDosha>("VATA");
-  const [seasonalOnset, setSeasonalOnset] = useState<TriDosha>("SEMHA");
-  const [seasonalCurrent, setSeasonalCurrent] = useState<TriDosha>("VATA");
-  const [agePrinciple, setAgePrinciple] = useState<AgePrinciple>("ADULT");
-  const [timeOnset, setTimeOnset] = useState<TriDosha>("PITTA");
-  const [timeCurrent, setTimeCurrent] = useState<TriDosha>("VATA");
-  const [geoBirthplace, setGeoBirthplace] = useState<Dhatu>("PATHAVI");
-  const [geoCurrent, setGeoCurrent] = useState<Dhatu>("VAYO");
+  const [principalDhatu, setPrincipalDhatu] = useState<Dhatu | "">("");
+  const [secondaryDhatu, setSecondaryDhatu] = useState<Dhatu | "">("");
+  const [conceptionDhatu, setConceptionDhatu] = useState<Dhatu | "">("");
+  const [conceptionCharacteristic, setConceptionCharacteristic] = useState<TriDosha | "">("");
+  const [seasonalOnset, setSeasonalOnset] = useState<TriDosha | "">("");
+  const [seasonalCurrent, setSeasonalCurrent] = useState<TriDosha | "">("");
+  const [agePrinciple, setAgePrinciple] = useState<AgePrinciple | "">("");
+  const [timeOnset, setTimeOnset] = useState<TriDosha | "">("");
+  const [timeCurrent, setTimeCurrent] = useState<TriDosha | "">("");
+  const [geoBirthplace, setGeoBirthplace] = useState<Dhatu | "">("");
+  const [geoCurrent, setGeoCurrent] = useState<Dhatu | "">("");
 
   // มูลเหตุการเกิดโรค (Cause of symptoms Checkboxes)
   const [causeFood, setCauseFood] = useState(false);
-  const [causePosition, setCausePosition] = useState(true);
+  const [causePosition, setCausePosition] = useState(false);
   const [causeWeather, setCauseWeather] = useState(false);
   const [causeFastingSleep, setCauseFastingSleep] = useState(false);
   const [causeIncontinence, setCauseIncontinence] = useState(false);
-  const [causeWorkHard, setCauseWorkHard] = useState(true);
+  const [causeWorkHard, setCauseWorkHard] = useState(false);
   const [causeSadness, setCauseSadness] = useState(false);
   const [causeWrath, setCauseWrath] = useState(false);
   const [causeOther, setCauseOther] = useState("");
 
   // Summary of Sickness & TTM Diagnosis
   const [summaryOfSickness, setSummaryOfSickness] = useState("");
-  const [diagnosisElements, setDiagnosisElements] = useState("วาตะกำเริบ ส่งผลให้เกิดอาการตึงตัวของกล้ามเนื้อบ่าและสะบัก");
-  const [ttmDiagnosis, setTtmDiagnosis] = useState("โรคลมปลายปัตฆาตสัญญาณ 4-5");
+  const [diagnosisElements, setDiagnosisElements] = useState("");
+  const [ttmDiagnosis, setTtmDiagnosis] = useState("");
 
   // PART 5: Treatment Plan & Program
-  const [treatmentPlan, setTreatmentPlan] = useState("นวดรักษาและประคบสมุนไพรเพื่อคลายกล้ามเนื้อ");
-  const [programCompress, setProgramCompress] = useState(true);
+  const [treatmentPlan, setTreatmentPlan] = useState("");
+  const [programCompress, setProgramCompress] = useState(false);
   const [programSteam, setProgramSteam] = useState(false);
-  const [programHerbalMed, setProgramHerbalMed] = useState(true);
-  const [programMassage, setProgramMassage] = useState(true);
-  const [programMassageDetails, setProgramMassageDetails] = useState("นวดแก้อาการบริเวณสะบัก บ่า และต้นคอ");
-  const [programConsult, setProgramConsult] = useState(true);
+  const [programHerbalMed, setProgramHerbalMed] = useState(false);
+  const [programMassage, setProgramMassage] = useState(false);
+  const [programMassageDetails, setProgramMassageDetails] = useState("");
+  const [programConsult, setProgramConsult] = useState(false);
 
-  const [evalAfterTreatment, setEvalAfterTreatment] = useState("กล้ามเนื้อบ่าคลายตัวลง ความตึงลดลง ผู้ป่วยรู้สึกสบายขึ้น");
-  const [suggestions, setSuggestions] = useState("หลีกเลี่ยงการยกของหนัก ปรับท่านั่งทำงาน และประคบอุ่นบริเวณที่ปวด");
-  const [followup, setFollowup] = useState("นัดติดตามผลการรักษาในอีก 1 สัปดาห์");
+  const [evalAfterTreatment, setEvalAfterTreatment] = useState("");
+  const [suggestions, setSuggestions] = useState("");
+  const [followup, setFollowup] = useState("");
 
   // PART 6: Billing & Prescriptions
   const [medicalRights, setMedicalRights] = useState<"PAY" | "FREE_ELDER" | "FREE_OTHER">("PAY");
   const [medicalRightsOther, setMedicalRightsOther] = useState("");
-  const [additionalItems, setAdditionalItems] = useState<{ id: string; itemName: string; amount: number }[]>([
-    { id: "1", itemName: "ค่าหัตถการทางการแพทย์แผนไทย (Procedure Fee)", amount: 300 },
-  ]);
+  const [additionalItems, setAdditionalItems] = useState<{ id: string; itemName: string; amount: number }[]>([]);
   const [billingNote, setBillingNote] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<"PAID" | "PENDING">("PAID");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
@@ -340,7 +372,7 @@ export function RecordTreatmentFormClient({
     medicines.length > 0 ? medicines[0].medicineId : 0
   );
   const [medQuantity, setMedQuantity] = useState<number>(1);
-  const [medDosage, setMedDosage] = useState("รับประทานครั้งละ 2 แคปซูล หลังอาหาร เช้า-เย็น");
+  const [medDosage, setMedDosage] = useState("");
 
   // UI state
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -491,9 +523,6 @@ export function RecordTreatmentFormClient({
         // Auto mode toggle based on past records
         if (list.length > 0) {
           setFormMode("CONTINUED_VISIT");
-          const latest = list[0];
-          if (latest.ttmDiagnosis) setTtmDiagnosis(latest.ttmDiagnosis);
-          if (latest.treatmentPlan) setTreatmentPlan(latest.treatmentPlan);
         } else {
           setFormMode("FIRST_VISIT");
         }
@@ -705,9 +734,9 @@ export function RecordTreatmentFormClient({
   ]);
 
   const composedDiagnosisElements = useMemo(() => {
-    const formatDhatu = (d?: Dhatu | null) => DHATU_OPTIONS.find((o) => o.value === d)?.label || d || "-";
-    const formatDosha = (t?: TriDosha | null) => TRIDOSHA_OPTIONS.find((o) => o.value === t)?.label || t || "-";
-    const formatAge = (a?: AgePrinciple | null) => AGE_OPTIONS.find((o) => o.value === a)?.label || a || "-";
+    const formatDhatu = (d?: Dhatu | null | "") => (d ? DHATU_OPTIONS.find((o) => o.value === d)?.label || d : "-");
+    const formatDosha = (t?: TriDosha | null | "") => (t ? TRIDOSHA_OPTIONS.find((o) => o.value === t)?.label || t : "-");
+    const formatAge = (a?: AgePrinciple | null | "") => (a ? AGE_OPTIONS.find((o) => o.value === a)?.label || a : "-");
 
     return [
       `ธาตุสมุฏฐาน: กำเนิด [${formatDhatu(conceptionDhatu)}], ลักษณะ [${formatDosha(conceptionCharacteristic)}]`,
@@ -769,6 +798,8 @@ export function RecordTreatmentFormClient({
 
     if (!symptoms.trim()) {
       newErrors.symptoms = "กรุณาระบุอาการสำคัญ (Symptoms/Condition)";
+    } else if (symptoms.trim() === "-") {
+      newErrors.symptoms = "กรุณาระบุอาการสำคัญ ไม่สามารถใส่เพียง '-' ได้";
     }
 
     if (selectedAppointmentId === "WALK_IN") {
@@ -784,9 +815,83 @@ export function RecordTreatmentFormClient({
       }
     }
 
+    // Causes of symptoms: at least 1 must be selected
+    const hasAnyCause =
+      causeFood ||
+      causePosition ||
+      causeWeather ||
+      causeFastingSleep ||
+      causeIncontinence ||
+      causeWorkHard ||
+      causeSadness ||
+      causeWrath ||
+      Boolean(causeOther.trim());
+    if (!hasAnyCause) {
+      newErrors.causesOfSymptoms = "กรุณาเลือกมูลเหตุการเกิดโรคอย่างน้อย 1 อย่าง";
+    }
+
+    // Clinical text fields: require actual text or '-'
+    const checkTextOrDash = (field: string, val: string) => {
+      if (!val || !val.trim()) {
+        newErrors[field] = "กรุณากรอกข้อมูล หรือใส่ '-' หากไม่มีข้อมูล";
+      }
+    };
+
+    checkTextOrDash("presentHistory", presentHistory);
+    checkTextOrDash("menstruationHistory", menstruationHistory);
+    checkTextOrDash("modernDiagnosis", modernDiagnosis);
+    checkTextOrDash("additionalSymptoms", additionalSymptoms);
+    checkTextOrDash("summaryOfSickness", summaryOfSickness);
+    checkTextOrDash("diagnosisElements", diagnosisElements);
+    checkTextOrDash("ttmDiagnosis", ttmDiagnosis);
+    checkTextOrDash("treatmentPlan", treatmentPlan);
+    checkTextOrDash("evalAfterTreatment", evalAfterTreatment);
+    checkTextOrDash("suggestions", suggestions);
+    checkTextOrDash("followup", followup);
+    checkTextOrDash("bp", bp);
+
+    // Reflexes
+    checkTextOrDash("bicepRT", bicepRT);
+    checkTextOrDash("bicepLT", bicepLT);
+    checkTextOrDash("tricepsRT", tricepsRT);
+    checkTextOrDash("tricepsLT", tricepsLT);
+    checkTextOrDash("kneeRT", kneeRT);
+    checkTextOrDash("kneeLT", kneeLT);
+    checkTextOrDash("ankleRT", ankleRT);
+    checkTextOrDash("ankleLT", ankleLT);
+
+    // Conditional details
+    if (programMassage && (!programMassageDetails || !programMassageDetails.trim())) {
+      newErrors.programMassageDetails = "กรุณากรอกข้อมูล หรือใส่ '-' หากไม่มีข้อมูล";
+    }
+    if (hasUnderlyingDisease && !underlyingDiseaseDetails.trim()) {
+      newErrors.underlyingDiseaseDetails = "กรุณาระบุรายละเอียด หรือใส่ '-'";
+    }
+    if (hasDrugAllergy && !drugAllergyDetails.trim()) {
+      newErrors.drugAllergyDetails = "กรุณาระบุรายละเอียด หรือใส่ '-'";
+    }
+    if (hasFoodAllergy && !foodAllergyDetails.trim()) {
+      newErrors.foodAllergyDetails = "กรุณาระบุรายละเอียด หรือใส่ '-'";
+    }
+    if (hasFamilyDisease && !familyDiseaseDetails.trim()) {
+      newErrors.familyDiseaseDetails = "กรุณาระบุรายละเอียด หรือใส่ '-'";
+    }
+
+    // Numeric vitals: must be entered (number or 0)
+    const checkVitalNumber = (field: string, val: number | string) => {
+      if (val === "" || val === undefined || val === null) {
+        newErrors[field] = "กรุณาระบุตัวเลข หรือใส่ '0' หากไม่ได้วัด";
+      }
+    };
+    checkVitalNumber("temp", temp);
+    checkVitalNumber("pulse", pulse);
+    checkVitalNumber("respirationRate", respirationRate);
+    checkVitalNumber("height", height);
+    checkVitalNumber("weight", weight);
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
+      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน หรือใส่ '-' ในช่องที่ไม่มีข้อมูล");
       setTimeout(() => scrollToFirstError(), 60);
       return;
     }
@@ -811,23 +916,23 @@ export function RecordTreatmentFormClient({
         doctorId: Number(doctorId) || 1,
         recordDate: validRecordDateIso,
         symptoms: symptoms.trim(),
-        presentHistory: presentHistory.trim() || undefined,
-        personalHistory: personalHistory.trim() || undefined,
-        temp: temp ? Number(temp) : undefined,
-        pulse: pulse ? Number(pulse) : undefined,
-        respirationRate: respirationRate ? Number(respirationRate) : undefined,
-        bp: bp.trim() || undefined,
-        height: height ? Number(height) : undefined,
-        weight: weight ? Number(weight) : undefined,
+        presentHistory: presentHistory.trim(),
+        personalHistory: personalHistory.trim() || "-",
+        temp: temp !== "" ? Number(temp) : undefined,
+        pulse: pulse !== "" ? Number(pulse) : undefined,
+        respirationRate: respirationRate !== "" ? Number(respirationRate) : undefined,
+        bp: bp.trim(),
+        height: height !== "" ? Number(height) : undefined,
+        weight: weight !== "" ? Number(weight) : undefined,
         bmi: bmiValue ? Number(bmiValue) : undefined,
-        bicepRt: bicepRT.trim() || undefined,
-        bicepLt: bicepLT.trim() || undefined,
-        tricepsRt: tricepsRT.trim() || undefined,
-        tricepsLt: tricepsLT.trim() || undefined,
-        kneeRt: kneeRT.trim() || undefined,
-        kneeLt: kneeLT.trim() || undefined,
-        ankleRt: ankleRT.trim() || undefined,
-        ankleLt: ankleLT.trim() || undefined,
+        bicepRt: bicepRT.trim(),
+        bicepLt: bicepLT.trim(),
+        tricepsRt: tricepsRT.trim(),
+        tricepsLt: tricepsLT.trim(),
+        kneeRt: kneeRT.trim(),
+        kneeLt: kneeLT.trim(),
+        ankleRt: ankleRT.trim(),
+        ankleLt: ankleLT.trim(),
         causesOfSymptoms: [
           ...(causeFood ? ["FOOD" as SymptomCause] : []),
           ...(causePosition ? ["POSTURE" as SymptomCause] : []),
@@ -840,42 +945,42 @@ export function RecordTreatmentFormClient({
           ...(causeOther.trim() ? ["OTHER" as SymptomCause] : []),
         ],
         causeOfSymptomsOther: causeOther.trim() || undefined,
-        summaryOfSickness: summaryOfSickness.trim() || undefined,
-        diagnosisElements: diagnosisElements.trim() || undefined,
-        ttmDiagnosis: ttmDiagnosis.trim() || undefined,
-        modernDiagnosis: modernDiagnosis.trim() || undefined,
-        additionalSymptoms: additionalSymptoms.trim() || undefined,
-        treatmentPlan: treatmentPlan.trim() || undefined,
+        summaryOfSickness: summaryOfSickness.trim(),
+        diagnosisElements: diagnosisElements.trim(),
+        ttmDiagnosis: ttmDiagnosis.trim(),
+        modernDiagnosis: modernDiagnosis.trim(),
+        additionalSymptoms: additionalSymptoms.trim(),
+        treatmentPlan: treatmentPlan.trim(),
         treatmentPrograms: selectedPrograms,
-        treatmentProgramMassageDetails: programMassage ? (programMassageDetails.trim() || undefined) : undefined,
+        treatmentProgramMassageDetails: programMassage ? (programMassageDetails.trim() || "-") : undefined,
         treatmentProgram: composedTreatmentProgram || undefined,
-        evalAfterTreatment: evalAfterTreatment.trim() || undefined,
-        suggestions: suggestions.trim() || undefined,
-        followup: followup.trim() || undefined,
-        painScoreBefore: painScoreBefore,
-        painScoreAfter: painScoreAfter,
-        principle: (!hasExistingDhatuPrinciple || formMode === "FIRST_VISIT") ? {
-          principalDhatu,
-          secondaryDhatu,
-          conceptionDhatu,
-          conceptionCharacteristic,
-          seasonalOnset,
-          seasonalCurrent,
-          agePrinciple,
-          timeOnset,
-          timeCurrent,
-          geoBirthplace,
-          geoCurrent,
+        evalAfterTreatment: evalAfterTreatment.trim(),
+        suggestions: suggestions.trim(),
+        followup: followup.trim(),
+        painScoreBefore: painScoreBefore !== null ? painScoreBefore : undefined,
+        painScoreAfter: painScoreAfter !== null ? painScoreAfter : undefined,
+        principle: (!hasExistingDhatuPrinciple && (principalDhatu || secondaryDhatu || conceptionDhatu || seasonalOnset || agePrinciple)) ? {
+          principalDhatu: principalDhatu || undefined,
+          secondaryDhatu: secondaryDhatu || undefined,
+          conceptionDhatu: conceptionDhatu || undefined,
+          conceptionCharacteristic: conceptionCharacteristic || undefined,
+          seasonalOnset: seasonalOnset || undefined,
+          seasonalCurrent: seasonalCurrent || undefined,
+          agePrinciple: agePrinciple || undefined,
+          timeOnset: timeOnset || undefined,
+          timeCurrent: timeCurrent || undefined,
+          geoBirthplace: geoBirthplace || undefined,
+          geoCurrent: geoCurrent || undefined,
         } : undefined,
         healthProfile: {
-          presentHistory: presentHistory.trim() || undefined,
-          underlyingDisease: hasUnderlyingDisease ? underlyingDiseaseDetails : "ปฏิเสธโรคประจำตัว",
-          drugAllergy: hasDrugAllergy ? drugAllergyDetails : "ปฏิเสธการแพ้ยา",
-          foodAllergy: hasFoodAllergy ? foodAllergyDetails : "ปฏิเสธการแพ้อาหาร",
-          hereditaryDisease: hasFamilyDisease ? familyDiseaseDetails : "ครอบครัวปฏิเสธโรคทางพันธุกรรม",
+          presentHistory: presentHistory.trim(),
+          underlyingDisease: hasUnderlyingDisease ? underlyingDiseaseDetails.trim() : "ปฏิเสธโรคประจำตัว",
+          drugAllergy: hasDrugAllergy ? drugAllergyDetails.trim() : "ปฏิเสธการแพ้ยา",
+          foodAllergy: hasFoodAllergy ? foodAllergyDetails.trim() : "ปฏิเสธการแพ้อาหาร",
+          hereditaryDisease: hasFamilyDisease ? familyDiseaseDetails.trim() : "ครอบครัวปฏิเสธโรคทางพันธุกรรม",
           alcoholConsumption: drinksAlcohol ? "ดื่มแอลกอฮอล์" : "ปฏิเสธการดื่มแอลกอฮอล์",
           smokingHistory: smokes ? "สูบบุหรี่" : "ปฏิเสธการสูบบุหรี่",
-          menstruation: menstruationHistory.trim() || undefined,
+          menstruation: menstruationHistory.trim() || "-",
           personalHistory: (drinksAlcohol || smokes) ? "มีประวัติดื่มแอลกอฮอล์หรือสูบบุหรี่" : "ปฏิเสธการดื่มแอลกอฮอล์ และปฏิเสธการสูบบุหรี่",
         },
       };
@@ -1270,81 +1375,67 @@ export function RecordTreatmentFormClient({
             )}
           </div>
 
-          {hasExistingDhatuPrinciple && formMode === "CONTINUED_VISIT" ? (
+          {hasExistingDhatuPrinciple ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white rounded border border-clinic-line text-xs">
               <div>
                 <span className="text-clinic-ink-soft block text-[11px]">ธาตุเจ้าเรือนหลัก (Principal Dhatu):</span>
                 <strong className="text-sm text-clinic-primary-deep">
-                  {DHATU_OPTIONS.find((o) => o.value === principalDhatu)?.label || principalDhatu}
+                  {DHATU_OPTIONS.find((o) => o.value === principalDhatu)?.label || principalDhatu || "-"}
                 </strong>
               </div>
               <div>
                 <span className="text-clinic-ink-soft block text-[11px]">ธาตุเจ้าเรือนรอง (Secondary Dhatu):</span>
                 <strong className="text-sm text-clinic-primary-deep">
-                  {DHATU_OPTIONS.find((o) => o.value === secondaryDhatu)?.label || secondaryDhatu}
+                  {DHATU_OPTIONS.find((o) => o.value === secondaryDhatu)?.label || secondaryDhatu || "-"}
                 </strong>
               </div>
             </div>
           ) : (
-            <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* ธาตุเจ้าเรือนหลัก */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-clinic-ink">
                   ธาตุเจ้าเรือนหลัก (Principal Dhatu - chao - ruan):
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <select
+                  value={principalDhatu}
+                  onChange={(e) => {
+                    setPrincipalDhatu(e.target.value as Dhatu);
+                    clearError("principalDhatu");
+                  }}
+                  className="w-full px-3 py-2 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                >
+                  <option value="">-- กรุณาเลือก --</option>
                   {DHATU_OPTIONS.map((item) => (
-                    <label
-                      key={item.value}
-                      className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
-                        principalDhatu === item.value
-                          ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
-                          : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="principalDhatu"
-                        value={item.value}
-                        checked={principalDhatu === item.value}
-                        onChange={() => setPrincipalDhatu(item.value)}
-                        className="accent-clinic-primary"
-                      />
-                      <span>{item.label}</span>
-                    </label>
+                    <option key={item.value} value={item.value}>
+                      {item.label} ({item.sub})
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
 
               {/* ธาตุเจ้าเรือนรอง */}
-              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-clinic-ink">
                   ธาตุเจ้าเรือนรอง (Secondary Dhatu - chao - ruan):
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <select
+                  value={secondaryDhatu}
+                  onChange={(e) => {
+                    setSecondaryDhatu(e.target.value as Dhatu);
+                    clearError("secondaryDhatu");
+                  }}
+                  className="w-full px-3 py-2 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                >
+                  <option value="">-- กรุณาเลือก --</option>
                   {DHATU_OPTIONS.map((item) => (
-                    <label
-                      key={item.value}
-                      className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
-                        secondaryDhatu === item.value
-                          ? "bg-clinic-primary text-white border-clinic-primary font-bold shadow-2xs"
-                          : "bg-white border-clinic-line text-clinic-ink hover:bg-slate-50"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="secondaryDhatu"
-                        value={item.value}
-                        checked={secondaryDhatu === item.value}
-                        onChange={() => setSecondaryDhatu(item.value)}
-                        className="accent-clinic-primary"
-                      />
-                      <span>{item.label}</span>
-                    </label>
+                    <option key={item.value} value={item.value}>
+                      {item.label} ({item.sub})
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
-            </>
+            </div>
           )}
         </div>
 
@@ -1361,12 +1452,22 @@ export function RecordTreatmentFormClient({
             value={symptoms}
             onChange={(e) => {
               setSymptoms(e.target.value);
-              clearError("symptoms");
+              if (e.target.value.trim() && e.target.value.trim() !== "-") {
+                clearError("symptoms");
+              }
             }}
-            onBlur={() => handleBlur("symptoms", symptoms)}
+            onBlur={() => {
+              if (!symptoms.trim()) {
+                setErrors((prev) => ({ ...prev, symptoms: "กรุณาระบุอาการสำคัญ (Symptoms/Condition)" }));
+              } else if (symptoms.trim() === "-") {
+                setErrors((prev) => ({ ...prev, symptoms: "กรุณาระบุอาการสำคัญ ไม่สามารถใส่เพียง '-' ได้" }));
+              } else {
+                clearError("symptoms");
+              }
+            }}
             placeholder="ระบุอาการสำคัญ เช่น ปวดบ่าและสะบักข้างขวา ร้าวขึ้นคอ เป็นมา 3 วัน..."
-            className={`w-full px-3 py-2 border rounded-control text-xs text-clinic-ink bg-clinic-bg/30 focus:ring-2 focus:ring-clinic-primary transition-colors ${
-              errors.symptoms ? "border-clinic-danger focus:ring-clinic-danger" : "border-clinic-line"
+            className={`w-full px-3 py-2 border rounded-control text-xs text-clinic-ink bg-clinic-bg/30 focus:ring-2 transition-colors ${
+              errors.symptoms ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line focus:ring-clinic-primary"
             }`}
             aria-invalid={!!errors.symptoms}
           />
@@ -1380,10 +1481,19 @@ export function RecordTreatmentFormClient({
           <textarea
             rows={2}
             value={presentHistory}
-            onChange={(e) => setPresentHistory(e.target.value)}
-            placeholder="ประวัติการเจ็บป่วยในปัจจุบัน อาการกำเริบเมื่อใด สิ่งที่ทำให้ทุเลาหรือรุนแรงขึ้น..."
-            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs text-clinic-ink bg-clinic-bg/30 focus:ring-2 focus:ring-clinic-primary"
+            onChange={(e) => {
+              setPresentHistory(e.target.value);
+              if (e.target.value.trim()) clearError("presentHistory");
+            }}
+            onBlur={() => handleTextBlur("presentHistory", presentHistory)}
+            placeholder="ประวัติการเจ็บป่วยในปัจจุบัน อาการกำเริบเมื่อใด สิ่งที่ทำให้ทุเลาหรือรุนแรงขึ้น หรือใส่ '-'..."
+            className={`w-full px-3 py-2 border rounded-control text-xs text-clinic-ink bg-clinic-bg/30 focus:ring-2 transition-colors ${
+              errors.presentHistory
+                ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20"
+                : "border-clinic-line focus:ring-clinic-primary"
+            }`}
           />
+          {renderError("presentHistory")}
         </div>
 
         {/* ประวัติอดีต, ครอบครัว, ส่วนตัว (Past, Family, Personal History) */}
@@ -1418,13 +1528,22 @@ export function RecordTreatmentFormClient({
                   </label>
                 </div>
                 {hasUnderlyingDisease && (
-                  <input
-                    type="text"
-                    placeholder="ระบุโรคประจำตัว..."
-                    value={underlyingDiseaseDetails}
-                    onChange={(e) => setUnderlyingDiseaseDetails(e.target.value)}
-                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded bg-white"
-                  />
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="ระบุโรคประจำตัว หรือใส่ '-'..."
+                      value={underlyingDiseaseDetails}
+                      onChange={(e) => {
+                        setUnderlyingDiseaseDetails(e.target.value);
+                        if (e.target.value.trim()) clearError("underlyingDiseaseDetails");
+                      }}
+                      onBlur={() => handleTextBlur("underlyingDiseaseDetails", underlyingDiseaseDetails)}
+                      className={`w-full px-2 py-1 text-xs border rounded bg-white ${
+                        errors.underlyingDiseaseDetails ? "border-clinic-danger" : "border-clinic-line"
+                      }`}
+                    />
+                    {renderError("underlyingDiseaseDetails")}
+                  </div>
                 )}
               </div>
 
@@ -1439,6 +1558,7 @@ export function RecordTreatmentFormClient({
                       onChange={() => {
                         setHasDrugAllergy(false);
                         setDrugAllergyDetails("");
+                        clearError("drugAllergyDetails");
                       }}
                     />
                     <span>ปฏิเสธการแพ้ยา</span>
@@ -1454,13 +1574,22 @@ export function RecordTreatmentFormClient({
                   </label>
                 </div>
                 {hasDrugAllergy && (
-                  <input
-                    type="text"
-                    placeholder="ระบุยาที่แพ้และอาการ..."
-                    value={drugAllergyDetails}
-                    onChange={(e) => setDrugAllergyDetails(e.target.value)}
-                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded bg-white text-rose-700"
-                  />
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="ระบุยาที่แพ้และอาการ หรือใส่ '-'..."
+                      value={drugAllergyDetails}
+                      onChange={(e) => {
+                        setDrugAllergyDetails(e.target.value);
+                        if (e.target.value.trim()) clearError("drugAllergyDetails");
+                      }}
+                      onBlur={() => handleTextBlur("drugAllergyDetails", drugAllergyDetails)}
+                      className={`w-full px-2 py-1 text-xs border rounded bg-white text-rose-700 ${
+                        errors.drugAllergyDetails ? "border-clinic-danger" : "border-clinic-line"
+                      }`}
+                    />
+                    {renderError("drugAllergyDetails")}
+                  </div>
                 )}
               </div>
 
@@ -1475,6 +1604,7 @@ export function RecordTreatmentFormClient({
                       onChange={() => {
                         setHasFoodAllergy(false);
                         setFoodAllergyDetails("");
+                        clearError("foodAllergyDetails");
                       }}
                     />
                     <span>ปฏิเสธการแพ้อาหาร</span>
@@ -1490,13 +1620,22 @@ export function RecordTreatmentFormClient({
                   </label>
                 </div>
                 {hasFoodAllergy && (
-                  <input
-                    type="text"
-                    placeholder="ระบุอาหารที่แพ้..."
-                    value={foodAllergyDetails}
-                    onChange={(e) => setFoodAllergyDetails(e.target.value)}
-                    className="w-full px-2 py-1 text-xs border border-clinic-line rounded bg-white text-amber-700"
-                  />
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="ระบุอาหารที่แพ้ หรือใส่ '-'..."
+                      value={foodAllergyDetails}
+                      onChange={(e) => {
+                        setFoodAllergyDetails(e.target.value);
+                        if (e.target.value.trim()) clearError("foodAllergyDetails");
+                      }}
+                      onBlur={() => handleTextBlur("foodAllergyDetails", foodAllergyDetails)}
+                      className={`w-full px-2 py-1 text-xs border rounded bg-white text-amber-700 ${
+                        errors.foodAllergyDetails ? "border-clinic-danger" : "border-clinic-line"
+                      }`}
+                    />
+                    {renderError("foodAllergyDetails")}
+                  </div>
                 )}
               </div>
             </div>
@@ -1514,6 +1653,7 @@ export function RecordTreatmentFormClient({
                   onChange={() => {
                     setHasFamilyDisease(false);
                     setFamilyDiseaseDetails("");
+                    clearError("familyDiseaseDetails");
                   }}
                 />
                 <span>ครอบครัวปฏิเสธโรคทางพันธุกรรม</span>
@@ -1528,13 +1668,22 @@ export function RecordTreatmentFormClient({
                 <span>ครอบครัวมีโรคทางพันธุกรรม</span>
               </label>
               {hasFamilyDisease && (
-                <input
-                  type="text"
-                  placeholder="ระบุโรคทางพันธุกรรมในครอบครัว..."
-                  value={familyDiseaseDetails}
-                  onChange={(e) => setFamilyDiseaseDetails(e.target.value)}
-                  className="flex-1 px-2.5 py-1 text-xs border border-clinic-line rounded bg-white"
-                />
+                <div className="flex-1 space-y-1">
+                  <input
+                    type="text"
+                    placeholder="ระบุโรคทางพันธุกรรมในครอบครัว หรือใส่ '-'..."
+                    value={familyDiseaseDetails}
+                    onChange={(e) => {
+                      setFamilyDiseaseDetails(e.target.value);
+                      if (e.target.value.trim()) clearError("familyDiseaseDetails");
+                    }}
+                    onBlur={() => handleTextBlur("familyDiseaseDetails", familyDiseaseDetails)}
+                    className={`w-full px-2.5 py-1 text-xs border rounded bg-white ${
+                      errors.familyDiseaseDetails ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
+                  />
+                  {renderError("familyDiseaseDetails")}
+                </div>
               )}
             </div>
           </div>
@@ -1596,10 +1745,19 @@ export function RecordTreatmentFormClient({
               <textarea
                 rows={2}
                 value={personalHistory}
-                onChange={(e) => setPersonalHistory(e.target.value)}
-                placeholder="เช่น เวลาตื่นนอน การรับประทานอาหารกี่มื้อ การอาบน้ำ กิจวัตรประจำวัน การพักผ่อน การออกกำลังกาย การใช้ชีวิต..."
-                className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                onChange={(e) => {
+                  setPersonalHistory(e.target.value);
+                  if (e.target.value.trim()) clearError("personalHistory");
+                }}
+                onBlur={() => handleTextBlur("personalHistory", personalHistory)}
+                placeholder="เช่น เวลาตื่นนอน การรับประทานอาหารกี่มื้อ การอาบน้ำ กิจวัตรประจำวัน หรือใส่ '-'..."
+                className={`w-full px-3 py-1.5 border rounded-control text-xs bg-white focus:ring-2 transition-colors ${
+                  errors.personalHistory
+                    ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20"
+                    : "border-clinic-line focus:ring-clinic-primary"
+                }`}
               />
+              {renderError("personalHistory")}
             </div>
           </div>
         </div>
@@ -1626,9 +1784,18 @@ export function RecordTreatmentFormClient({
               type="number"
               step="0.1"
               value={temp}
-              onChange={(e) => setTemp(e.target.value === "" ? "" : Number(e.target.value))}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs font-mono bg-clinic-bg/30"
+              onChange={(e) => {
+                const val = e.target.value === "" ? "" : Number(e.target.value);
+                setTemp(val);
+                if (val !== "") clearError("temp");
+              }}
+              onBlur={() => handleVitalBlur("temp", temp)}
+              placeholder="เช่น 36.5 หรือ 0"
+              className={`w-full px-3 py-1.5 border rounded-control text-xs font-mono bg-clinic-bg/30 transition-colors ${
+                errors.temp ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("temp")}
           </div>
 
           <div>
@@ -1638,9 +1805,18 @@ export function RecordTreatmentFormClient({
             <input
               type="number"
               value={pulse}
-              onChange={(e) => setPulse(e.target.value === "" ? "" : Number(e.target.value))}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs font-mono bg-clinic-bg/30"
+              onChange={(e) => {
+                const val = e.target.value === "" ? "" : Number(e.target.value);
+                setPulse(val);
+                if (val !== "") clearError("pulse");
+              }}
+              onBlur={() => handleVitalBlur("pulse", pulse)}
+              placeholder="เช่น 76 หรือ 0"
+              className={`w-full px-3 py-1.5 border rounded-control text-xs font-mono bg-clinic-bg/30 transition-colors ${
+                errors.pulse ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("pulse")}
           </div>
 
           <div>
@@ -1650,11 +1826,18 @@ export function RecordTreatmentFormClient({
             <input
               type="number"
               value={respirationRate}
-              onChange={(e) =>
-                setRespirationRate(e.target.value === "" ? "" : Number(e.target.value))
-              }
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs font-mono bg-clinic-bg/30"
+              onChange={(e) => {
+                const val = e.target.value === "" ? "" : Number(e.target.value);
+                setRespirationRate(val);
+                if (val !== "") clearError("respirationRate");
+              }}
+              onBlur={() => handleVitalBlur("respirationRate", respirationRate)}
+              placeholder="เช่น 18 หรือ 0"
+              className={`w-full px-3 py-1.5 border rounded-control text-xs font-mono bg-clinic-bg/30 transition-colors ${
+                errors.respirationRate ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("respirationRate")}
           </div>
 
           <div>
@@ -1664,9 +1847,17 @@ export function RecordTreatmentFormClient({
             <input
               type="text"
               value={bp}
-              onChange={(e) => setBp(e.target.value)}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs font-mono bg-clinic-bg/30"
+              onChange={(e) => {
+                setBp(e.target.value);
+                if (e.target.value.trim()) clearError("bp");
+              }}
+              onBlur={() => handleTextBlur("bp", bp)}
+              placeholder="เช่น 120/80 หรือ -"
+              className={`w-full px-3 py-1.5 border rounded-control text-xs font-mono bg-clinic-bg/30 transition-colors ${
+                errors.bp ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("bp")}
           </div>
 
           <div>
@@ -1676,9 +1867,18 @@ export function RecordTreatmentFormClient({
             <input
               type="number"
               value={height}
-              onChange={(e) => setHeight(e.target.value === "" ? "" : Number(e.target.value))}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs font-mono bg-clinic-bg/30"
+              onChange={(e) => {
+                const val = e.target.value === "" ? "" : Number(e.target.value);
+                setHeight(val);
+                if (val !== "") clearError("height");
+              }}
+              onBlur={() => handleVitalBlur("height", height)}
+              placeholder="เช่น 165 หรือ 0"
+              className={`w-full px-3 py-1.5 border rounded-control text-xs font-mono bg-clinic-bg/30 transition-colors ${
+                errors.height ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("height")}
           </div>
 
           <div>
@@ -1689,9 +1889,18 @@ export function RecordTreatmentFormClient({
               type="number"
               step="0.1"
               value={weight}
-              onChange={(e) => setWeight(e.target.value === "" ? "" : Number(e.target.value))}
-              className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs font-mono bg-clinic-bg/30"
+              onChange={(e) => {
+                const val = e.target.value === "" ? "" : Number(e.target.value);
+                setWeight(val);
+                if (val !== "") clearError("weight");
+              }}
+              onBlur={() => handleVitalBlur("weight", weight)}
+              placeholder="เช่น 60 หรือ 0"
+              className={`w-full px-3 py-1.5 border rounded-control text-xs font-mono bg-clinic-bg/30 transition-colors ${
+                errors.weight ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("weight")}
           </div>
         </div>
 
@@ -1715,9 +1924,20 @@ export function RecordTreatmentFormClient({
             <label className="text-xs font-bold text-clinic-ink flex items-center gap-1.5">
               <span>🎯 ระดับความปวด (ก่อนการรักษา) Pain score (Before treatment)</span>
             </label>
-            <span className="text-xs font-bold text-clinic-primary-deep font-mono">
-              {painScoreBefore} / 10
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-clinic-primary-deep font-mono">
+                {painScoreBefore !== null ? `${painScoreBefore} / 10` : "ยังไม่ได้ประเมิน"}
+              </span>
+              {painScoreBefore !== null && (
+                <button
+                  type="button"
+                  onClick={() => setPainScoreBefore(null)}
+                  className="text-[10px] text-clinic-ink-soft hover:text-rose-600 underline cursor-pointer"
+                >
+                  ล้างค่า
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -1751,10 +1971,17 @@ export function RecordTreatmentFormClient({
             <input
               type="text"
               value={modernDiagnosis}
-              onChange={(e) => setModernDiagnosis(e.target.value)}
-              placeholder="เช่น Myofascial Pain Syndrome, Cervical Strain..."
-              className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+              onChange={(e) => {
+                setModernDiagnosis(e.target.value);
+                if (e.target.value.trim()) clearError("modernDiagnosis");
+              }}
+              onBlur={() => handleTextBlur("modernDiagnosis", modernDiagnosis)}
+              placeholder="เช่น Myofascial Pain Syndrome หรือใส่ '-' หากไม่มีข้อมูล..."
+              className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+                errors.modernDiagnosis ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("modernDiagnosis")}
           </div>
 
           <div>
@@ -1764,10 +1991,17 @@ export function RecordTreatmentFormClient({
             <input
               type="text"
               value={additionalSymptoms}
-              onChange={(e) => setAdditionalSymptoms(e.target.value)}
-              placeholder="อาการตรวจพบเพิ่มเติม เช่น มีจุดกดเจ็บบริเวณสะบัก..."
-              className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+              onChange={(e) => {
+                setAdditionalSymptoms(e.target.value);
+                if (e.target.value.trim()) clearError("additionalSymptoms");
+              }}
+              onBlur={() => handleTextBlur("additionalSymptoms", additionalSymptoms)}
+              placeholder="อาการตรวจพบเพิ่มเติม เช่น มีจุดกดเจ็บบริเวณสะบัก หรือใส่ '-'..."
+              className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+                errors.additionalSymptoms ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("additionalSymptoms")}
           </div>
         </div>
 
@@ -1785,18 +2019,34 @@ export function RecordTreatmentFormClient({
                   <input
                     type="text"
                     value={bicepRT}
-                    onChange={(e) => setBicepRT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setBicepRT(e.target.value);
+                      if (e.target.value.trim()) clearError("bicepRT");
+                    }}
+                    onBlur={() => handleTextBlur("bicepRT", bicepRT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.bicepRT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("bicepRT")}
                 </div>
                 <div>
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
                     value={bicepLT}
-                    onChange={(e) => setBicepLT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setBicepLT(e.target.value);
+                      if (e.target.value.trim()) clearError("bicepLT");
+                    }}
+                    onBlur={() => handleTextBlur("bicepLT", bicepLT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.bicepLT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("bicepLT")}
                 </div>
               </div>
             </div>
@@ -1809,18 +2059,34 @@ export function RecordTreatmentFormClient({
                   <input
                     type="text"
                     value={tricepsRT}
-                    onChange={(e) => setTricepsRT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setTricepsRT(e.target.value);
+                      if (e.target.value.trim()) clearError("tricepsRT");
+                    }}
+                    onBlur={() => handleTextBlur("tricepsRT", tricepsRT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.tricepsRT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("tricepsRT")}
                 </div>
                 <div>
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
                     value={tricepsLT}
-                    onChange={(e) => setTricepsLT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setTricepsLT(e.target.value);
+                      if (e.target.value.trim()) clearError("tricepsLT");
+                    }}
+                    onBlur={() => handleTextBlur("tricepsLT", tricepsLT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.tricepsLT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("tricepsLT")}
                 </div>
               </div>
             </div>
@@ -1833,18 +2099,34 @@ export function RecordTreatmentFormClient({
                   <input
                     type="text"
                     value={kneeRT}
-                    onChange={(e) => setKneeRT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setKneeRT(e.target.value);
+                      if (e.target.value.trim()) clearError("kneeRT");
+                    }}
+                    onBlur={() => handleTextBlur("kneeRT", kneeRT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.kneeRT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("kneeRT")}
                 </div>
                 <div>
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
                     value={kneeLT}
-                    onChange={(e) => setKneeLT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setKneeLT(e.target.value);
+                      if (e.target.value.trim()) clearError("kneeLT");
+                    }}
+                    onBlur={() => handleTextBlur("kneeLT", kneeLT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.kneeLT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("kneeLT")}
                 </div>
               </div>
             </div>
@@ -1857,18 +2139,34 @@ export function RecordTreatmentFormClient({
                   <input
                     type="text"
                     value={ankleRT}
-                    onChange={(e) => setAnkleRT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setAnkleRT(e.target.value);
+                      if (e.target.value.trim()) clearError("ankleRT");
+                    }}
+                    onBlur={() => handleTextBlur("ankleRT", ankleRT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.ankleRT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("ankleRT")}
                 </div>
                 <div>
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
                     value={ankleLT}
-                    onChange={(e) => setAnkleLT(e.target.value)}
-                    className="w-full px-2 py-0.5 text-xs border rounded text-center bg-white"
+                    onChange={(e) => {
+                      setAnkleLT(e.target.value);
+                      if (e.target.value.trim()) clearError("ankleLT");
+                    }}
+                    onBlur={() => handleTextBlur("ankleLT", ankleLT)}
+                    placeholder="-"
+                    className={`w-full px-2 py-0.5 text-xs border rounded text-center bg-white ${
+                      errors.ankleLT ? "border-clinic-danger" : "border-clinic-line"
+                    }`}
                   />
+                  {renderError("ankleLT")}
                 </div>
               </div>
             </div>
@@ -1883,10 +2181,17 @@ export function RecordTreatmentFormClient({
           <input
             type="text"
             value={menstruationHistory}
-            onChange={(e) => setMenstruationHistory(e.target.value)}
-            placeholder="เช่น รอบเดือนมาสม่ำเสมอ ทุก 28 วัน ไม่ปวดประจำเดือน / ประจำเดือนหมดแล้ว..."
-            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+            onChange={(e) => {
+              setMenstruationHistory(e.target.value);
+              if (e.target.value.trim()) clearError("menstruationHistory");
+            }}
+            onBlur={() => handleTextBlur("menstruationHistory", menstruationHistory)}
+            placeholder="เช่น รอบเดือนมาสม่ำเสมอ หรือใส่ '-' หากไม่มีข้อมูล/ผู้ป่วยชาย..."
+            className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+              errors.menstruationHistory ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+            }`}
           />
+          {renderError("menstruationHistory")}
         </div>
       </div>
 
@@ -1914,29 +2219,29 @@ export function RecordTreatmentFormClient({
             )}
           </div>
 
-          {hasExistingDhatuPrinciple && formMode === "CONTINUED_VISIT" ? (
+          {hasExistingDhatuPrinciple ? (
             <div className="bg-white p-4 rounded border border-clinic-line space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
                   <span className="font-bold text-clinic-primary-deep block mb-1">● ธาตุสมุฏฐาน (Elementary):</span>
                   <div className="text-[11px] text-clinic-ink space-y-0.5">
-                    <div>กำเนิด/ตอนเกิด: <strong>{DHATU_OPTIONS.find((o) => o.value === conceptionDhatu)?.label || conceptionDhatu}</strong></div>
-                    <div>ปฏิสนธิลักษณะ: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === conceptionCharacteristic)?.label || conceptionCharacteristic}</strong></div>
+                    <div>กำเนิด/ตอนเกิด: <strong>{DHATU_OPTIONS.find((o) => o.value === conceptionDhatu)?.label || conceptionDhatu || "-"}</strong></div>
+                    <div>ปฏิสนธิลักษณะ: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === conceptionCharacteristic)?.label || conceptionCharacteristic || "-"}</strong></div>
                   </div>
                 </div>
 
                 <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
                   <span className="font-bold text-clinic-primary-deep block mb-1">● อุตุสมุฏฐาน (Seasonal):</span>
                   <div className="text-[11px] text-clinic-ink space-y-0.5">
-                    <div>เมื่อเริ่มเจ็บป่วย: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === seasonalOnset)?.label || seasonalOnset}</strong></div>
-                    <div>เมื่อมาพบแพทย์: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === seasonalCurrent)?.label || seasonalCurrent}</strong></div>
+                    <div>เมื่อเริ่มเจ็บป่วย: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === seasonalOnset)?.label || seasonalOnset || "-"}</strong></div>
+                    <div>เมื่อมาพบแพทย์: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === seasonalCurrent)?.label || seasonalCurrent || "-"}</strong></div>
                   </div>
                 </div>
 
                 <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
                   <span className="font-bold text-clinic-primary-deep block mb-1">● อายุสมุฏฐาน (Age):</span>
                   <div className="text-[11px] text-clinic-ink">
-                    ช่วงวัย: <strong>{AGE_OPTIONS.find((o) => o.value === agePrinciple)?.label || agePrinciple}</strong>
+                    ช่วงวัย: <strong>{AGE_OPTIONS.find((o) => o.value === agePrinciple)?.label || agePrinciple || "-"}</strong>
                   </div>
                 </div>
               </div>
@@ -1945,302 +2250,293 @@ export function RecordTreatmentFormClient({
                 <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
                   <span className="font-bold text-clinic-primary-deep block mb-1">● กาลสมุฏฐาน (Time):</span>
                   <div className="text-[11px] text-clinic-ink space-y-0.5">
-                    <div>เมื่ออาการกำเริบ: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === timeOnset)?.label || timeOnset}</strong></div>
-                    <div>เมื่อมาพบแพทย์: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === timeCurrent)?.label || timeCurrent}</strong></div>
+                    <div>เมื่ออาการกำเริบ: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === timeOnset)?.label || timeOnset || "-"}</strong></div>
+                    <div>เมื่อมาพบแพทย์: <strong>{TRIDOSHA_OPTIONS.find((o) => o.value === timeCurrent)?.label || timeCurrent || "-"}</strong></div>
                   </div>
                 </div>
 
                 <div className="p-2.5 bg-slate-50 rounded border border-slate-200">
                   <span className="font-bold text-clinic-primary-deep block mb-1">● ประเทศสมุฏฐาน (Geographical):</span>
                   <div className="text-[11px] text-clinic-ink space-y-0.5">
-                    <div>ภูมิลำเนาเกิด: <strong>{DHATU_OPTIONS.find((o) => o.value === geoBirthplace)?.label || geoBirthplace}</strong></div>
-                    <div>ที่อยู่ปัจจุบัน: <strong>{DHATU_OPTIONS.find((o) => o.value === geoCurrent)?.label || geoCurrent}</strong></div>
+                    <div>ภูมิลำเนาเกิด: <strong>{DHATU_OPTIONS.find((o) => o.value === geoBirthplace)?.label || geoBirthplace || "-"}</strong></div>
+                    <div>ที่อยู่ปัจจุบัน: <strong>{DHATU_OPTIONS.find((o) => o.value === geoCurrent)?.label || geoCurrent || "-"}</strong></div>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <>
+            <div className="space-y-3 bg-white p-4 rounded border border-clinic-line">
               {/* 1. ธาตุสมุฏฐาน */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <span className="font-bold text-clinic-ink block">● ธาตุสมุฏฐาน (Elementary principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิ/ตอนเกิด (Dhatu):</span>
-                    <div className="flex flex-wrap gap-2">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิ/ตอนเกิด (Dhatu):</label>
+                    <select
+                      value={conceptionDhatu}
+                      onChange={(e) => setConceptionDhatu(e.target.value as Dhatu | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {DHATU_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="conceptionDhatu"
-                            value={item.value}
-                            checked={conceptionDhatu === item.value}
-                            onChange={() => setConceptionDhatu(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
 
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิลักษณะ (TriDosha):</span>
-                    <div className="flex flex-wrap gap-3">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ปฏิสนธิลักษณะ (TriDosha):</label>
+                    <select
+                      value={conceptionCharacteristic}
+                      onChange={(e) => setConceptionCharacteristic(e.target.value as TriDosha | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {TRIDOSHA_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="conceptionCharacteristic"
-                            value={item.value}
-                            checked={conceptionCharacteristic === item.value}
-                            onChange={() => setConceptionCharacteristic(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
                 </div>
               </div>
 
               {/* 2. อุตุสมุฏฐาน */}
-              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
                 <span className="font-bold text-clinic-ink block">● อุตุสมุฏฐาน (Seasonal principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อเริ่มเจ็บป่วย:</span>
-                    <div className="flex flex-wrap gap-3">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อเริ่มเจ็บป่วย:</label>
+                    <select
+                      value={seasonalOnset}
+                      onChange={(e) => setSeasonalOnset(e.target.value as TriDosha | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {TRIDOSHA_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="seasonalOnset"
-                            value={item.value}
-                            checked={seasonalOnset === item.value}
-                            onChange={() => setSeasonalOnset(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
 
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</span>
-                    <div className="flex flex-wrap gap-3">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</label>
+                    <select
+                      value={seasonalCurrent}
+                      onChange={(e) => setSeasonalCurrent(e.target.value as TriDosha | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {TRIDOSHA_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="seasonalCurrent"
-                            value={item.value}
-                            checked={seasonalCurrent === item.value}
-                            onChange={() => setSeasonalCurrent(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
                 </div>
               </div>
 
               {/* 3. อายุสมุฏฐาน */}
-              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
                 <span className="font-bold text-clinic-ink block">● อายุสมุฏฐาน (Age principles)</span>
-                <div className="flex flex-wrap gap-4 pl-3">
-                  {AGE_OPTIONS.map((item) => (
-                    <label key={item.value} className="inline-flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="agePrinciple"
-                        value={item.value}
-                        checked={agePrinciple === item.value}
-                        onChange={() => setAgePrinciple(item.value)}
-                        className="accent-clinic-primary"
-                      />
-                      <span>{item.label}</span>
-                    </label>
-                  ))}
+                <div className="pl-3 max-w-sm">
+                  <label className="text-[11px] text-clinic-ink-soft block mb-1">ช่วงวัย:</label>
+                  <select
+                    value={agePrinciple}
+                    onChange={(e) => setAgePrinciple(e.target.value as AgePrinciple | "")}
+                    className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                  >
+                    <option value="">-- กรุณาเลือก --</option>
+                    {AGE_OPTIONS.map((item) => (
+                      <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               {/* 4. กาลสมุฏฐาน */}
-              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
                 <span className="font-bold text-clinic-ink block">● กาลสมุฏฐาน (Time principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่ออาการกำเริบ:</span>
-                    <div className="flex flex-wrap gap-3">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่ออาการกำเริบ:</label>
+                    <select
+                      value={timeOnset}
+                      onChange={(e) => setTimeOnset(e.target.value as TriDosha | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {TRIDOSHA_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="timeOnset"
-                            value={item.value}
-                            checked={timeOnset === item.value}
-                            onChange={() => setTimeOnset(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
 
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</span>
-                    <div className="flex flex-wrap gap-3">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">เมื่อมาพบแพทย์:</label>
+                    <select
+                      value={timeCurrent}
+                      onChange={(e) => setTimeCurrent(e.target.value as TriDosha | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {TRIDOSHA_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="timeCurrent"
-                            value={item.value}
-                            checked={timeCurrent === item.value}
-                            onChange={() => setTimeCurrent(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
                 </div>
               </div>
 
               {/* 5. ประเทศสมุฏฐาน */}
-              <div className="space-y-2 pt-2 border-t border-clinic-line/60">
+              <div className="space-y-1.5 pt-2 border-t border-clinic-line/60">
                 <span className="font-bold text-clinic-ink block">● ประเทศสมุฏฐาน (Geographical principles)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3">
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ภูมิลำเนา (Place of birth):</span>
-                    <div className="flex flex-wrap gap-2">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ภูมิลำเนา (Place of birth):</label>
+                    <select
+                      value={geoBirthplace}
+                      onChange={(e) => setGeoBirthplace(e.target.value as Dhatu | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {DHATU_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="geoBirthplace"
-                            value={item.value}
-                            checked={geoBirthplace === item.value}
-                            onChange={() => setGeoBirthplace(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
 
                   <div>
-                    <span className="text-[11px] text-clinic-ink-soft block mb-1">ปัจจุบัน (Present address):</span>
-                    <div className="flex flex-wrap gap-2">
+                    <label className="text-[11px] text-clinic-ink-soft block mb-1">ปัจจุบัน (Present address):</label>
+                    <select
+                      value={geoCurrent}
+                      onChange={(e) => setGeoCurrent(e.target.value as Dhatu | "")}
+                      className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-white focus:ring-2 focus:ring-clinic-primary"
+                    >
+                      <option value="">-- กรุณาเลือก --</option>
                       {DHATU_OPTIONS.map((item) => (
-                        <label key={item.value} className="inline-flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="geoCurrent"
-                            value={item.value}
-                            checked={geoCurrent === item.value}
-                            onChange={() => setGeoCurrent(item.value)}
-                            className="accent-clinic-primary"
-                          />
-                          <span>{item.label}</span>
-                        </label>
+                        <option key={item.value} value={item.value}>{item.label} ({item.sub})</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
 
         {/* มูลเหตุการเกิดโรค (Cause of symptoms Checkboxes) */}
-        <div className="space-y-2">
-          <label className="block text-xs font-bold text-clinic-ink">
-            มูลเหตุการเกิดโรค (Cause of symptoms):
-          </label>
+        <div className={`space-y-2 p-3 rounded-control border transition-colors ${
+          errors.causesOfSymptoms ? "border-clinic-danger bg-red-50/10" : "border-transparent"
+        }`}>
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold text-clinic-ink">
+              มูลเหตุการเกิดโรค (Cause of symptoms): <span className="text-red-500">* (เลือกอย่างน้อย 1 อย่าง)</span>
+            </label>
+            {errors.causesOfSymptoms && (
+              <span className="text-xs text-clinic-danger font-medium">
+                {errors.causesOfSymptoms}
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causeFood}
-                onChange={(e) => setCauseFood(e.target.checked)}
+                onChange={(e) => {
+                  setCauseFood(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>อาหาร (Food)</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causePosition}
-                onChange={(e) => setCausePosition(e.target.checked)}
+                onChange={(e) => {
+                  setCausePosition(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>อิริยาบถ (Position)</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causeWeather}
-                onChange={(e) => setCauseWeather(e.target.checked)}
+                onChange={(e) => {
+                  setCauseWeather(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>ความร้อน-ความเย็น</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causeFastingSleep}
-                onChange={(e) => setCauseFastingSleep(e.target.checked)}
+                onChange={(e) => {
+                  setCauseFastingSleep(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>อดนอน อดข้าว อดน้ำ</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causeIncontinence}
-                onChange={(e) => setCauseIncontinence(e.target.checked)}
+                onChange={(e) => {
+                  setCauseIncontinence(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>กลั้นอุจจาระปัสสาวะ</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causeWorkHard}
-                onChange={(e) => setCauseWorkHard(e.target.checked)}
+                onChange={(e) => {
+                  setCauseWorkHard(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>ทำงานเกินกำลัง</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causeSadness}
-                onChange={(e) => setCauseSadness(e.target.checked)}
+                onChange={(e) => {
+                  setCauseSadness(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>ความเศร้าโศกเสียใจ</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={causeWrath}
-                onChange={(e) => setCauseWrath(e.target.checked)}
+                onChange={(e) => {
+                  setCauseWrath(e.target.checked);
+                  clearError("causesOfSymptoms");
+                }}
                 className="rounded text-clinic-primary"
               />
               <span>ความโกรธ (Wrath)</span>
@@ -2252,7 +2548,10 @@ export function RecordTreatmentFormClient({
               type="text"
               placeholder="อื่นๆ (etc.) ระบุเพิ่มเติม..."
               value={causeOther}
-              onChange={(e) => setCauseOther(e.target.value)}
+              onChange={(e) => {
+                setCauseOther(e.target.value);
+                if (e.target.value.trim()) clearError("causesOfSymptoms");
+              }}
               className="w-full px-3 py-1.5 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
             />
           </div>
@@ -2267,10 +2566,17 @@ export function RecordTreatmentFormClient({
             <textarea
               rows={2}
               value={summaryOfSickness}
-              onChange={(e) => setSummaryOfSickness(e.target.value)}
-              placeholder="สรุปภาพรวมความเจ็บป่วยและสาเหตุ..."
-              className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+              onChange={(e) => {
+                setSummaryOfSickness(e.target.value);
+                if (e.target.value.trim()) clearError("summaryOfSickness");
+              }}
+              onBlur={() => handleTextBlur("summaryOfSickness", summaryOfSickness)}
+              placeholder="สรุปภาพรวมความเจ็บป่วยและสาเหตุ หรือใส่ '-'..."
+              className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+                errors.summaryOfSickness ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("summaryOfSickness")}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2281,10 +2587,17 @@ export function RecordTreatmentFormClient({
               <input
                 type="text"
                 value={diagnosisElements}
-                onChange={(e) => setDiagnosisElements(e.target.value)}
-                placeholder="เช่น ธาตุดินพิการ, ลมกองหยาบ..."
-                className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30 font-medium"
+                onChange={(e) => {
+                  setDiagnosisElements(e.target.value);
+                  if (e.target.value.trim()) clearError("diagnosisElements");
+                }}
+                onBlur={() => handleTextBlur("diagnosisElements", diagnosisElements)}
+                placeholder="เช่น ธาตุดินพิการ, ลมกองหยาบ หรือใส่ '-'..."
+                className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 font-medium transition-colors ${
+                  errors.diagnosisElements ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+                }`}
               />
+              {renderError("diagnosisElements")}
             </div>
 
             <div>
@@ -2294,11 +2607,18 @@ export function RecordTreatmentFormClient({
               <input
                 type="text"
                 value={ttmDiagnosis}
-                onChange={(e) => setTtmDiagnosis(e.target.value)}
-                placeholder="เช่น โรคลมปลายปัตฆาตสัญญาณ 4-5, ลมจับโปงแห้งเข่า..."
-                className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30 font-bold text-clinic-primary-deep"
+                onChange={(e) => {
+                  setTtmDiagnosis(e.target.value);
+                  if (e.target.value.trim()) clearError("ttmDiagnosis");
+                }}
+                onBlur={() => handleTextBlur("ttmDiagnosis", ttmDiagnosis)}
+                placeholder="เช่น โรคลมปลายปัตฆาตสัญญาณ 4-5, ลมจับโปงแห้งเข่า หรือใส่ '-'..."
+                className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 font-bold text-clinic-primary-deep transition-colors ${
+                  errors.ttmDiagnosis ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+                }`}
                 required
               />
+              {renderError("ttmDiagnosis")}
             </div>
           </div>
         </div>
@@ -2323,10 +2643,17 @@ export function RecordTreatmentFormClient({
           <input
             type="text"
             value={treatmentPlan}
-            onChange={(e) => setTreatmentPlan(e.target.value)}
-            placeholder="ระบุแผนการรักษา เช่น นวดแก้อาการและประคบสมุนไพรสด..."
-            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30 focus:ring-2 focus:ring-clinic-primary"
+            onChange={(e) => {
+              setTreatmentPlan(e.target.value);
+              if (e.target.value.trim()) clearError("treatmentPlan");
+            }}
+            onBlur={() => handleTextBlur("treatmentPlan", treatmentPlan)}
+            placeholder="ระบุแผนการรักษา เช่น นวดแก้อาการและประคบสมุนไพรสด หรือใส่ '-'..."
+            className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 focus:ring-2 transition-colors ${
+              errors.treatmentPlan ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line focus:ring-clinic-primary"
+            }`}
           />
+          {renderError("treatmentPlan")}
         </div>
 
         {/* วิธีการ (Treatment program Checkboxes) */}
@@ -2335,7 +2662,7 @@ export function RecordTreatmentFormClient({
             ๒. วิธีการรักษา / หัตถการ (Treatment program):
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
-            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={programCompress}
@@ -2345,7 +2672,7 @@ export function RecordTreatmentFormClient({
               <span>ประคบสมุนไพร (Herbal compress)</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={programSteam}
@@ -2355,7 +2682,7 @@ export function RecordTreatmentFormClient({
               <span>อบสมุนไพร (Herbal steam)</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={programHerbalMed}
@@ -2365,7 +2692,7 @@ export function RecordTreatmentFormClient({
               <span>จ่ายยาสมุนไพร (Prescription)</span>
             </label>
 
-            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer">
+            <label className="inline-flex items-center gap-2 p-2.5 bg-clinic-bg/40 border border-clinic-line rounded cursor-pointer hover:bg-clinic-bg/60">
               <input
                 type="checkbox"
                 checked={programMassage}
@@ -2380,11 +2707,18 @@ export function RecordTreatmentFormClient({
             <div className="pt-1">
               <input
                 type="text"
-                placeholder="ระบุรายละเอียดหัตถการ เช่น นวดกดจุดแก้อาการสัญญาณ 4-5 ศีรษะและบ่า..."
+                placeholder="ระบุรายละเอียดหัตถการ เช่น นวดกดจุดแก้อาการสัญญาณ 4-5 ศีรษะและบ่า หรือใส่ '-'..."
                 value={programMassageDetails}
-                onChange={(e) => setProgramMassageDetails(e.target.value)}
-                className="w-full px-3 py-1.5 border border-clinic-line rounded text-xs bg-clinic-bg/30"
+                onChange={(e) => {
+                  setProgramMassageDetails(e.target.value);
+                  if (e.target.value.trim()) clearError("programMassageDetails");
+                }}
+                onBlur={() => handleTextBlur("programMassageDetails", programMassageDetails)}
+                className={`w-full px-3 py-1.5 border rounded text-xs bg-clinic-bg/30 transition-colors ${
+                  errors.programMassageDetails ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+                }`}
               />
+              {renderError("programMassageDetails")}
             </div>
           )}
         </div>
@@ -2397,10 +2731,17 @@ export function RecordTreatmentFormClient({
           <textarea
             rows={2}
             value={evalAfterTreatment}
-            onChange={(e) => setEvalAfterTreatment(e.target.value)}
-            placeholder="เช่น กล้ามเนื้อคลายตัว ความตึงตัวลดลง ผู้ป่วยรู้สึกเบาสบาย..."
-            className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+            onChange={(e) => {
+              setEvalAfterTreatment(e.target.value);
+              if (e.target.value.trim()) clearError("evalAfterTreatment");
+            }}
+            onBlur={() => handleTextBlur("evalAfterTreatment", evalAfterTreatment)}
+            placeholder="เช่น กล้ามเนื้อคลายตัว ความตึงตัวลดลง หรือใส่ '-'..."
+            className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+              errors.evalAfterTreatment ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+            }`}
           />
+          {renderError("evalAfterTreatment")}
         </div>
 
         {/* Pain Score Assessment (หลังการรักษา) */}
@@ -2409,14 +2750,31 @@ export function RecordTreatmentFormClient({
             <label className="text-xs font-bold text-clinic-ink flex items-center gap-1.5">
               <span>✨ ระดับความปวด (หลังการรักษา) Pain score (After treatment)</span>
             </label>
-            <span className="text-xs font-bold text-emerald-700 font-mono">
-              {painScoreAfter} / 10{" "}
-              {painScoreBefore - painScoreAfter > 0 && (
-                <span className="text-xs font-bold text-emerald-600 ml-1">
-                  (ความปวดลดลง {painScoreBefore - painScoreAfter} ระดับ)
-                </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-emerald-700 font-mono">
+                {painScoreAfter !== null ? (
+                  <>
+                    {painScoreAfter} / 10{" "}
+                    {painScoreBefore !== null && painScoreBefore - painScoreAfter > 0 && (
+                      <span className="text-xs font-bold text-emerald-600 ml-1">
+                        (ความปวดลดลง {painScoreBefore - painScoreAfter} ระดับ)
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-clinic-ink-soft font-normal text-xs">(ยังไม่ได้ประเมิน)</span>
+                )}
+              </span>
+              {painScoreAfter !== null && (
+                <button
+                  type="button"
+                  onClick={() => setPainScoreAfter(null)}
+                  className="text-[11px] text-clinic-ink-soft hover:text-clinic-danger underline ml-2 cursor-pointer"
+                >
+                  ล้างค่า
+                </button>
               )}
-            </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -2450,10 +2808,17 @@ export function RecordTreatmentFormClient({
             <textarea
               rows={2}
               value={suggestions}
-              onChange={(e) => setSuggestions(e.target.value)}
-              placeholder="คำแนะนำการปฏิบัติตัว ท่าบริหารยืดเหยียด..."
-              className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+              onChange={(e) => {
+                setSuggestions(e.target.value);
+                if (e.target.value.trim()) clearError("suggestions");
+              }}
+              onBlur={() => handleTextBlur("suggestions", suggestions)}
+              placeholder="คำแนะนำการปฏิบัติตัว ท่าบริหารยืดเหยียด หรือใส่ '-'..."
+              className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+                errors.suggestions ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("suggestions")}
           </div>
 
           <div>
@@ -2463,10 +2828,17 @@ export function RecordTreatmentFormClient({
             <textarea
               rows={2}
               value={followup}
-              onChange={(e) => setFollowup(e.target.value)}
-              placeholder="เช่น นัดติดตามผลในอีก 1 สัปดาห์ (หรือระบุวันที่)"
-              className="w-full px-3 py-2 border border-clinic-line rounded-control text-xs bg-clinic-bg/30"
+              onChange={(e) => {
+                setFollowup(e.target.value);
+                if (e.target.value.trim()) clearError("followup");
+              }}
+              onBlur={() => handleTextBlur("followup", followup)}
+              placeholder="เช่น นัดติดตามผลในอีก 1 สัปดาห์ หรือใส่ '-'..."
+              className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 transition-colors ${
+                errors.followup ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
+              }`}
             />
+            {renderError("followup")}
           </div>
         </div>
       </div>
