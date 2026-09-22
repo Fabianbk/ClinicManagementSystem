@@ -22,8 +22,14 @@ import {
   Clock,
   User,
   CalendarDays,
+  CalendarPlus,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import { formatDoctorDisplayName } from "@/lib/utils";
+import { WeeklyCalendarGrid } from "@/components/doctor/WeeklyCalendarGrid";
+import { DoctorCreateAppointmentModal } from "@/components/doctor/DoctorCreateAppointmentModal";
+import { AppointmentDetailModal } from "@/components/doctor/AppointmentDetailModal";
 
 interface AppointmentListClientProps {
   doctorId: number;
@@ -69,6 +75,9 @@ export function AppointmentListClient({
     initialData?.content ?? []
   );
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+
+  // Search & Filter State for List View
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | AppointmentStatus>("ALL");
   const [selectedDate, setSelectedDate] = useState("");
@@ -77,7 +86,18 @@ export function AppointmentListClient({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Reload doctor's own appointments
+  // Doctor Booking Modal State
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createInitialDate, setCreateInitialDate] = useState<string | undefined>();
+  const [createInitialHour, setCreateInitialHour] = useState<string | undefined>();
+  const [createInitialSlotId, setCreateInitialSlotId] = useState<number | undefined>();
+
+  // Appointment Detail Modal State
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedAppointmentForDetail, setSelectedAppointmentForDetail] =
+    useState<AppointmentResponseDTO | null>(null);
+
+  // Reload doctor's appointments
   const refreshAppointments = async () => {
     try {
       setLoading(true);
@@ -95,7 +115,7 @@ export function AppointmentListClient({
     }
   };
 
-  // Complete appointment action
+  // Complete appointment action (from list view)
   const handleComplete = async (appointmentId: number) => {
     if (!confirm("ยืนยันการทำรายการ: เสร็จสิ้นการรักษา?")) return;
     try {
@@ -116,7 +136,7 @@ export function AppointmentListClient({
     }
   };
 
-  // No-show appointment action
+  // No-show appointment action (from list view)
   const handleNoShow = async (appointmentId: number) => {
     if (!confirm("ยืนยันระบุว่าผู้ป่วยไม่มาตามนัด?")) return;
     try {
@@ -137,7 +157,25 @@ export function AppointmentListClient({
     }
   };
 
-  // Filter appointments
+  // Handler when clicking empty slot in WeeklyCalendarGrid
+  const handleCreateAppointmentForSlot = (
+    dateStr: string,
+    hourStr: string,
+    slotId?: number
+  ) => {
+    setCreateInitialDate(dateStr);
+    setCreateInitialHour(hourStr);
+    setCreateInitialSlotId(slotId);
+    setIsCreateOpen(true);
+  };
+
+  // Handler when clicking an appointment card in WeeklyCalendarGrid
+  const handleSelectAppointment = (appointment: AppointmentResponseDTO) => {
+    setSelectedAppointmentForDetail(appointment);
+    setIsDetailOpen(true);
+  };
+
+  // Filter appointments for List view
   const filteredAppointments = appointments.filter((app) => {
     if (app.doctorId && app.doctorId !== doctorId) {
       return false;
@@ -149,7 +187,8 @@ export function AppointmentListClient({
       const q = searchQuery.toLowerCase();
       const matchPatient = app.patientFullname?.toLowerCase().includes(q);
       const matchDoctor = app.doctorFullname?.toLowerCase().includes(q);
-      const matchId = app.patientId?.toString().includes(q) || app.appointmentId?.toString().includes(q);
+      const matchId =
+        app.patientId?.toString().includes(q) || app.appointmentId?.toString().includes(q);
       if (!matchPatient && !matchDoctor && !matchId) return false;
     }
     if (selectedDate !== "") {
@@ -164,7 +203,9 @@ export function AppointmentListClient({
   const totalCount = doctorAppointments.length;
   const scheduledCount = doctorAppointments.filter((a) => a.status === "SCHEDULED").length;
   const completedCount = doctorAppointments.filter((a) => a.status === "COMPLETED").length;
-  const noShowCount = doctorAppointments.filter((a) => a.status === "NO_SHOW" || a.status === "CANCELLED").length;
+  const noShowCount = doctorAppointments.filter(
+    (a) => a.status === "NO_SHOW" || a.status === "CANCELLED"
+  ).length;
 
   return (
     <div className="space-y-6 pb-20 font-body text-clinic-ink">
@@ -173,21 +214,39 @@ export function AppointmentListClient({
         title="รายการนัดหมายตรวจรักษา (Appointments)"
         subtitle={
           doctorName
-            ? `ตรวจสอบคิวผู้ป่วย นัดหมายที่กำลังมาถึงของ ${formatDoctorDisplayName(doctorName)}`
-            : "ตรวจสอบคิวผู้ป่วย นัดหมายที่กำลังมาถึง และบันทึกผลการตรวจรักษา"
+            ? `ตรวจสอบคิวผู้ป่วย ปฏิทินนัดหมาย และบันทึกผลการตรวจรักษาของ ${formatDoctorDisplayName(
+                doctorName
+              )}`
+            : "ตรวจสอบคิวผู้ป่วย ปฏิทินนัดหมาย และบันทึกผลการตรวจรักษา"
         }
         actions={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={refreshAppointments}
-            disabled={loading}
-            className="gap-1.5 shadow-2xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>รีเฟรชข้อมูล</span>
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              type="button"
+              onClick={() => {
+                setCreateInitialDate(new Date().toISOString().split("T")[0]);
+                setCreateInitialHour(undefined);
+                setCreateInitialSlotId(undefined);
+                setIsCreateOpen(true);
+              }}
+              className="gap-1.5 bg-clinic-primary hover:bg-clinic-primary-deep text-white font-bold text-xs shadow-2xs"
+            >
+              <CalendarPlus className="w-3.5 h-3.5" />
+              <span>+ นัดหมายผู้ป่วยใหม่</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={refreshAppointments}
+              disabled={loading}
+              className="gap-1.5 shadow-2xs text-xs"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span>รีเฟรช</span>
+            </Button>
+          </div>
         }
       />
 
@@ -198,7 +257,11 @@ export function AppointmentListClient({
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
-          <button type="button" onClick={() => setErrorMsg(null)} className="text-xs underline cursor-pointer">
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            className="text-xs underline cursor-pointer"
+          >
             ปิด
           </button>
         </div>
@@ -210,7 +273,11 @@ export function AppointmentListClient({
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{successMsg}</span>
           </div>
-          <button type="button" onClick={() => setSuccessMsg(null)} className="text-xs underline cursor-pointer">
+          <button
+            type="button"
+            onClick={() => setSuccessMsg(null)}
+            className="text-xs underline cursor-pointer"
+          >
             ปิด
           </button>
         </div>
@@ -252,167 +319,252 @@ export function AppointmentListClient({
         </Card>
       </div>
 
-      {/* Filter Toolbar */}
-      <Card>
-        <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-clinic-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input
-              placeholder="ค้นหาชื่อผู้ป่วย, รหัส HN หรือรหัสนัดหมาย..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 text-xs"
-            />
-          </div>
+      {/* View Switcher Tabs (Weekly Calendar vs List View) */}
+      <div className="flex items-center justify-between border-b border-clinic-line pb-2 flex-wrap gap-2">
+        <div className="flex items-center bg-clinic-bg/80 p-1 rounded-control border border-clinic-line">
+          <button
+            type="button"
+            onClick={() => setViewMode("calendar")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-bold transition-all ${
+              viewMode === "calendar"
+                ? "bg-white text-clinic-primary-deep shadow-2xs"
+                : "text-clinic-ink-soft hover:text-clinic-ink hover:bg-white/50"
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5 text-clinic-primary" />
+            <span>ปฏิทินรายสัปดาห์ (Weekly Calendar)</span>
+          </button>
 
-          <div className="w-full sm:w-48">
-            <DatePicker
-              value={selectedDate}
-              onChange={(val) => setSelectedDate(val)}
-              placeholder="กรองตามวันที่"
-            />
-          </div>
-
-          <div className="w-full sm:w-48">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="text-xs"
-            >
-              <option value="ALL">ทุกสถานะนัดหมาย</option>
-              <option value="SCHEDULED">ยืนยันแล้ว (SCHEDULED)</option>
-              <option value="COMPLETED">เสร็จสิ้น (COMPLETED)</option>
-              <option value="CANCELLED">ยกเลิก (CANCELLED)</option>
-              <option value="NO_SHOW">ไม่มาตามนัด (NO_SHOW)</option>
-            </Select>
-          </div>
-
-          {(searchQuery || selectedDate || statusFilter !== "ALL") && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedDate("");
-                setStatusFilter("ALL");
-              }}
-              className="text-xs text-clinic-ink-soft shrink-0"
-            >
-              ล้างตัวกรอง
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Appointments List */}
-      {filteredAppointments.length > 0 ? (
-        <div className="space-y-4">
-          {filteredAppointments.map((app) => {
-            const isUpdating = updatingId === app.appointmentId;
-            const isScheduled = app.status === "SCHEDULED";
-
-            return (
-              <Card
-                key={app.appointmentId}
-                className="hover:border-clinic-primary/40 hover:shadow-sm transition-all"
-              >
-                <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  {/* Left Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <AppointmentStatusBadge status={app.status} />
-                      <span className="text-xs font-mono text-clinic-ink-soft">
-                        นัดหมาย #{app.appointmentId}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-display font-bold text-base text-clinic-primary-deep">
-                        {app.patientFullname || `ผู้ป่วยรหัส #${app.patientId}`}
-                      </h3>
-                      {app.patientId && (
-                        <span className="text-xs font-mono text-clinic-ink-soft bg-clinic-bg px-2 py-0.5 rounded border border-clinic-line">
-                          HN: P-{String(app.patientId).padStart(5, "0")}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-clinic-ink-soft">
-                      <span className="flex items-center gap-1.5 font-medium text-clinic-ink">
-                        <CalendarDays className="w-3.5 h-3.5 text-clinic-primary" />
-                        {formatDateThai(app.slotStartTime)}
-                      </span>
-                      <span className="flex items-center gap-1.5 font-mono text-clinic-ink">
-                        <Clock className="w-3.5 h-3.5 text-clinic-terracotta" />
-                        {formatTimeRange(app.slotStartTime, app.slotEndTime)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Right Actions */}
-                  <div className="flex flex-wrap items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-clinic-line">
-                    {app.patientId && (
-                      <Button asChild variant="outline" size="sm" className="text-xs gap-1">
-                        <Link href={`/doctor/patients/${app.patientId}`}>
-                          <User className="w-3.5 h-3.5" />
-                          <span>ดูประวัติ</span>
-                        </Link>
-                      </Button>
-                    )}
-
-                    {isScheduled && (
-                      <>
-                        <Button
-                          asChild
-                          variant="terracotta"
-                          size="sm"
-                          className="text-xs gap-1 shadow-2xs font-semibold"
-                        >
-                          <Link
-                            href={`/doctor/treatments/new?appointmentId=${app.appointmentId}&patientId=${app.patientId}`}
-                          >
-                            <FilePlus className="w-3.5 h-3.5" />
-                            <span>บันทึกการรักษา</span>
-                          </Link>
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          disabled={isUpdating}
-                          onClick={() => handleComplete(app.appointmentId)}
-                          className="text-xs text-emerald-800 hover:bg-emerald-100"
-                        >
-                          เสร็จสิ้น
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={isUpdating}
-                          onClick={() => handleNoShow(app.appointmentId)}
-                          className="text-xs text-rose-700 hover:bg-rose-50"
-                        >
-                          ไม่มาตามนัด
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-bold transition-all ${
+              viewMode === "list"
+                ? "bg-white text-clinic-primary-deep shadow-2xs"
+                : "text-clinic-ink-soft hover:text-clinic-ink hover:bg-white/50"
+            }`}
+          >
+            <List className="w-3.5 h-3.5 text-clinic-primary" />
+            <span>รายการนัดหมาย (List View)</span>
+          </button>
         </div>
-      ) : (
-        <EmptyState
-          icon={<Calendar className="w-6 h-6 text-clinic-primary" />}
-          title="ไม่พบรายการนัดหมายตามเงื่อนไขที่เลือก"
-          description="ลองปรับตัวกรองวันที่หรือสถานะนัดหมายใหม่"
+
+        <p className="text-xs text-clinic-ink-soft">
+          {viewMode === "calendar"
+            ? "คลิกที่ช่องเวลาว่างเพื่อสร้างนัดหมาย หรือคลิกการ์ดนัดหมายเพื่อดูรายละเอียด"
+            : `แสดงรายการนัดหมายทั้งหมด (${filteredAppointments.length} รายการ)`}
+        </p>
+      </div>
+
+      {/* VIEW MODE: CALENDAR */}
+      {viewMode === "calendar" && (
+        <WeeklyCalendarGrid
+          doctorId={doctorId}
+          appointments={appointments}
+          onSelectAppointment={handleSelectAppointment}
+          onCreateAppointmentForSlot={handleCreateAppointmentForSlot}
+          onRefresh={refreshAppointments}
         />
       )}
+
+      {/* VIEW MODE: LIST */}
+      {viewMode === "list" && (
+        <div className="space-y-4">
+          {/* Filter Toolbar */}
+          <Card>
+            <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 w-full">
+                <Search className="w-4 h-4 text-clinic-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  placeholder="ค้นหาชื่อผู้ป่วย, รหัส HN หรือรหัสนัดหมาย..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 text-xs"
+                />
+              </div>
+
+              <div className="w-full sm:w-48">
+                <DatePicker
+                  value={selectedDate}
+                  onChange={(val) => setSelectedDate(val)}
+                  placeholder="กรองตามวันที่"
+                />
+              </div>
+
+              <div className="w-full sm:w-48">
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="text-xs"
+                >
+                  <option value="ALL">ทุกสถานะนัดหมาย</option>
+                  <option value="SCHEDULED">ยืนยันแล้ว (SCHEDULED)</option>
+                  <option value="COMPLETED">เสร็จสิ้น (COMPLETED)</option>
+                  <option value="CANCELLED">ยกเลิก (CANCELLED)</option>
+                  <option value="NO_SHOW">ไม่มาตามนัด (NO_SHOW)</option>
+                </Select>
+              </div>
+
+              {(searchQuery || selectedDate || statusFilter !== "ALL") && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedDate("");
+                    setStatusFilter("ALL");
+                  }}
+                  className="text-xs text-clinic-ink-soft shrink-0"
+                >
+                  ล้างตัวกรอง
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Appointments List */}
+          {filteredAppointments.length > 0 ? (
+            <div className="space-y-4">
+              {filteredAppointments.map((app) => {
+                const isUpdating = updatingId === app.appointmentId;
+                const isScheduled = app.status === "SCHEDULED";
+
+                return (
+                  <Card
+                    key={app.appointmentId}
+                    className="hover:border-clinic-primary/40 hover:shadow-sm transition-all"
+                  >
+                    <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      {/* Left Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <AppointmentStatusBadge status={app.status} />
+                          <span className="text-xs font-mono text-clinic-ink-soft">
+                            นัดหมาย #{app.appointmentId}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-display font-bold text-base text-clinic-primary-deep">
+                            {app.patientFullname || `ผู้ป่วยรหัส #${app.patientId}`}
+                          </h3>
+                          {app.patientId && (
+                            <span className="text-xs font-mono text-clinic-ink-soft bg-clinic-bg px-2 py-0.5 rounded border border-clinic-line">
+                              HN: P-{String(app.patientId).padStart(5, "0")}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-clinic-ink-soft">
+                          <span className="flex items-center gap-1.5 font-medium text-clinic-ink">
+                            <CalendarDays className="w-3.5 h-3.5 text-clinic-primary" />
+                            {formatDateThai(app.slotStartTime)}
+                          </span>
+                          <span className="flex items-center gap-1.5 font-mono text-clinic-ink">
+                            <Clock className="w-3.5 h-3.5 text-clinic-terracotta" />
+                            {formatTimeRange(app.slotStartTime, app.slotEndTime)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right Actions */}
+                      <div className="flex flex-wrap items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-clinic-line">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSelectAppointment(app)}
+                          className="text-xs gap-1"
+                        >
+                          <span>ดูรายละเอียด</span>
+                        </Button>
+
+                        {app.patientId && (
+                          <Button asChild variant="outline" size="sm" className="text-xs gap-1">
+                            <Link href={`/doctor/patients/${app.patientId}`}>
+                              <User className="w-3.5 h-3.5" />
+                              <span>ดูประวัติ</span>
+                            </Link>
+                          </Button>
+                        )}
+
+                        {isScheduled && (
+                          <>
+                            <Button
+                              asChild
+                              variant="terracotta"
+                              size="sm"
+                              className="text-xs gap-1 shadow-2xs font-semibold"
+                            >
+                              <Link
+                                href={`/doctor/treatments/new?appointmentId=${app.appointmentId}&patientId=${app.patientId}`}
+                              >
+                                <FilePlus className="w-3.5 h-3.5" />
+                                <span>บันทึกการรักษา</span>
+                              </Link>
+                            </Button>
+
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() => handleComplete(app.appointmentId)}
+                              className="text-xs text-emerald-800 hover:bg-emerald-100"
+                            >
+                              เสร็จสิ้น
+                            </Button>
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() => handleNoShow(app.appointmentId)}
+                              className="text-xs text-rose-700 hover:bg-rose-50"
+                            >
+                              ไม่มาตามนัด
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<Calendar className="w-6 h-6 text-clinic-primary" />}
+              title="ไม่พบรายการนัดหมายตามเงื่อนไขที่เลือก"
+              description="ลองปรับตัวกรองวันที่หรือสถานะนัดหมายใหม่"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Doctor Create Appointment Modal */}
+      <DoctorCreateAppointmentModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        doctorId={doctorId}
+        initialDate={createInitialDate}
+        initialHour={createInitialHour}
+        initialSlotId={createInitialSlotId}
+        onSuccess={refreshAppointments}
+      />
+
+      {/* Appointment Detail Modal */}
+      <AppointmentDetailModal
+        appointment={selectedAppointmentForDetail}
+        isOpen={isDetailOpen}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setSelectedAppointmentForDetail(null);
+        }}
+        onStatusUpdated={refreshAppointments}
+      />
     </div>
   );
 }

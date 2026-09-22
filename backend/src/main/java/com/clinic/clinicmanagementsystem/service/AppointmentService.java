@@ -34,12 +34,16 @@ public class AppointmentService {
     private final CurrentUser currentUser;
 
     /**
-     * The core booking method. Only PATIENT can reach this endpoint
-     * (@PreAuthorize on the controller); requireSelfOrDoctor still guards it
-     * so a patient can never book on behalf of a different patientId.
+     * The core booking method. Both PATIENT and DOCTOR can reach this endpoint
+     * (@PreAuthorize on the controller).
+     * If caller is a PATIENT, currentUser.requireSelfOrDoctor guards it so a patient
+     * can never book on behalf of a different patientId.
+     * When caller is a DOCTOR, they can book for any patient.
      */
     public AppointmentResponseDTO book(AppointmentRequestDTO dto) {
-        currentUser.requireSelfOrDoctor(dto.getPatientId());
+        if (!currentUser.isDoctor()) {
+            currentUser.requireSelfOrDoctor(dto.getPatientId());
+        }
 
         AppointmentSlot slot = appointmentSlotRepository.findById(dto.getSlotId())
                 .orElseThrow(() -> new ResourceNotFoundException("AppointmentSlot", dto.getSlotId()));

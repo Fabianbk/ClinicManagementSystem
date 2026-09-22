@@ -22,7 +22,7 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @PostMapping
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR')")
     public ResponseEntity<ApiResponse<AppointmentResponseDTO>> book(
             @Valid @RequestBody AppointmentRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)

@@ -166,4 +166,44 @@ class AppointmentServiceTest {
         verify(appointmentSlotRepository).save(slot);
         verify(appointmentRepository).save(any(Appointment.class));
     }
+
+    @Test
+    void book_whenDoctorBooksForPatient_shouldSucceedWithoutRequireSelfOrDoctor() {
+        when(currentUser.isDoctor()).thenReturn(true);
+        when(appointmentSlotRepository.findById(100)).thenReturn(Optional.of(slot));
+        when(patientRepository.findById(10)).thenReturn(Optional.of(patient));
+        when(appointmentRepository.existsOverlappingAppointmentForPatient(
+                eq(10), eq(AppointmentStatus.SCHEDULED), eq(futureStartTime), eq(futureEndTime)))
+                .thenReturn(false);
+
+        Appointment savedAppointment = new Appointment();
+        savedAppointment.setAppointmentId(501);
+        savedAppointment.setAppointmentSlot(slot);
+        savedAppointment.setPatient(patient);
+        savedAppointment.setStatus(AppointmentStatus.SCHEDULED);
+
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(savedAppointment);
+
+        AppointmentResponseDTO responseDTO = AppointmentResponseDTO.builder()
+                .appointmentId(501)
+                .patientId(10)
+                .slotId(100)
+                .status(AppointmentStatus.SCHEDULED)
+                .build();
+        when(appointmentMapper.toResponseDTO(savedAppointment)).thenReturn(responseDTO);
+
+        AppointmentRequestDTO dto = AppointmentRequestDTO.builder()
+                .patientId(10)
+                .slotId(100)
+                .build();
+
+        AppointmentResponseDTO result = appointmentService.book(dto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getAppointmentId()).isEqualTo(501);
+        assertThat(slot.getStatus()).isEqualTo(AppointmentSlotStatus.BOOKED);
+        verify(currentUser, never()).requireSelfOrDoctor(anyInt());
+        verify(appointmentSlotRepository).save(slot);
+        verify(appointmentRepository).save(any(Appointment.class));
+    }
 }
