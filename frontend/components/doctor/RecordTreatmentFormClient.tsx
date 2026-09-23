@@ -892,7 +892,49 @@ export function RecordTreatmentFormClient({
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       toast.error("กรุณากรอกข้อมูลให้ครบถ้วน หรือใส่ '-' ในช่องที่ไม่มีข้อมูล");
-      setTimeout(() => scrollToFirstError(), 60);
+      const FIELD_ORDER = [
+        "selectedPatientId",
+        "patientId",
+        "slotId",
+        "symptoms",
+        "presentHistory",
+        "underlyingDiseaseDetails",
+        "drugAllergyDetails",
+        "foodAllergyDetails",
+        "familyDiseaseDetails",
+        "personalHistory",
+        "temp",
+        "pulse",
+        "respirationRate",
+        "bp",
+        "height",
+        "weight",
+        "modernDiagnosis",
+        "additionalSymptoms",
+        "bicepRT",
+        "bicepLT",
+        "tricepsRT",
+        "tricepsLT",
+        "kneeRT",
+        "kneeLT",
+        "ankleRT",
+        "ankleLT",
+        "menstruationHistory",
+        "causesOfSymptoms",
+        "summaryOfSickness",
+        "diagnosisElements",
+        "ttmDiagnosis",
+        "treatmentPlan",
+        "programMassageDetails",
+        "evalAfterTreatment",
+        "suggestions",
+        "followup",
+      ];
+      const firstKey = FIELD_ORDER.find((k) => newErrors[k]);
+      scrollToFirstError(null, firstKey);
+      setTimeout(() => {
+        scrollToFirstError(null, firstKey);
+      }, 60);
       return;
     }
 
@@ -1050,7 +1092,7 @@ export function RecordTreatmentFormClient({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-6 pb-24 font-body text-clinic-ink">
+    <form onSubmit={handleSubmit} noValidate className="max-w-5xl mx-auto space-y-6 pb-24 font-body text-clinic-ink">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -1155,6 +1197,7 @@ export function RecordTreatmentFormClient({
           >
             <select
               id="selectedPatientId"
+              name="patientId"
               value={selectedPatientId}
               onChange={(e) => {
                 setSelectedPatientId(Number(e.target.value));
@@ -1226,7 +1269,14 @@ export function RecordTreatmentFormClient({
 
         {/* Walk-in Slot Selector */}
         {selectedAppointmentId === "WALK_IN" && !noScheduleForDate && (
-          <div className="bg-clinic-bg/40 p-4 rounded-control border border-clinic-line space-y-2">
+          <div
+            id="field-slotId"
+            className={`p-4 rounded-control border space-y-2 transition-colors ${
+              errors.slotId
+                ? "bg-red-50/20 border-clinic-danger ring-1 ring-clinic-danger"
+                : "bg-clinic-bg/40 border-clinic-line"
+            }`}
+          >
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-clinic-primary-deep flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-clinic-primary" />
@@ -1496,6 +1546,7 @@ export function RecordTreatmentFormClient({
         >
           <textarea
             id="symptoms"
+            name="symptoms"
             rows={2}
             value={symptoms}
             onChange={(e) => {
@@ -1527,6 +1578,8 @@ export function RecordTreatmentFormClient({
             ประวัติปัจจุบัน (Present History)
           </label>
           <textarea
+            id="field-presentHistory"
+            name="presentHistory"
             rows={2}
             value={presentHistory}
             onChange={(e) => {
@@ -1579,6 +1632,8 @@ export function RecordTreatmentFormClient({
                   <div className="space-y-1">
                     <input
                       type="text"
+                      id="field-underlyingDiseaseDetails"
+                      name="underlyingDiseaseDetails"
                       placeholder="ระบุโรคประจำตัว หรือใส่ '-'..."
                       value={underlyingDiseaseDetails}
                       onChange={(e) => {
@@ -1625,6 +1680,8 @@ export function RecordTreatmentFormClient({
                   <div className="space-y-1">
                     <input
                       type="text"
+                      id="field-drugAllergyDetails"
+                      name="drugAllergyDetails"
                       placeholder="ระบุยาที่แพ้และอาการ หรือใส่ '-'..."
                       value={drugAllergyDetails}
                       onChange={(e) => {
@@ -1671,6 +1728,8 @@ export function RecordTreatmentFormClient({
                   <div className="space-y-1">
                     <input
                       type="text"
+                      id="field-foodAllergyDetails"
+                      name="foodAllergyDetails"
                       placeholder="ระบุอาหารที่แพ้ หรือใส่ '-'..."
                       value={foodAllergyDetails}
                       onChange={(e) => {
@@ -1719,6 +1778,8 @@ export function RecordTreatmentFormClient({
                 <div className="flex-1 space-y-1">
                   <input
                     type="text"
+                    id="field-familyDiseaseDetails"
+                    name="familyDiseaseDetails"
                     placeholder="ระบุโรคทางพันธุกรรมในครอบครัว หรือใส่ '-'..."
                     value={familyDiseaseDetails}
                     onChange={(e) => {
@@ -1791,6 +1852,8 @@ export function RecordTreatmentFormClient({
                 วิถีชีวิตและกิจวัตรประจำวัน (Lifestyle Habits / Daily Routine):
               </label>
               <textarea
+                id="field-personalHistory"
+                name="personalHistory"
                 rows={2}
                 value={personalHistory}
                 onChange={(e) => {
@@ -1831,6 +1894,8 @@ export function RecordTreatmentFormClient({
             <input
               type="number"
               step="0.1"
+              id="field-temp"
+              name="temp"
               value={temp}
               onChange={(e) => {
                 const val = e.target.value === "" ? "" : Number(e.target.value);
@@ -1852,6 +1917,8 @@ export function RecordTreatmentFormClient({
             </label>
             <input
               type="number"
+              id="field-pulse"
+              name="pulse"
               value={pulse}
               onChange={(e) => {
                 const val = e.target.value === "" ? "" : Number(e.target.value);
@@ -1873,6 +1940,8 @@ export function RecordTreatmentFormClient({
             </label>
             <input
               type="number"
+              id="field-respirationRate"
+              name="respirationRate"
               value={respirationRate}
               onChange={(e) => {
                 const val = e.target.value === "" ? "" : Number(e.target.value);
@@ -1894,6 +1963,8 @@ export function RecordTreatmentFormClient({
             </label>
             <input
               type="text"
+              id="field-bp"
+              name="bp"
               value={bp}
               onChange={(e) => {
                 setBp(e.target.value);
@@ -1914,6 +1985,8 @@ export function RecordTreatmentFormClient({
             </label>
             <input
               type="number"
+              id="field-height"
+              name="height"
               value={height}
               onChange={(e) => {
                 const val = e.target.value === "" ? "" : Number(e.target.value);
@@ -1936,6 +2009,8 @@ export function RecordTreatmentFormClient({
             <input
               type="number"
               step="0.1"
+              id="field-weight"
+              name="weight"
               value={weight}
               onChange={(e) => {
                 const val = e.target.value === "" ? "" : Number(e.target.value);
@@ -2018,6 +2093,8 @@ export function RecordTreatmentFormClient({
             </label>
             <input
               type="text"
+              id="field-modernDiagnosis"
+              name="modernDiagnosis"
               value={modernDiagnosis}
               onChange={(e) => {
                 setModernDiagnosis(e.target.value);
@@ -2038,6 +2115,8 @@ export function RecordTreatmentFormClient({
             </label>
             <input
               type="text"
+              id="field-additionalSymptoms"
+              name="additionalSymptoms"
               value={additionalSymptoms}
               onChange={(e) => {
                 setAdditionalSymptoms(e.target.value);
@@ -2066,6 +2145,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">RT:</span>
                   <input
                     type="text"
+                    id="field-bicepRT"
+                    name="bicepRT"
                     value={bicepRT}
                     onChange={(e) => {
                       setBicepRT(e.target.value);
@@ -2083,6 +2164,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
+                    id="field-bicepLT"
+                    name="bicepLT"
                     value={bicepLT}
                     onChange={(e) => {
                       setBicepLT(e.target.value);
@@ -2106,6 +2189,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">RT:</span>
                   <input
                     type="text"
+                    id="field-tricepsRT"
+                    name="tricepsRT"
                     value={tricepsRT}
                     onChange={(e) => {
                       setTricepsRT(e.target.value);
@@ -2123,6 +2208,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
+                    id="field-tricepsLT"
+                    name="tricepsLT"
                     value={tricepsLT}
                     onChange={(e) => {
                       setTricepsLT(e.target.value);
@@ -2146,6 +2233,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">RT:</span>
                   <input
                     type="text"
+                    id="field-kneeRT"
+                    name="kneeRT"
                     value={kneeRT}
                     onChange={(e) => {
                       setKneeRT(e.target.value);
@@ -2163,6 +2252,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
+                    id="field-kneeLT"
+                    name="kneeLT"
                     value={kneeLT}
                     onChange={(e) => {
                       setKneeLT(e.target.value);
@@ -2186,6 +2277,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">RT:</span>
                   <input
                     type="text"
+                    id="field-ankleRT"
+                    name="ankleRT"
                     value={ankleRT}
                     onChange={(e) => {
                       setAnkleRT(e.target.value);
@@ -2203,6 +2296,8 @@ export function RecordTreatmentFormClient({
                   <span className="text-[10px] text-clinic-ink-soft">LT:</span>
                   <input
                     type="text"
+                    id="field-ankleLT"
+                    name="ankleLT"
                     value={ankleLT}
                     onChange={(e) => {
                       setAnkleLT(e.target.value);
@@ -2228,6 +2323,8 @@ export function RecordTreatmentFormClient({
           </label>
           <input
             type="text"
+            id="field-menstruationHistory"
+            name="menstruationHistory"
             value={menstruationHistory}
             onChange={(e) => {
               setMenstruationHistory(e.target.value);
@@ -2703,9 +2800,12 @@ export function RecordTreatmentFormClient({
         </div>
 
         {/* มูลเหตุการเกิดโรค (Cause of symptoms Checkboxes) */}
-        <div className={`space-y-2 p-3 rounded-control border transition-colors ${
-          errors.causesOfSymptoms ? "border-clinic-danger bg-red-50/10" : "border-transparent"
-        }`}>
+        <div
+          id="field-causesOfSymptoms"
+          className={`space-y-2 p-3 rounded-control border transition-colors ${
+            errors.causesOfSymptoms ? "border-clinic-danger bg-red-50/10" : "border-transparent"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <label className="block text-xs font-bold text-clinic-ink">
               มูลเหตุการเกิดโรค (Cause of symptoms): <span className="text-red-500">* (เลือกอย่างน้อย 1 อย่าง)</span>
@@ -2843,6 +2943,8 @@ export function RecordTreatmentFormClient({
               สรุปความเจ็บป่วย (Summary of sickness)
             </label>
             <textarea
+              id="field-summaryOfSickness"
+              name="summaryOfSickness"
               rows={2}
               value={summaryOfSickness}
               onChange={(e) => {
@@ -2865,6 +2967,8 @@ export function RecordTreatmentFormClient({
               </label>
               <input
                 type="text"
+                id="field-diagnosisElements"
+                name="diagnosisElements"
                 value={diagnosisElements}
                 onChange={(e) => {
                   setDiagnosisElements(e.target.value);
@@ -2885,6 +2989,8 @@ export function RecordTreatmentFormClient({
               </label>
               <input
                 type="text"
+                id="field-ttmDiagnosis"
+                name="ttmDiagnosis"
                 value={ttmDiagnosis}
                 onChange={(e) => {
                   setTtmDiagnosis(e.target.value);
@@ -2895,7 +3001,6 @@ export function RecordTreatmentFormClient({
                 className={`w-full px-3 py-2 border rounded-control text-xs bg-clinic-bg/30 font-bold text-clinic-primary-deep transition-colors ${
                   errors.ttmDiagnosis ? "border-clinic-danger focus:ring-clinic-danger bg-red-50/20" : "border-clinic-line"
                 }`}
-                required
               />
               {renderError("ttmDiagnosis")}
             </div>
@@ -2921,6 +3026,8 @@ export function RecordTreatmentFormClient({
           </label>
           <input
             type="text"
+            id="field-treatmentPlan"
+            name="treatmentPlan"
             value={treatmentPlan}
             onChange={(e) => {
               setTreatmentPlan(e.target.value);
@@ -2986,6 +3093,8 @@ export function RecordTreatmentFormClient({
             <div className="pt-1">
               <input
                 type="text"
+                id="field-programMassageDetails"
+                name="programMassageDetails"
                 placeholder="ระบุรายละเอียดหัตถการ เช่น นวดกดจุดแก้อาการสัญญาณ 4-5 ศีรษะและบ่า หรือใส่ '-'..."
                 value={programMassageDetails}
                 onChange={(e) => {
@@ -3008,6 +3117,8 @@ export function RecordTreatmentFormClient({
             ตรวจร่างกายและประเมินผลหลังการรักษา (Physical examination and evaluation after treatments)
           </label>
           <textarea
+            id="field-evalAfterTreatment"
+            name="evalAfterTreatment"
             rows={2}
             value={evalAfterTreatment}
             onChange={(e) => {
@@ -3085,6 +3196,8 @@ export function RecordTreatmentFormClient({
               ๓. คำแนะนำ (Suggestions)
             </label>
             <textarea
+              id="field-suggestions"
+              name="suggestions"
               rows={2}
               value={suggestions}
               onChange={(e) => {
@@ -3105,6 +3218,8 @@ export function RecordTreatmentFormClient({
               ๔. นัดหมายเพื่อติดตามผลการรักษา (Follow up)
             </label>
             <textarea
+              id="field-followup"
+              name="followup"
               rows={2}
               value={followup}
               onChange={(e) => {

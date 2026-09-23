@@ -105,32 +105,62 @@ export function formatDualEraDisplay(isoDate: string): string {
 }
 
 /**
- * Smoothly scroll to the first element in the DOM that has an error state
+ * Smoothly scroll to the first element in the DOM that has an error state,
+ * with sticky navbar offset consideration and focus management.
  */
-export function scrollToFirstError(rootContainer?: HTMLElement | null): void {
+export function scrollToFirstError(
+  rootContainer?: HTMLElement | null,
+  targetKeyOrId?: string | null
+): void {
   if (typeof window === "undefined") return;
 
   const container = rootContainer || document;
-  const firstErrorElement = container.querySelector<HTMLElement>(
-    '[aria-invalid="true"], [data-has-error="true"], .border-clinic-danger, .has-form-error'
-  );
+  let firstErrorElement: HTMLElement | null = null;
+
+  if (targetKeyOrId) {
+    firstErrorElement =
+      document.getElementById(targetKeyOrId) ||
+      document.getElementById(`field-${targetKeyOrId}`) ||
+      container.querySelector<HTMLElement>(`[name="${targetKeyOrId}"]`) ||
+      container.querySelector<HTMLElement>(`[data-field="${targetKeyOrId}"]`);
+  }
+
+  if (!firstErrorElement) {
+    firstErrorElement = container.querySelector<HTMLElement>(
+      '[aria-invalid="true"], [data-has-error="true"], .border-clinic-danger, .has-form-error'
+    );
+  }
 
   if (firstErrorElement) {
-    firstErrorElement.scrollIntoView({
+    const navbarOffset = 90; // DoctorNavbar sticky header is 64px + comfortable breathing margin
+    const elementRect = firstErrorElement.getBoundingClientRect();
+    const currentScroll =
+      window.scrollY ?? window.pageYOffset ?? document.documentElement.scrollTop ?? 0;
+    const absoluteElementTop = elementRect.top + currentScroll;
+    const targetScrollY = Math.max(0, absoluteElementTop - navbarOffset);
+
+    window.scrollTo({
+      top: targetScrollY,
       behavior: "smooth",
-      block: "center",
     });
 
-    // Try focusing the input or inner input
-    if (typeof firstErrorElement.focus === "function") {
-      firstErrorElement.focus();
-    } else {
-      const innerInput = firstErrorElement.querySelector<HTMLElement>(
-        "input, select, textarea, button"
-      );
-      if (innerInput && typeof innerInput.focus === "function") {
-        innerInput.focus();
-      }
-    }
+    // Try focusing the input or inner input after scroll starts
+    setTimeout(() => {
+      try {
+        if (
+          typeof firstErrorElement.focus === "function" &&
+          firstErrorElement.tagName !== "DIV"
+        ) {
+          firstErrorElement.focus({ preventScroll: true });
+        } else {
+          const innerInput = firstErrorElement.querySelector<HTMLElement>(
+            "input, select, textarea, button"
+          );
+          if (innerInput && typeof innerInput.focus === "function") {
+            innerInput.focus({ preventScroll: true });
+          }
+        }
+      } catch {}
+    }, 250);
   }
 }

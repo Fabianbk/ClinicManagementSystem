@@ -273,7 +273,9 @@ export function RecordTreatmentEditClient({
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
-      setTimeout(() => scrollToFirstError(), 60);
+      const firstKey = Object.keys(newErrors)[0];
+      scrollToFirstError(null, firstKey);
+      setTimeout(() => scrollToFirstError(null, firstKey), 60);
       return;
     }
 
@@ -348,7 +350,7 @@ export function RecordTreatmentEditClient({
   };
 
   return (
-    <form onSubmit={handleUpdate} className="max-w-5xl mx-auto space-y-6 pb-20 font-body text-clinic-ink">
+    <form onSubmit={handleUpdate} noValidate className="max-w-5xl mx-auto space-y-6 pb-20 font-body text-clinic-ink">
       {/* Receipt Lockdown Notice Banner */}
       {isLocked && (
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-card shadow-2xs flex items-start gap-3">
