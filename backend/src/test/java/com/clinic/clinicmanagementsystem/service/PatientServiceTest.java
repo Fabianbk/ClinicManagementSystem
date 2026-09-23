@@ -17,6 +17,7 @@ import com.clinic.clinicmanagementsystem.mapper.PrincipleMapper;
 import com.clinic.clinicmanagementsystem.repository.ContactPersonRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientAccountRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
+import com.clinic.clinicmanagementsystem.repository.RecordTreatmentRepository;
 import com.clinic.clinicmanagementsystem.security.CurrentUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,9 @@ class PatientServiceTest {
 
     @Mock
     private ContactPersonMapper contactPersonMapper;
+
+    @Mock
+    private RecordTreatmentRepository recordTreatmentRepository;
 
     @InjectMocks
     private PatientService patientService;
@@ -245,6 +249,6 @@ class PatientServiceTest {
         patient.setZipCode("10110");
 
         assertThat(patient.getFullAddress())
-                .isEqualTo("บ้านเลขที่ 99 ถนน สุขุมวิท แขวง คลองเตย เขต คลองเตย จังหวัด กรุงเทพมหานคร 10110");
+                .isEqualTo("บ้านเลขที่ 99 ถนน สุขุมวิท แขวง คลองเตย เขต คลองเตย กรุงเทพมหานคร 10110");
     }
 }

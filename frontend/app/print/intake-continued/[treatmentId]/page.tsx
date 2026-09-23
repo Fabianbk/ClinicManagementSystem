@@ -3,6 +3,7 @@ import { getRecordTreatment } from "@/lib/resources/record-treatments";
 import { getPatient } from "@/lib/resources/patients";
 import { PrintToolbar } from "@/components/print/PrintToolbar";
 import { formatThaiDate, formatDoctorDisplayName } from "@/lib/utils";
+import { CLINIC_INFO } from "@/lib/constants";
 
 interface ContinuedPrintPageProps {
   params: { treatmentId: string };
@@ -43,7 +44,7 @@ export default async function ContinuedPrintPage({ params }: ContinuedPrintPageP
         {/* Header */}
         <div className="text-center border-b-2 border-slate-900 pb-2">
           <div className="flex justify-between items-center text-[10px] text-slate-600 mb-0.5">
-            <span>พิมพ์วิมานคลินิกการแพทย์แผนไทย (081-9358026)</span>
+            <span>{CLINIC_INFO.nameTh} ({CLINIC_INFO.phone})</span>
             <span className="font-bold text-slate-900">แบบบันทึกการรักษาต่อเนื่อง (CONTINUED VISIT)</span>
           </div>
           <h2 className="text-base font-bold text-slate-900">
@@ -215,7 +216,7 @@ export default async function ContinuedPrintPage({ params }: ContinuedPrintPageP
           <div className="space-y-4">
             <p className="text-slate-600">ลงชื่อแพทย์แผนไทยผู้ตรวจรักษา</p>
             <p className="font-bold text-slate-900">({formatDoctorDisplayName(treatment.doctorFullname)})</p>
-            <p className="text-[10px] text-slate-500">แพทย์แผนไทยประจำพิมพ์วิมานคลินิก</p>
+            <p className="text-[10px] text-slate-500">แพทย์แผนไทยประจำ{CLINIC_INFO.nameTh}</p>
           </div>
         </div>
       </main>

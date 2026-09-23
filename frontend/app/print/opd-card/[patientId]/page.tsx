@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { getPatient } from "@/lib/resources/patients";
+import { getLatestHealthProfileByPatientId } from "@/lib/resources/record-treatments";
 import { PrintToolbar } from "@/components/print/PrintToolbar";
-import { formatThaiDate } from "@/lib/utils";
+import { formatThaiDate, formatThaiAddress, formatMaritalStatusThai } from "@/lib/utils";
+import { CLINIC_INFO } from "@/lib/constants";
 import { AlertTriangle, HeartPulse, User, Phone, Home, ShieldAlert } from "lucide-react";
 
 interface OpdCardPrintPageProps {
@@ -14,7 +16,11 @@ export default async function OpdCardPrintPage({ params }: OpdCardPrintPageProps
     notFound();
   }
 
-  const patient = await getPatient(patientId).catch(() => null);
+  const [patient, healthProfile] = await Promise.all([
+    getPatient(patientId).catch(() => null),
+    getLatestHealthProfileByPatientId(patientId).catch(() => null),
+  ]);
+
   if (!patient) {
     notFound();
   }
@@ -27,18 +33,7 @@ export default async function OpdCardPrintPage({ params }: OpdCardPrintPageProps
       )
     : "-";
 
-  const fullAddress = [
-    patient.houseNo ? `บ้านเลขที่ ${patient.houseNo}` : "",
-    patient.moo ? `หมู่ ${patient.moo}` : "",
-    patient.soi ? `ซอย ${patient.soi}` : "",
-    patient.road ? `ถนน ${patient.road}` : "",
-    patient.subDistrict ? `ตำบล/แขวง ${patient.subDistrict}` : "",
-    patient.district ? `อำเภอ/เขต ${patient.district}` : "",
-    patient.province ? `จังหวัด ${patient.province}` : "",
-    patient.zipCode ? patient.zipCode : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const fullAddress = formatThaiAddress(patient);
 
   const emergency = patient.contactPersons?.[0];
 
@@ -57,10 +52,10 @@ export default async function OpdCardPrintPage({ params }: OpdCardPrintPageProps
         {/* Document Header */}
         <div className="text-center border-b-2 border-slate-800 pb-3 mb-4">
           <h2 className="text-lg font-bold tracking-tight text-slate-900">
-            พิมพ์วิมานคลินิกการแพทย์แผนไทย (Pimvimaan Thai Traditional Medicine Clinic)
+            {CLINIC_INFO.nameTh} ({CLINIC_INFO.nameEn})
           </h2>
           <p className="text-xs text-slate-600 mt-0.5">
-            ใบอนุญาตให้จัดตั้งคลินิกเลขที่ 10108002264 · โทรศัพท์: 081-9358026
+            ใบอนุญาตให้จัดตั้งคลินิกเลขที่ {CLINIC_INFO.licenseNo} · โทรศัพท์: {CLINIC_INFO.phone}
           </p>
           <div className="inline-block mt-1 px-3 py-0.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-xs">
             บัตรประจำตัวผู้ป่วยเวชระเบียน (OUTPATIENT DEPARTMENT CARD)
@@ -163,7 +158,7 @@ export default async function OpdCardPrintPage({ params }: OpdCardPrintPageProps
               <div>
                 <span className="text-slate-500 text-[11px]">สถานภาพสมรส:</span>
                 <p className="font-medium text-slate-800">
-                  {patient.maritalStatus || "-"}
+                  {formatMaritalStatusThai(patient.maritalStatus)}
                 </p>
               </div>
             </div>
@@ -231,21 +226,21 @@ export default async function OpdCardPrintPage({ params }: OpdCardPrintPageProps
                 ประวัติการแพ้ยา (DRUG ALLERGIES):
               </span>
               <p className="text-sm font-black text-rose-800">
-                {patient.healthProfile?.drugAllergy || "ปฏิเสธประวัติแพ้ยา (No known drug allergy)"}
+                {healthProfile?.drugAllergy || patient.healthProfile?.drugAllergy || "ปฏิเสธประวัติแพ้ยา (No known drug allergy)"}
               </p>
             </div>
 
             <div className="space-y-1">
               <span className="text-slate-500 text-[11px]">โรคประจำตัว (Underlying Diseases):</span>
               <p className="font-semibold text-slate-900">
-                {patient.healthProfile?.underlyingDisease || "- ไม่มี / ปฏิเสธ -"}
+                {healthProfile?.underlyingDisease || patient.healthProfile?.underlyingDisease || "- ไม่มี / ปฏิเสธ -"}
               </p>
             </div>
 
             <div className="space-y-1">
               <span className="text-slate-500 text-[11px]">ประวัติแพ้อาหาร/สารอื่นๆ:</span>
               <p className="text-slate-800">
-                {patient.healthProfile?.foodAllergy || "-"}
+                {healthProfile?.foodAllergy || patient.healthProfile?.foodAllergy || "-"}
               </p>
             </div>
 
@@ -257,7 +252,7 @@ export default async function OpdCardPrintPage({ params }: OpdCardPrintPageProps
 
         {/* Footer */}
         <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-500">
-          <span>คลินิกการแพทย์แผนไทยพิมพ์วิมาน · เอกสารเวชระเบียนทางการ</span>
+          <span>{CLINIC_INFO.nameTh} · {CLINIC_INFO.addressTh}</span>
           <span>วันที่พิมพ์: {new Date().toLocaleDateString("th-TH")}</span>
         </div>
       </main>

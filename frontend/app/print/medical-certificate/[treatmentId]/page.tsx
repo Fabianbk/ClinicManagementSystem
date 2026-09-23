@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { getRecordTreatment } from "@/lib/resources/record-treatments";
 import { getPatient } from "@/lib/resources/patients";
+import { getDoctor } from "@/lib/resources/doctors";
 import { PrintToolbar } from "@/components/print/PrintToolbar";
-import { formatThaiDate, formatDoctorDisplayName } from "@/lib/utils";
+import { formatThaiDate, formatThaiAddress, formatDoctorDisplayName } from "@/lib/utils";
+import { CLINIC_INFO } from "@/lib/constants";
 
 interface MedicalCertificatePrintPageProps {
   params: { treatmentId: string };
@@ -27,25 +29,18 @@ export default async function MedicalCertificatePrintPage({
     notFound();
   }
 
-  const patient = await getPatient(treatment.patientId).catch(() => null);
+  const [patient, doctor] = await Promise.all([
+    getPatient(treatment.patientId).catch(() => null),
+    treatment.doctorId ? getDoctor(treatment.doctorId).catch(() => null) : Promise.resolve(null),
+  ]);
 
   const hnCode = `P-${String(treatment.patientId).padStart(5, "0")}`;
   const sickLeaveDays = searchParams.sickLeaveDays ? Number(searchParams.sickLeaveDays) : null;
   const sickLeaveFrom = searchParams.sickLeaveFrom || "";
   const sickLeaveTo = searchParams.sickLeaveTo || "";
 
-  const fullAddress = [
-    patient?.houseNo ? `บ้านเลขที่ ${patient.houseNo}` : "",
-    patient?.moo ? `หมู่ ${patient.moo}` : "",
-    patient?.soi ? `ซอย ${patient.soi}` : "",
-    patient?.road ? `ถนน ${patient.road}` : "",
-    patient?.subDistrict ? `ตำบล/แขวง ${patient.subDistrict}` : "",
-    patient?.district ? `อำเภอ/เขต ${patient.district}` : "",
-    patient?.province ? `จังหวัด ${patient.province}` : "",
-    patient?.zipCode || "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const fullAddress = formatThaiAddress(patient);
+  const doctorLicenseNo = doctor?.physicianLicenseNo || CLINIC_INFO.defaultDoctorLicenseNo;
 
   const docxQuery = new URLSearchParams();
   if (sickLeaveDays) docxQuery.set("sickLeaveDays", String(sickLeaveDays));
@@ -67,13 +62,13 @@ export default async function MedicalCertificatePrintPage({
         {/* Official Header */}
         <div className="text-center border-b-2 border-slate-900 pb-4 space-y-1">
           <h2 className="text-xl font-bold tracking-tight text-slate-900">
-            พิมพ์วิมานคลินิกการแพทย์แผนไทย
+            {CLINIC_INFO.nameTh}
           </h2>
           <p className="text-xs text-slate-600">
-            Pimvimaan Thai Traditional Medicine Clinic · ใบอนุญาตให้จัดตั้งคลินิกเลขที่ 10108002264
+            {CLINIC_INFO.nameEn} · ใบอนุญาตให้จัดตั้งคลินิกเลขที่ {CLINIC_INFO.licenseNo}
           </p>
           <p className="text-xs text-slate-600">
-            เลขที่ 78/14 หมู่บ้านสัมมากร รามคำแหง 112 แขวงสะพานสูง เขตสะพานสูง กรุงเทพมหานคร 10240 · โทร. 081-9358026
+            {CLINIC_INFO.addressTh} · โทร. {CLINIC_INFO.phone}
           </p>
           <div className="inline-block mt-2 px-4 py-1 bg-slate-900 text-white text-sm font-bold uppercase tracking-wider rounded-xs">
             ใบรับรองแพทย์ (MEDICAL CERTIFICATE)
@@ -87,7 +82,7 @@ export default async function MedicalCertificatePrintPage({
           </div>
 
           <p className="indent-8">
-            ข้าพเจ้า <strong className="text-slate-900 border-b border-dotted border-slate-400 px-1 font-bold">{formatDoctorDisplayName(treatment.doctorFullname)}</strong> ผู้ประกอบวิชาชีพการแพทย์แผนไทย ใบอนุญาตประกอบวิชาชีพเลขที่ <strong className="border-b border-dotted border-slate-400 px-1 font-mono">พท.ว. 21088</strong> ประจำพิมพ์วิมานคลินิกการแพทย์แผนไทย
+            ข้าพเจ้า <strong className="text-slate-900 border-b border-dotted border-slate-400 px-1 font-bold">{formatDoctorDisplayName(treatment.doctorFullname)}</strong> ผู้ประกอบวิชาชีพการแพทย์แผนไทย ใบอนุญาตประกอบวิชาชีพเลขที่ <strong className="border-b border-dotted border-slate-400 px-1 font-mono">{doctorLicenseNo}</strong> ประจำ{CLINIC_INFO.nameTh}
           </p>
 
           <p className="indent-8">

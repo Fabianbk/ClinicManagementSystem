@@ -151,21 +151,73 @@ public class Patient {
         return passportNo;
     }
 
-    /** Helper for single unified full address string. */
+    /** Helper for single unified full address string matching official Thai standards. */
     public String getFullAddress() {
-        boolean isBkk = province != null && (province.contains("กรุงเทพ") || province.equalsIgnoreCase("Bangkok"));
-        String subPrefix = isBkk ? "แขวง " : "ตำบล ";
-        String distPrefix = isBkk ? "เขต " : "อำเภอ ";
+        boolean isBkk = province != null && (province.contains("กรุงเทพ") || province.equalsIgnoreCase("Bangkok") || province.equalsIgnoreCase("กทม") || province.equalsIgnoreCase("กทม."));
+
+        String cleanHouseNo = null;
+        if (houseNo != null && !houseNo.isBlank()) {
+            String val = houseNo.trim();
+            cleanHouseNo = (val.startsWith("บ้านเลขที่") || val.startsWith("เลขที่")) ? val : "บ้านเลขที่ " + val;
+        }
+
+        String cleanMoo = null;
+        if (moo != null && !moo.isBlank()) {
+            String val = moo.trim();
+            cleanMoo = val.startsWith("หมู่") ? val : "หมู่ " + val;
+        }
+
+        String cleanSoi = null;
+        if (soi != null && !soi.isBlank()) {
+            String val = soi.trim();
+            cleanSoi = val.startsWith("ซอย") ? val : "ซอย " + val;
+        }
+
+        String cleanRoad = null;
+        if (road != null && !road.isBlank()) {
+            String val = road.trim();
+            cleanRoad = val.startsWith("ถนน") ? val : "ถนน " + val;
+        }
+
+        String cleanSubDistrict = null;
+        if (subDistrict != null && !subDistrict.isBlank()) {
+            String val = subDistrict.trim();
+            if (isBkk) {
+                cleanSubDistrict = val.startsWith("แขวง") ? val : "แขวง " + val.replaceFirst("^[ตต]ำบล\\s*", "").replaceFirst("^แขวง\\s*", "");
+            } else {
+                cleanSubDistrict = val.startsWith("ตำบล") ? val : "ตำบล " + val.replaceFirst("^แขวง\\s*", "").replaceFirst("^[ตต]ำบล\\s*", "");
+            }
+        }
+
+        String cleanDistrict = null;
+        if (district != null && !district.isBlank()) {
+            String val = district.trim();
+            if (isBkk) {
+                cleanDistrict = val.startsWith("เขต") ? val : "เขต " + val.replaceFirst("^[ออ]ำเภอ\\s*", "").replaceFirst("^เขต\\s*", "");
+            } else {
+                cleanDistrict = val.startsWith("อำเภอ") ? val : "อำเภอ " + val.replaceFirst("^เขต\\s*", "").replaceFirst("^[ออ]ำเภอ\\s*", "");
+            }
+        }
+
+        String cleanProvince = null;
+        if (province != null && !province.isBlank()) {
+            String val = province.trim();
+            if (isBkk) {
+                cleanProvince = "กรุงเทพมหานคร";
+            } else {
+                cleanProvince = val.startsWith("จังหวัด") ? val : "จังหวัด " + val;
+            }
+        }
 
         return Stream.of(
-                houseNo != null && !houseNo.isBlank() ? "บ้านเลขที่ " + houseNo : null,
-                moo != null && !moo.isBlank() ? "หมู่ " + moo : null,
-                soi != null && !soi.isBlank() ? "ซอย " + soi : null,
-                road != null && !road.isBlank() ? "ถนน " + road : null,
-                subDistrict != null && !subDistrict.isBlank() ? subPrefix + subDistrict : null,
-                district != null && !district.isBlank() ? distPrefix + district : null,
-                province != null && !province.isBlank() ? "จังหวัด " + province : null,
-                zipCode != null && !zipCode.isBlank() ? zipCode : null).filter(s -> s != null && !s.isBlank())
+                cleanHouseNo,
+                cleanMoo,
+                cleanSoi,
+                cleanRoad,
+                cleanSubDistrict,
+                cleanDistrict,
+                cleanProvince,
+                zipCode != null && !zipCode.isBlank() ? zipCode.trim() : null).filter(s -> s != null && !s.isBlank())
                 .collect(Collectors.joining(" "));
     }
 }

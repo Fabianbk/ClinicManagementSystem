@@ -1,4 +1,5 @@
 import type { PatientResponseDTO } from "@/lib/types";
+import { CLINIC_INFO } from "@/lib/constants";
 
 interface PatientIntakeEnViewProps {
   patient?: PatientResponseDTO | null;
@@ -29,10 +30,10 @@ export function PatientIntakeEnView({ patient }: PatientIntakeEnViewProps) {
       {/* Clinic Header */}
       <div className="text-center border-b-2 border-slate-900 pb-3">
         <h2 className="text-base font-bold text-slate-900 leading-tight">
-          Pimvimaan Thai Traditional Medicine Clinic
+          {CLINIC_INFO.nameEn}
         </h2>
         <p className="text-[11px] text-slate-600 mt-0.5">
-          Clinic License No. 10108002264 · Tel. (+66) 081-9358026
+          Clinic License No. {CLINIC_INFO.licenseNo} · Tel. (+66) {CLINIC_INFO.phone.startsWith("0") ? CLINIC_INFO.phone.substring(1) : CLINIC_INFO.phone}
         </p>
         <h3 className="text-sm font-bold text-slate-900 mt-1 uppercase tracking-wide">
           PATIENT&apos;S PERSONAL DATA (INTAKE FORM)

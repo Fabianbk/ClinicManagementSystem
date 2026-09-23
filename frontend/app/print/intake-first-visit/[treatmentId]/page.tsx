@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { getRecordTreatment } from "@/lib/resources/record-treatments";
 import { getPatient } from "@/lib/resources/patients";
 import { PrintToolbar } from "@/components/print/PrintToolbar";
-import { formatThaiDate, formatDoctorDisplayName } from "@/lib/utils";
+import { formatThaiDate, formatThaiAddress, formatDoctorDisplayName } from "@/lib/utils";
+import { CLINIC_INFO } from "@/lib/constants";
 
 interface FirstVisitPrintPageProps {
   params: { treatmentId: string };
@@ -29,18 +30,7 @@ export default async function FirstVisitPrintPage({ params }: FirstVisitPrintPag
       )
     : "-";
 
-  const fullAddress = [
-    patient?.houseNo ? `บ้านเลขที่ ${patient.houseNo}` : "",
-    patient?.moo ? `หมู่ ${patient.moo}` : "",
-    patient?.soi ? `ซอย ${patient.soi}` : "",
-    patient?.road ? `ถนน ${patient.road}` : "",
-    patient?.subDistrict ? `ตำบล/แขวง ${patient.subDistrict}` : "",
-    patient?.district ? `อำเภอ/เขต ${patient.district}` : "",
-    patient?.province ? `จังหวัด ${patient.province}` : "",
-    patient?.zipCode || "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const fullAddress = formatThaiAddress(patient);
 
   const emergency = patient?.contactPersons?.[0];
 
@@ -57,7 +47,7 @@ export default async function FirstVisitPrintPage({ params }: FirstVisitPrintPag
       <main className="a4-sheet print-page space-y-4 text-xs font-body text-slate-900 leading-relaxed">
         <div className="text-center border-b-2 border-slate-900 pb-2">
           <div className="flex justify-between items-start text-[10px] text-slate-500 mb-1">
-            <span>พิมพ์วิมานคลินิกการแพทย์แผนไทย (081-9358026)</span>
+            <span>{CLINIC_INFO.nameTh} ({CLINIC_INFO.phone})</span>
             <span className="font-bold text-slate-900">หน้า ๑ จาก ๔ (สำหรับผู้รับบริการครั้งแรก)</span>
           </div>
           <h2 className="text-base font-bold text-slate-900">
@@ -140,13 +130,13 @@ export default async function FirstVisitPrintPage({ params }: FirstVisitPrintPag
             <div>
               <span className="font-bold text-slate-800 block">โรคประจำตัว (Underlying Disease):</span>
               <p className="p-1.5 bg-slate-50 border border-slate-200 rounded mt-0.5">
-                {patient?.healthProfile?.underlyingDisease || "ปฏิเสธ / ไม่มี"}
+                {treatment.healthProfile?.underlyingDisease || patient?.healthProfile?.underlyingDisease || "ปฏิเสธ / ไม่มี"}
               </p>
             </div>
             <div>
               <span className="font-bold text-rose-800 block">ประวัติการแพ้ยา (Drug Allergy):</span>
               <p className="p-1.5 bg-rose-50 border border-rose-200 rounded mt-0.5 font-bold text-rose-900">
-                {patient?.healthProfile?.drugAllergy || "ปฏิเสธประวัติแพ้ยา"}
+                {treatment.healthProfile?.drugAllergy || patient?.healthProfile?.drugAllergy || "ปฏิเสธประวัติแพ้ยา"}
               </p>
             </div>
           </div>
@@ -155,13 +145,13 @@ export default async function FirstVisitPrintPage({ params }: FirstVisitPrintPag
             <div>
               <span className="text-slate-700 block">ประวัติการเจ็บป่วยในครอบครัว (Family History):</span>
               <p className="p-1.5 bg-slate-50 border border-slate-200 rounded mt-0.5 text-slate-800">
-                {patient?.healthProfile?.hereditaryDisease || "-"}
+                {treatment.healthProfile?.hereditaryDisease || patient?.healthProfile?.hereditaryDisease || "-"}
               </p>
             </div>
             <div>
               <span className="text-slate-700 block">ประวัติอุบัติเหตุ / ผ่าตัด (Accident & Surgery):</span>
               <p className="p-1.5 bg-slate-50 border border-slate-200 rounded mt-0.5 text-slate-800">
-                {patient?.healthProfile?.accidentHistory || "-"}
+                {treatment.healthProfile?.accidentHistory || patient?.healthProfile?.accidentHistory || "-"}
               </p>
             </div>
           </div>
@@ -435,7 +425,7 @@ export default async function FirstVisitPrintPage({ params }: FirstVisitPrintPag
           <div className="space-y-6">
             <p className="text-slate-600">ลงชื่อแพทย์แผนไทยผู้ตรวจรักษา</p>
             <p className="font-bold text-slate-900">({formatDoctorDisplayName(treatment.doctorFullname)})</p>
-            <p className="text-[10px] text-slate-500">แพทย์แผนไทยประจำพิมพ์วิมานคลินิก</p>
+            <p className="text-[10px] text-slate-500">แพทย์แผนไทยประจำ{CLINIC_INFO.nameTh}</p>
           </div>
         </div>
       </main>

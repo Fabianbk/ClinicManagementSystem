@@ -21,6 +21,7 @@ import com.clinic.clinicmanagementsystem.mapper.PrincipleMapper;
 import com.clinic.clinicmanagementsystem.repository.ContactPersonRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientAccountRepository;
 import com.clinic.clinicmanagementsystem.repository.PatientRepository;
+import com.clinic.clinicmanagementsystem.repository.RecordTreatmentRepository;
 import com.clinic.clinicmanagementsystem.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,8 @@ public class PatientService {
     private final PatientMapper patientMapper;
     private final PrincipleMapper principleMapper;
     private final ContactPersonMapper contactPersonMapper;
+    private final RecordTreatmentRepository recordTreatmentRepository;
+    private final HealthProfileMapper healthProfileMapper;
 
     /**
      * Creates a patient along with whatever nested contactPersons / principle /
@@ -83,7 +86,14 @@ public class PatientService {
     @Transactional(readOnly = true)
     public PatientResponseDTO getById(int patientId) {
         currentUser.requireSelfOrDoctor(patientId);
-        return patientMapper.toResponseDTO(findPatientOrThrow(patientId));
+        Patient patient = findPatientOrThrow(patientId);
+        PatientResponseDTO dto = patientMapper.toResponseDTO(patient);
+        if (recordTreatmentRepository != null) {
+            recordTreatmentRepository
+                    .findFirstByAppointment_Patient_PatientIdAndHealthProfileIsNotNullOrderByRecordDateDescRecordTreatmentIdDesc(patientId)
+                    .ifPresent(rt -> dto.setHealthProfile(healthProfileMapper.toResponseDTO(rt.getHealthProfile())));
+        }
+        return dto;
     }
 
     @Transactional(readOnly = true)

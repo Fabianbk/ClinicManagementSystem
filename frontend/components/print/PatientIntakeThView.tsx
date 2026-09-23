@@ -1,5 +1,6 @@
 import type { PatientResponseDTO } from "@/lib/types";
 import { formatThaiDate } from "@/lib/utils";
+import { CLINIC_INFO } from "@/lib/constants";
 
 interface PatientIntakeThViewProps {
   patient?: PatientResponseDTO | null;
@@ -31,10 +32,10 @@ export function PatientIntakeThView({ patient }: PatientIntakeThViewProps) {
       {/* Clinic Header */}
       <div className="text-center border-b-2 border-slate-900 pb-3">
         <h2 className="text-base font-bold text-slate-900 leading-tight">
-          พิมพ์วิมานคลินิกการแพทย์แผนไทย (Pimvimaan Thai Traditional Medicine Clinic)
+          {CLINIC_INFO.nameTh} ({CLINIC_INFO.nameEn})
         </h2>
         <p className="text-[11px] text-slate-600 mt-0.5">
-          ใบอนุญาตให้จัดตั้งคลินิกเลขที่ 10108002264 · โทร. 081-9358026
+          ใบอนุญาตให้จัดตั้งคลินิกเลขที่ {CLINIC_INFO.licenseNo} · โทร. {CLINIC_INFO.phone}
         </p>
         <h3 className="text-sm font-bold text-slate-900 mt-1 uppercase tracking-wide">
           แบบกรอกประวัติผู้ป่วย (PATIENT REGISTRATION FORM)

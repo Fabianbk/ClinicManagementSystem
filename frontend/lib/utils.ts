@@ -152,3 +152,158 @@ export function thaiBahtText(amount: number): string {
   return result;
 }
 
+export interface AddressDataLike {
+  houseNo?: string | null;
+  moo?: string | null;
+  soi?: string | null;
+  road?: string | null;
+  subDistrict?: string | null;
+  district?: string | null;
+  province?: string | null;
+  zipCode?: string | null;
+  address?: string | null;
+}
+
+/**
+ * จัดรูปแบบที่อยู่ภาษาไทยตามมาตรฐานราชการ:
+ * - กรุงเทพมหานคร: แขวง... เขต... กรุงเทพมหานคร (ไม่มีคำว่า "จังหวัด")
+ * - ต่างจังหวัด: ตำบล... อำเภอ... จังหวัด...
+ * - ป้องกันคำนำหน้าซ้อน (เช่น "บ้านเลขที่ บ้านเลขที่", "แขวง แขวง", "จังหวัด จังหวัด")
+ */
+export function formatThaiAddress(p?: AddressDataLike | null): string {
+  if (!p) return "-";
+
+  const clean = (val?: string | null) => (val ? val.trim() : "");
+
+  const houseNo = clean(p.houseNo);
+  const moo = clean(p.moo);
+  const soi = clean(p.soi);
+  const road = clean(p.road);
+  const subDistrict = clean(p.subDistrict);
+  const district = clean(p.district);
+  const province = clean(p.province);
+  const zipCode = clean(p.zipCode);
+
+  const hasStructured = Boolean(houseNo || subDistrict || district || province);
+  if (!hasStructured && p.address && p.address.trim()) {
+    return p.address.trim();
+  }
+
+  const isBkk =
+    province.includes("กรุงเทพ") ||
+    province.toLowerCase().includes("bangkok") ||
+    province === "กทม" ||
+    province === "กทม.";
+
+  const parts: string[] = [];
+
+  if (houseNo) {
+    if (houseNo.startsWith("บ้านเลขที่") || houseNo.startsWith("เลขที่")) {
+      parts.push(houseNo);
+    } else {
+      parts.push(`บ้านเลขที่ ${houseNo}`);
+    }
+  }
+
+  if (moo) {
+    if (moo.startsWith("หมู่")) {
+      parts.push(moo);
+    } else {
+      parts.push(`หมู่ ${moo}`);
+    }
+  }
+
+  if (soi) {
+    if (soi.startsWith("ซอย")) {
+      parts.push(soi);
+    } else {
+      parts.push(`ซอย ${soi}`);
+    }
+  }
+
+  if (road) {
+    if (road.startsWith("ถนน")) {
+      parts.push(road);
+    } else {
+      parts.push(`ถนน ${road}`);
+    }
+  }
+
+  if (subDistrict) {
+    if (isBkk) {
+      if (subDistrict.startsWith("แขวง")) {
+        parts.push(subDistrict);
+      } else {
+        const raw = subDistrict.replace(/^ตำบล\s*/, "").replace(/^แขวง\s*/, "");
+        parts.push(`แขวง${raw}`);
+      }
+    } else {
+      if (subDistrict.startsWith("ตำบล")) {
+        parts.push(subDistrict);
+      } else {
+        const raw = subDistrict.replace(/^แขวง\s*/, "").replace(/^ตำบล\s*/, "");
+        parts.push(`ตำบล${raw}`);
+      }
+    }
+  }
+
+  if (district) {
+    if (isBkk) {
+      if (district.startsWith("เขต")) {
+        parts.push(district);
+      } else {
+        const raw = district.replace(/^อำเภอ\s*/, "").replace(/^เขต\s*/, "");
+        parts.push(`เขต${raw}`);
+      }
+    } else {
+      if (district.startsWith("อำเภอ")) {
+        parts.push(district);
+      } else {
+        const raw = district.replace(/^เขต\s*/, "").replace(/^อำเภอ\s*/, "");
+        parts.push(`อำเภอ${raw}`);
+      }
+    }
+  }
+
+  if (province) {
+    if (isBkk) {
+      parts.push("กรุงเทพมหานคร");
+    } else {
+      if (province.startsWith("จังหวัด")) {
+        parts.push(province);
+      } else {
+        parts.push(`จังหวัด${province}`);
+      }
+    }
+  }
+
+  if (zipCode) {
+    parts.push(zipCode);
+  }
+
+  const result = parts.join(" ").trim();
+  return result || p.address?.trim() || "-";
+}
+
+/**
+ * แปลงสถานภาพสมรสเป็นภาษาไทยมาตรฐาน
+ */
+export function formatMaritalStatusThai(status?: string | null): string {
+  if (!status) return "-";
+  switch (status.toUpperCase()) {
+    case "SINGLE":
+      return "โสด";
+    case "MARRIED":
+      return "สมรส";
+    case "WIDOWED":
+      return "หม้าย";
+    case "DIVORCED":
+      return "หย่าร้าง";
+    case "MONK":
+      return "สมณะ / นักบวช";
+    default:
+      return status;
+  }
+}
+
+

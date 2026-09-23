@@ -3,6 +3,7 @@ import { getRecordTreatment } from "@/lib/resources/record-treatments";
 import { getPatient } from "@/lib/resources/patients";
 import { PrintToolbar } from "@/components/print/PrintToolbar";
 import { formatThaiDate, formatDoctorDisplayName, thaiBahtText } from "@/lib/utils";
+import { CLINIC_INFO } from "@/lib/constants";
 
 interface TreatmentOrderPrintPageProps {
   params: { treatmentId: string };
@@ -87,10 +88,10 @@ export default async function TreatmentOrderPrintPage({ params }: TreatmentOrder
         {/* Clinic Official Header */}
         <div className="text-center border-b-2 border-slate-900 pb-3">
           <h2 className="text-base font-bold text-slate-900 leading-tight">
-            พิมพ์วิมานคลินิกการแพทย์แผนไทย (Pimvimaan Thai Traditional Medicine Clinic)
+            {CLINIC_INFO.nameTh} ({CLINIC_INFO.nameEn})
           </h2>
           <p className="text-[11px] text-slate-600 mt-0.5">
-            ใบอนุญาตให้จัดตั้งคลินิกเลขที่ 10108002264 · โทรศัพท์: 081-9358026
+            ใบอนุญาตให้จัดตั้งคลินิกเลขที่ {CLINIC_INFO.licenseNo} · โทรศัพท์: {CLINIC_INFO.phone}
           </p>
           <div className="inline-block mt-1 px-3 py-0.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-xs">
             ใบสั่งการรักษาและค่าใช้จ่าย (TREATMENT ORDER &amp; BILLING)
@@ -243,7 +244,7 @@ export default async function TreatmentOrderPrintPage({ params }: TreatmentOrder
           <div className="space-y-6">
             <p className="text-slate-600">ลงชื่อแพทย์แผนไทยผู้สั่งการรักษา / ผู้รับเงิน</p>
             <p className="font-bold text-slate-900">({formatDoctorDisplayName(treatment.doctorFullname)})</p>
-            <p className="text-[10px] text-slate-500">แพทย์แผนไทยประจำพิมพ์วิมานคลินิก</p>
+            <p className="text-[10px] text-slate-500">แพทย์แผนไทยประจำ{CLINIC_INFO.nameTh}</p>
           </div>
         </div>
       </main>
