@@ -13,7 +13,9 @@ import type {
   HouseholdStatus,
   TreatmentRights,
   PatientRequestDTO,
+  PatientResponseDTO,
 } from "@/lib/types";
+import { PatientCredentialsModal } from "@/components/doctor/PatientCredentialsModal";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,10 @@ export default function NewPatientPage() {
 
   // Patient Intake Mode
   const [idType, setIdType] = useState<IdType>("THAI_ID");
+
+  // Registration Credentials Modal
+  const [createdPatientData, setCreatedPatientData] = useState<PatientResponseDTO | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Section 1: Identification & Basic Details
   const [fullname, setFullname] = useState("");
@@ -161,8 +167,17 @@ export default function NewPatientPage() {
       errMap.dateOfBirth = "กรุณาระบุวันเดือนปีเกิด";
     }
     if (field === "mobileNumber") {
-      if (!mobileNumber || stripNonDigits(mobileNumber).length < 9) {
-        errMap.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+      if (idType === "THAI_ID") {
+        if (!mobileNumber || stripNonDigits(mobileNumber).length < 9) {
+          errMap.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+        }
+      } else {
+        if (mobileNumber.trim()) {
+          const cleanPhone = stripNonDigits(mobileNumber);
+          if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+            errMap.mobileNumber = "เบอร์โทรศัพท์ไม่ถูกต้อง (7-15 หลัก)";
+          }
+        }
       }
     }
 
@@ -214,6 +229,46 @@ export default function NewPatientPage() {
       .join(" ");
   };
 
+  const handleResetForm = () => {
+    setFullname("");
+    setNationalId("");
+    setPassportNo("");
+    setGender("MALE");
+    setDateOfBirth("");
+    setOccupation("");
+    setMaritalStatus("SINGLE");
+    setCitizenship(idType === "THAI_ID" ? "ไทย" : "");
+    setEthnicity(idType === "THAI_ID" ? "ไทย" : "");
+    setReligion(idType === "THAI_ID" ? "พุทธ" : "");
+    setBloodGroupAbo("UNKNOWN");
+    setBloodGroupRh("UNKNOWN");
+    setTreatmentRights("PAY_DIRECT");
+    setHouseNo("");
+    setMoo("");
+    setSoi("");
+    setRoad("");
+    setSubDistrict("");
+    setDistrict("");
+    setProvince("");
+    setZipCode("");
+    setMobileNumber("");
+    setEmail("");
+    setOriginalDomicile("");
+    setBirthPlace("");
+    setEducation("");
+    setHouseholdStatus("");
+    setFatherName("");
+    setMotherName("");
+    setSpouseName("");
+    setThaiCalendarBirthDate("");
+    setEmergencyContacts([
+      { contactName: "", relationship: "", contactAddress: "", mobileNumber: "" },
+    ]);
+    setErrors({});
+    setIsModalOpen(false);
+    setCreatedPatientData(null);
+  };
+
   const updateEmergencyContact = (
     index: number,
     field: keyof ContactPersonRequestDTO,
@@ -248,9 +303,18 @@ export default function NewPatientPage() {
       newErrors.dateOfBirth = "กรุณาระบุวันเดือนปีเกิด";
     }
 
-    const cleanPhone = stripNonDigits(mobileNumber);
-    if (!cleanPhone || cleanPhone.length < 9) {
-      newErrors.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+    if (idType === "THAI_ID") {
+      const cleanPhone = stripNonDigits(mobileNumber);
+      if (!cleanPhone || cleanPhone.length < 9) {
+        newErrors.mobileNumber = "กรุณาระบุเบอร์โทรศัพท์มือถือที่ถูกต้อง (9-10 หลัก)";
+      }
+    } else {
+      if (mobileNumber.trim()) {
+        const cleanPhone = stripNonDigits(mobileNumber);
+        if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+          newErrors.mobileNumber = "เบอร์โทรศัพท์ไม่ถูกต้อง (7-15 หลัก)";
+        }
+      }
     }
 
     for (let i = 0; i < emergencyContacts.length; i++) {
@@ -309,7 +373,7 @@ export default function NewPatientPage() {
       education: idType === "THAI_ID" ? education.trim() || undefined : undefined,
 
       // Contact
-      mobileNumber: stripNonDigits(mobileNumber),
+      mobileNumber: stripNonDigits(mobileNumber) || undefined,
       email: email.trim() || undefined,
 
       contactPersons: emergencyContacts
@@ -338,11 +402,11 @@ export default function NewPatientPage() {
         return;
       }
 
+      const createdPatient: PatientResponseDTO = await res.json();
       toast.success("บันทึกข้อมูลผู้ป่วยใหม่สำเร็จเรียบร้อยแล้ว!");
-      startTransition(() => {
-        router.push("/doctor/patients");
-        router.refresh();
-      });
+      setCreatedPatientData(createdPatient);
+      setIsModalOpen(true);
+      setIsSubmitting(false);
     } catch (err: any) {
       toast.error(err.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
       setIsSubmitting(false);
@@ -757,18 +821,22 @@ export default function NewPatientPage() {
               <div>
                 <FormField
                   id="mobileNumber"
-                  label="เบอร์โทรศัพท์มือถือ (Mobile Phone)"
-                  required
+                  label={
+                    idType === "THAI_ID"
+                      ? "เบอร์โทรศัพท์มือถือ (Mobile Phone)"
+                      : "เบอร์โทรศัพท์ (Mobile Phone - ถ้ามี)"
+                  }
+                  required={idType === "THAI_ID"}
                   error={errors.mobileNumber}
                 >
                   <Input
                     id="mobileNumber"
                     type="tel"
-                    maxLength={12}
-                    placeholder="08X-XXX-XXXX"
+                    maxLength={15}
+                    placeholder={idType === "THAI_ID" ? "08X-XXX-XXXX" : "เช่น 0812345678"}
                     value={mobileNumber}
                     onChange={(e) => {
-                      setMobileNumber(formatPhoneNumber(e.target.value));
+                      setMobileNumber(idType === "THAI_ID" ? formatPhoneNumber(e.target.value) : e.target.value);
                       clearError("mobileNumber");
                     }}
                     onBlur={() => handleBlur("mobileNumber")}
@@ -777,7 +845,14 @@ export default function NewPatientPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="email">อีเมล (Email)</Label>
+                <Label htmlFor="email">
+                  อีเมล (Email){" "}
+                  {idType === "PASSPORT" && (
+                    <span className="text-[11px] text-clinic-primary font-normal">
+                      (แนะนำสำหรับผู้ป่วยต่างชาติ)
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -1024,6 +1099,13 @@ export default function NewPatientPage() {
           </Button>
         </div>
       </form>
+
+      <PatientCredentialsModal
+        isOpen={isModalOpen}
+        patient={createdPatientData}
+        onClose={() => setIsModalOpen(false)}
+        onResetForm={handleResetForm}
+      />
     </div>
   );
 }

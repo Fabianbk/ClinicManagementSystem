@@ -113,7 +113,6 @@ public class PatientRequestDTO {
     private String education;
 
     // Contact
-    @NotBlank(message = "Mobile number is required")
     @Size(max = 20)
     private String mobileNumber;
 
@@ -138,5 +137,13 @@ public class PatientRequestDTO {
             return passportNo != null && !passportNo.trim().isEmpty() && passportNo.trim().length() <= 15 && (nationalId == null || nationalId.trim().isEmpty());
         }
         return false;
+    }
+
+    @AssertTrue(message = "Mobile number is required for Thai patients")
+    public boolean isValidMobileNumber() {
+        if (idType == IdType.THAI_ID) {
+            return mobileNumber != null && !mobileNumber.trim().isEmpty();
+        }
+        return true;
     }
 }

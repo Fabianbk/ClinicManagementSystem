@@ -66,6 +66,10 @@ public class PatientResponseDTO {
     private String mobileNumber;
     private String email;
 
+    // Account Credentials (for Patient Portal)
+    private String username;
+    private String initialPassword;
+
     private List<ContactPersonResponseDTO> contactPersons;
     private PrincipleResponseDTO principle;
     private HealthProfileResponseDTO healthProfile;

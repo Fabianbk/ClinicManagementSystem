@@ -49,38 +49,39 @@ public class PatientService {
     private final ContactPersonMapper contactPersonMapper;
     private final RecordTreatmentRepository recordTreatmentRepository;
     private final HealthProfileMapper healthProfileMapper;
+    private final jakarta.persistence.EntityManager entityManager;
 
     /**
      * Creates a patient along with whatever nested contactPersons / principle /
      * healthProfile were submitted in the same request. PatientMapper#toEntity
      * builds the whole object graph as brand-new objects; cascade = ALL on
      * Patient persists all of it together in this one save() call.
-     * Also auto-registers a PatientAccount using mobile number as username and
+     * Also auto-registers a PatientAccount using HN as username and
      * formatted birthday (ddMMyyyy) as password.
      */
     public PatientResponseDTO create(PatientRequestDTO dto) {
         validateIdUniquenessOnCreate(dto);
 
-        String username = dto.getMobileNumber() != null ? dto.getMobileNumber().trim() : "";
-        if (patientAccountRepository.existsById(username)) {
-            throw new DuplicateResourceException(
-                    "Username '" + username + "' is already taken");
-        }
-
         Patient patient = patientMapper.toEntity(dto);
+        Patient saved = patientRepository.save(patient);
+
+        String hnUsername = String.format("P-%05d", saved.getPatientId());
 
         SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy");
         String birthdayPassword = sdf.format(dto.getDateOfBirth());
 
         PatientAccount account = new PatientAccount();
-        account.setUsername(username);
+        account.setUsername(hnUsername);
         account.setPassword(passwordEncoder.encode(birthdayPassword));
-        account.setPatient(patient);
-        patient.setPatientAccount(account);
+        account.setPatient(saved);
+        entityManager.persist(account);
+        saved.setPatientAccount(account);
 
-        Patient saved = patientRepository.save(patient);
+        PatientResponseDTO responseDTO = patientMapper.toResponseDTO(saved);
+        responseDTO.setUsername(hnUsername);
+        responseDTO.setInitialPassword(birthdayPassword);
 
-        return patientMapper.toResponseDTO(saved);
+        return responseDTO;
     }
 
     @Transactional(readOnly = true)

@@ -27,6 +27,8 @@ public interface PatientMapper {
     @Mapping(target = "idNumber", expression = "java(entity.getIdNumber())")
     @Mapping(target = "address", expression = "java(entity.getFullAddress())")
     @Mapping(target = "bloodGroup", expression = "java(formatBloodGroup(entity.getBloodGroupAbo(), entity.getBloodGroupRh()))")
+    @Mapping(target = "username", expression = "java(entity.getPatientAccount() != null ? entity.getPatientAccount().getUsername() : String.format(\"P-%05d\", entity.getPatientId()))")
+    @Mapping(target = "initialPassword", ignore = true)
     PatientResponseDTO toResponseDTO(Patient entity);
 
     /**

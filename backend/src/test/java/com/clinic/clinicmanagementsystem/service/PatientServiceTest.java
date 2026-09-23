@@ -75,6 +75,9 @@ class PatientServiceTest {
     @Mock
     private RecordTreatmentRepository recordTreatmentRepository;
 
+    @Mock
+    private jakarta.persistence.EntityManager entityManager;
+
     @InjectMocks
     private PatientService patientService;
 
@@ -118,9 +121,8 @@ class PatientServiceTest {
     }
 
     @Test
-    void create_shouldAutoCreatePatientAccountWithMobileAndFormattedBirthday() {
+    void create_shouldAutoCreatePatientAccountWithHnAndFormattedBirthday() {
         when(patientRepository.existsByNationalId("1234567890123")).thenReturn(false);
-        when(patientAccountRepository.existsById("0812345678")).thenReturn(false);
         when(patientMapper.toEntity(requestDTO)).thenReturn(patientEntity);
         when(patientRepository.save(patientEntity)).thenReturn(patientEntity);
         when(passwordEncoder.encode("15081995")).thenReturn("$2a$10$encodedHash15081995");
@@ -136,10 +138,12 @@ class PatientServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getPatientId()).isEqualTo(101);
+        assertThat(result.getUsername()).isEqualTo("P-00101");
+        assertThat(result.getInitialPassword()).isEqualTo("15081995");
 
         verify(patientRepository).save(patientEntity);
         assertThat(patientEntity.getPatientAccount()).isNotNull();
-        assertThat(patientEntity.getPatientAccount().getUsername()).isEqualTo("0812345678");
+        assertThat(patientEntity.getPatientAccount().getUsername()).isEqualTo("P-00101");
         assertThat(patientEntity.getPatientAccount().getPassword()).isEqualTo("$2a$10$encodedHash15081995");
         assertThat(patientEntity.getPatientAccount().getPatient()).isEqualTo(patientEntity);
     }
@@ -151,19 +155,6 @@ class PatientServiceTest {
         assertThatThrownBy(() -> patientService.create(requestDTO))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("1234567890123");
-
-        verify(patientRepository, never()).save(any());
-        verify(patientAccountRepository, never()).save(any());
-    }
-
-    @Test
-    void create_shouldThrowWhenMobileNumberExistsInPatientAccount() {
-        when(patientRepository.existsByNationalId("1234567890123")).thenReturn(false);
-        when(patientAccountRepository.existsById("0812345678")).thenReturn(true);
-
-        assertThatThrownBy(() -> patientService.create(requestDTO))
-                .isInstanceOf(DuplicateResourceException.class)
-                .hasMessageContaining("0812345678");
 
         verify(patientRepository, never()).save(any());
         verify(patientAccountRepository, never()).save(any());

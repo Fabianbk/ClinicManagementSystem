@@ -65,7 +65,7 @@ export function LoginForm({ role, loginPath, defaultRedirect, nextPath }: LoginF
           name="username"
           autoComplete="username"
           required
-          placeholder={isDoctor ? "doctor1" : "patient1"}
+          placeholder={isDoctor ? "doctor1" : "กรอกชื่อผู้ใช้"}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={isPending}

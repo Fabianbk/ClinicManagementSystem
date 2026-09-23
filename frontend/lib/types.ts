@@ -200,7 +200,7 @@ export interface PatientRequestDTO {
   education?: string;
 
   // Contact
-  mobileNumber: string;
+  mobileNumber?: string;
   email?: string;
 
   contactPersons?: ContactPersonRequestDTO[];
@@ -255,8 +255,12 @@ export interface PatientResponseDTO {
   education?: string | null;
 
   // Contact
-  mobileNumber: string;
+  mobileNumber?: string | null;
   email: string | null;
+
+  // Account Credentials (for Patient Portal)
+  username?: string | null;
+  initialPassword?: string | null;
 
   contactPersons: ContactPersonResponseDTO[] | null;
   principle: PrincipleResponseDTO | null;

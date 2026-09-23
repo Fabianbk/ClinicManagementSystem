@@ -24,6 +24,7 @@ import {
   Eye,
   AlertTriangle,
   ShieldCheck,
+  KeyRound,
 } from "lucide-react";
 import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
 import { PatientDocumentSection } from "@/components/doctor/PatientDocumentSection";
@@ -327,6 +328,27 @@ export default async function PatientDetailPage({
               <div>
                 <dt className="font-semibold text-clinic-ink-soft">อีเมล</dt>
                 <dd className="font-medium text-clinic-ink mt-0.5">{patient.email || "-"}</dd>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-clinic-line">
+              <span className="font-semibold text-clinic-primary-deep flex items-center gap-1.5 mb-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-clinic-primary" />
+                <span>บัญชีเข้าสู่ระบบผู้รับบริการ (Patient Portal)</span>
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-clinic-primary/5 p-2.5 rounded-control border border-clinic-primary/15">
+                <div>
+                  <dt className="text-[11px] text-clinic-ink-soft">ชื่อผู้ใช้หลัก (รหัส HN)</dt>
+                  <dd className="font-mono font-bold text-clinic-primary-deep mt-0.5">
+                    {patient.username || `P-${String(patient.patientId).padStart(5, "0")}`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] text-clinic-ink-soft">รหัสผ่านเริ่มต้น</dt>
+                  <dd className="text-clinic-ink font-medium mt-0.5">
+                    วันเกิด ววดดปปปป (ค.ศ.)
+                  </dd>
+                </div>
               </div>
             </div>
           </CardContent>

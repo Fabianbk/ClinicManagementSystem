@@ -72,11 +72,20 @@ class PatientServiceIntegrationTest {
         assertThat(responseDTO.getPatientId()).isGreaterThan(0);
         assertThat(responseDTO.getMobileNumber()).isEqualTo(testMobile);
 
-        Optional<PatientAccount> accountOpt = patientAccountRepository.findById(testMobile);
+        String expectedHn = String.format("P-%05d", responseDTO.getPatientId());
+        assertThat(responseDTO.getUsername()).isEqualTo(expectedHn);
+        assertThat(responseDTO.getInitialPassword()).isEqualTo("20051998");
+
+        Optional<PatientAccount> accountOpt = patientAccountRepository.findById(expectedHn);
         assertThat(accountOpt).isPresent();
         PatientAccount account = accountOpt.get();
-        assertThat(account.getUsername()).isEqualTo(testMobile);
+        assertThat(account.getUsername()).isEqualTo(expectedHn);
         assertThat(account.getPatient().getPatientId()).isEqualTo(responseDTO.getPatientId());
         assertThat(passwordEncoder.matches("20051998", account.getPassword())).isTrue();
+
+        // Multi-login verification: by HN, mobile, and email
+        assertThat(patientAccountRepository.findByLoginIdentifier(expectedHn, responseDTO.getPatientId())).isNotEmpty();
+        assertThat(patientAccountRepository.findByLoginIdentifier(testMobile, null)).isNotEmpty();
+        assertThat(patientAccountRepository.findByLoginIdentifier("testauto@example.com", null)).isNotEmpty();
     }
 }

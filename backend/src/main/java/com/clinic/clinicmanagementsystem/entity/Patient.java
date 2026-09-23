@@ -123,7 +123,7 @@ public class Patient {
     private String education;
 
     // Contact
-    @Column(name = "mobile_number", nullable = false, length = 20)
+    @Column(name = "mobile_number", length = 20)
     private String mobileNumber;
 
     @Column(name = "email", length = 100)
