@@ -509,6 +509,21 @@ export function RecordTreatmentFormClient({
 
   // Fetch patient previous treatment records and latest health profile for pre-filling
   useEffect(() => {
+    // Reset patient clinical history when switching or unselecting patient
+    setPatientHistory([]);
+    setFormMode("FIRST_VISIT");
+    setHasUnderlyingDisease(false);
+    setUnderlyingDiseaseDetails("");
+    setHasDrugAllergy(false);
+    setDrugAllergyDetails("");
+    setHasFoodAllergy(false);
+    setFoodAllergyDetails("");
+    setHasFamilyDisease(false);
+    setFamilyDiseaseDetails("");
+    setDrinksAlcohol(false);
+    setSmokes(false);
+    setMenstruationHistory("");
+
     if (!selectedPatientId) return;
     let isMounted = true;
 
@@ -609,21 +624,35 @@ export function RecordTreatmentFormClient({
     );
   }, [currentPatient]);
 
-  // Auto-fill from patient principle if available
+  // Auto-fill or reset patient Dhatu principles
   useEffect(() => {
-    if (!currentPatient?.principle) return;
-    const p = currentPatient.principle;
-    if (p.principalDhatu) setPrincipalDhatu(p.principalDhatu);
-    if (p.secondaryDhatu) setSecondaryDhatu(p.secondaryDhatu);
-    if (p.conceptionDhatu) setConceptionDhatu(p.conceptionDhatu);
-    if (p.conceptionCharacteristic) setConceptionCharacteristic(p.conceptionCharacteristic);
-    if (p.seasonalOnset) setSeasonalOnset(p.seasonalOnset);
-    if (p.seasonalCurrent) setSeasonalCurrent(p.seasonalCurrent);
-    if (p.agePrinciple) setAgePrinciple(p.agePrinciple);
-    if (p.timeOnset) setTimeOnset(p.timeOnset);
-    if (p.timeCurrent) setTimeCurrent(p.timeCurrent);
-    if (p.geoBirthplace) setGeoBirthplace(p.geoBirthplace);
-    if (p.geoCurrent) setGeoCurrent(p.geoCurrent);
+    const p = currentPatient?.principle;
+    if (p) {
+      setPrincipalDhatu(p.principalDhatu || ("" as Dhatu));
+      setSecondaryDhatu(p.secondaryDhatu || ("" as Dhatu));
+      setConceptionDhatu(p.conceptionDhatu || ("" as Dhatu));
+      setConceptionCharacteristic(p.conceptionCharacteristic || ("" as TriDosha));
+      setSeasonalOnset(p.seasonalOnset || ("" as TriDosha));
+      setSeasonalCurrent(p.seasonalCurrent || ("" as TriDosha));
+      setAgePrinciple(p.agePrinciple || ("" as AgePrinciple));
+      setTimeOnset(p.timeOnset || ("" as TriDosha));
+      setTimeCurrent(p.timeCurrent || ("" as TriDosha));
+      setGeoBirthplace(p.geoBirthplace || ("" as Dhatu));
+      setGeoCurrent(p.geoCurrent || ("" as Dhatu));
+    } else {
+      // Patient has no recorded principles, or patient changed/deselected: clear all 11 back to blank!
+      setPrincipalDhatu("" as Dhatu);
+      setSecondaryDhatu("" as Dhatu);
+      setConceptionDhatu("" as Dhatu);
+      setConceptionCharacteristic("" as TriDosha);
+      setSeasonalOnset("" as TriDosha);
+      setSeasonalCurrent("" as TriDosha);
+      setAgePrinciple("" as AgePrinciple);
+      setTimeOnset("" as TriDosha);
+      setTimeCurrent("" as TriDosha);
+      setGeoBirthplace("" as Dhatu);
+      setGeoCurrent("" as Dhatu);
+    }
   }, [currentPatient]);
 
   // Medicine add / remove
