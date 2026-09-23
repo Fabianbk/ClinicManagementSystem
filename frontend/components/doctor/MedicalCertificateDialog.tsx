@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileCheck, Loader2 } from "lucide-react";
+import { FileCheck, Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -134,6 +134,22 @@ export function MedicalCertificateDialog({
     }
   };
 
+  const handlePrint = () => {
+    const params = new URLSearchParams();
+    if (includeSickLeave && sickLeaveDays > 0) {
+      params.set("sickLeaveDays", String(sickLeaveDays));
+      if (sickLeaveFrom) {
+        params.set("sickLeaveFrom", formatDisplayDate(sickLeaveFrom));
+      }
+      if (sickLeaveTo) {
+        params.set("sickLeaveTo", formatDisplayDate(sickLeaveTo));
+      }
+    }
+    const queryString = params.toString() ? `?${params.toString()}` : "";
+    window.open(`/print/medical-certificate/${recordTreatmentId}${queryString}`, "_blank");
+    setOpen(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -243,7 +259,7 @@ export function MedicalCertificateDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -257,9 +273,20 @@ export function MedicalCertificateDialog({
             type="button"
             variant="default"
             size="sm"
+            onClick={handlePrint}
+            disabled={loading}
+            className="gap-1.5 font-semibold bg-clinic-primary hover:bg-clinic-primary-deep text-white shadow-2xs"
+          >
+            <Printer className="w-4 h-4" />
+            <span>พิมพ์ A4 / PDF</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={handleDownload}
             disabled={loading}
-            className="gap-1.5 font-semibold"
+            className="gap-1.5 font-semibold text-clinic-ink hover:text-clinic-primary border-clinic-line"
           >
             {loading ? (
               <>
@@ -268,8 +295,8 @@ export function MedicalCertificateDialog({
               </>
             ) : (
               <>
-                <FileCheck className="w-4 h-4" />
-                <span>ดาวน์โหลดใบรับรองแพทย์ (.docx)</span>
+                <FileCheck className="w-4 h-4 text-clinic-primary" />
+                <span>ดาวน์โหลด Word (.docx)</span>
               </>
             )}
           </Button>

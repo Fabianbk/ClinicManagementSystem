@@ -11,4 +11,5 @@ public interface RecordTreatmentRepository extends JpaRepository<RecordTreatment
     Optional<RecordTreatment> findByAppointment_AppointmentId(int appointmentId);
     Page<RecordTreatment> findByAppointment_Patient_PatientId(int patientId, Pageable pageable);
     Optional<RecordTreatment> findFirstByAppointment_Patient_PatientIdAndHealthProfileIsNotNullOrderByRecordDateDescRecordTreatmentIdDesc(int patientId);
-}
+    long countByAppointment_Patient_PatientIdAndRecordTreatmentIdLessThanEqual(int patientId, int recordTreatmentId);
+}

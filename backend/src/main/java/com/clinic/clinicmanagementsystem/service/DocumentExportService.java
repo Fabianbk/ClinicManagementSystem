@@ -82,6 +82,55 @@ public class DocumentExportService {
     }
 
     /**
+     * Export Continued Treatment Record (แบบบันทึกการรักษาต่อเนื่อง) (.docx) by recordTreatmentId.
+     */
+    public byte[] exportClientIntakeContinued(int recordTreatmentId) {
+        RecordTreatment treatment = recordTreatmentRepository.findById(recordTreatmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("RecordTreatment", recordTreatmentId));
+        Patient patient = treatment.getPatient();
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient not found for treatment ID: " + recordTreatmentId);
+        }
+
+        Map<String, Object> data = buildContinuedIntakeData(patient, treatment);
+        return renderTemplate("templates/client_intake_continued.docx", data);
+    }
+
+    public Map<String, Object> buildContinuedIntakeData(Patient patient, RecordTreatment treatment) {
+        Map<String, Object> data = buildTemplateData(patient, treatment);
+
+        // Compute continuedPageNo based on visit index
+        int continuedNo = 1;
+        if (patient.getPatientId() > 0) {
+            long prevCount = recordTreatmentRepository.countByAppointment_Patient_PatientIdAndRecordTreatmentIdLessThanEqual(
+                    patient.getPatientId(), treatment.getRecordTreatmentId());
+            continuedNo = Math.max(1, (int) prevCount);
+        }
+        data.put("continuedPageNo", String.valueOf(continuedNo));
+
+        return data;
+    }
+
+    /**
+     * Export blank Thai Patient Intake Form (.docx) for printing empty sheets.
+     */
+    public byte[] exportBlankPatientIntakeTh() {
+        Patient patient = new Patient();
+        Map<String, Object> data = buildPatientIntakeThData(patient);
+        return renderTemplate("templates/patient_intake_th.docx", data);
+    }
+
+    /**
+     * Export blank English Patient Personal Data (.docx) for printing empty sheets.
+     */
+    public byte[] exportBlankPatientIntakeEn() {
+        Patient patient = new Patient();
+        Map<String, Object> data = buildPatientIntakeEnData(patient, null);
+        return renderTemplate("templates/patient_intake_en.docx", data);
+    }
+
+
+    /**
      * Export Thai Patient Intake Form (.docx) by patientId.
      */
     public byte[] exportPatientIntakeTh(int patientId) {

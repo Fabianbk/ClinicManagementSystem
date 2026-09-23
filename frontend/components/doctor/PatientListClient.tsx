@@ -19,6 +19,14 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Users,
   UserPlus,
   Search,
@@ -32,8 +40,12 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  Printer,
+  ChevronDown,
+  FileText,
+  Globe,
+  FileDown,
 } from "lucide-react";
-import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
 
 interface PatientListClientProps {
   initialData: PageResponse<PatientResponseDTO> | null;
@@ -184,6 +196,74 @@ export function PatientListClient({ initialData }: PatientListClientProps) {
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">รีเฟรช</span>
             </Button>
+
+            {/* Blank Forms Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-clinic-primary border-clinic-line"
+                  title="พิมพ์หรือดาวน์โหลดแบบฟอร์มเปล่าสำหรับผู้ป่วยใหม่"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>พิมพ์แบบฟอร์มเปล่า</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="text-xs">แบบฟอร์มขึ้นทะเบียนเปล่า (A4)</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a
+                    href="/print/blank/intake-th"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 cursor-pointer text-xs"
+                  >
+                    <FileText className="w-4 h-4 text-clinic-primary shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">แบบกรอกประวัติ (ไทย)</span>
+                      <span className="text-[10px] text-clinic-ink-muted">เปิดหน้าพิมพ์ A4</span>
+                    </div>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href="/print/blank/intake-en"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 cursor-pointer text-xs"
+                  >
+                    <Globe className="w-4 h-4 text-clinic-accent shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Personal Data (English)</span>
+                      <span className="text-[10px] text-clinic-ink-muted">เปิดหน้าพิมพ์ A4 (Foreigner)</span>
+                    </div>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a
+                    href="/api/documents/blank/intake-th"
+                    className="flex items-center gap-2 cursor-pointer text-xs"
+                  >
+                    <FileDown className="w-4 h-4 text-clinic-primary shrink-0" />
+                    <span className="text-xs">ดาวน์โหลด Word เปล่า (ไทย)</span>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href="/api/documents/blank/intake-en"
+                    className="flex items-center gap-2 cursor-pointer text-xs"
+                  >
+                    <FileDown className="w-4 h-4 text-clinic-accent shrink-0" />
+                    <span className="text-xs">ดาวน์โหลด Word เปล่า (EN)</span>
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button asChild variant="terracotta" size="sm" className="gap-1.5 shadow-xs">
               <Link href="/doctor/patients/new">
                 <UserPlus className="w-4 h-4" />
@@ -463,14 +543,6 @@ export function PatientListClient({ initialData }: PatientListClientProps) {
                             <span className="hidden md:inline">ดูข้อมูล</span>
                           </Link>
                         </Button>
-                        <PatientDocumentDropdown
-                          patientId={patient.patientId}
-                          patientName={patient.fullname}
-                          variant="ghost"
-                          size="sm"
-                          label="Word"
-                          className="h-7 px-2 text-xs gap-1 text-clinic-primary hover:bg-clinic-primary-soft"
-                        />
                         <Button
                           asChild
                           variant="ghost"

@@ -4,7 +4,26 @@ import Link from "next/link";
 import type { RecordTreatmentResponseDTO, PatientResponseDTO } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Printer, Edit, Leaf, ShieldAlert } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ArrowLeft,
+  Printer,
+  Edit,
+  Leaf,
+  ShieldAlert,
+  ChevronDown,
+  FileText,
+  FileDown,
+  Receipt,
+  ClipboardList,
+} from "lucide-react";
 import { DownloadDocxButton } from "@/components/doctor/DownloadDocxButton";
 import { PatientDocumentDropdown } from "@/components/doctor/PatientDocumentDropdown";
 import { MedicalCertificateDialog } from "@/components/doctor/MedicalCertificateDialog";
@@ -63,7 +82,7 @@ export function TreatmentDetailClient({
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 font-body text-clinic-ink">
       {/* Top Action Bar (Hidden during print) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 print:hidden">
         <Button asChild variant="outline" size="sm" className="gap-1.5 shadow-2xs">
           <Link href="/doctor/treatments">
             <ArrowLeft className="w-4 h-4" />
@@ -71,48 +90,108 @@ export function TreatmentDetailClient({
           </Link>
         </Button>
 
-        <div className="flex items-center gap-2.5">
-          <DownloadDocxButton
-            recordTreatmentId={treatment.recordTreatmentId}
-            label="ดาวน์โหลดแบบบันทึก (Word)"
-            className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          {/* แบบบันทึกข้อมูลผู้รับบริการ (ครั้งแรก vs ต่อเนื่อง) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-clinic-primary border-clinic-line font-medium shadow-2xs"
+                title="แบบบันทึกข้อมูลผู้รับบริการและผลการรักษา"
+              >
+                <ClipboardList className="w-4 h-4 text-clinic-primary" />
+                <span>แบบบันทึกผู้รับบริการ</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel className="text-xs">แบบบันทึกข้อมูลผู้รับบริการ (Client Intake)</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/print/intake-first-visit/${treatment.recordTreatmentId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+                >
+                  <Printer className="w-4 h-4 text-clinic-primary shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-clinic-ink">พิมพ์แบบตรวจครั้งแรก (4 หน้า)</span>
+                    <span className="text-[10px] text-clinic-ink-muted">ประวัติสุขภาพ ธาตุสมุฏฐาน ตรวจร่างกาย วินิจฉัย</span>
+                  </div>
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/print/intake-continued/${treatment.recordTreatmentId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+                >
+                  <Printer className="w-4 h-4 text-clinic-primary shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-clinic-ink">พิมพ์แบบรักษาต่อเนื่อง (1 หน้า)</span>
+                    <span className="text-[10px] text-clinic-ink-muted">สัญญาณชีพ อาการ Reflexes และผลการรักษา</span>
+                  </div>
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/api/documents/intake-form/treatment/${treatment.recordTreatmentId}`}
+                  className="flex items-center gap-2 cursor-pointer text-xs"
+                >
+                  <FileDown className="w-4 h-4 text-clinic-primary shrink-0" />
+                  <span>ดาวน์โหลด Word ครั้งแรก (4 หน้า)</span>
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/api/documents/intake-form/treatment/${treatment.recordTreatmentId}/continued`}
+                  className="flex items-center gap-2 cursor-pointer text-xs"
+                >
+                  <FileDown className="w-4 h-4 text-clinic-primary shrink-0" />
+                  <span>ดาวน์โหลด Word รักษาต่อเนื่อง (1 หน้า)</span>
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
+          {/* ใบสั่งการรักษาและค่าใช้จ่าย */}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-clinic-primary border-clinic-line font-medium shadow-2xs"
+            title="พิมพ์ใบสั่งการรักษาและค่าใช้จ่ายขนาด A4"
+          >
+            <a
+              href={`/print/treatment-order/${treatment.recordTreatmentId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Receipt className="w-4 h-4 text-clinic-primary" />
+              <span>ใบสั่งการรักษา / ค่าใช้จ่าย</span>
+            </a>
+          </Button>
+
+          {/* ใบรับรองแพทย์ */}
           <MedicalCertificateDialog
             recordTreatmentId={treatment.recordTreatmentId}
             patientName={treatment.patientFullname}
             patientId={treatment.patientId}
             diagnosis={treatment.ttmDiagnosis || treatment.modernDiagnosis || undefined}
             doctorName={treatment.doctorFullname || undefined}
-            label="ใบรับรองแพทย์ (Word)"
-            className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
+            label="ใบรับรองแพทย์"
+            className="gap-1.5 shadow-2xs text-clinic-primary font-medium"
           />
 
-          {patient && (
-            <PatientDocumentDropdown
-              patientId={patient.patientId}
-              patientName={patient.fullname}
-              label="แบบฟอร์มอื่น (Word)"
-              variant="outline"
-              className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
-            />
-          )}
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handlePrint}
-            className="gap-1.5 shadow-2xs text-clinic-primary font-semibold"
-          >
-            <Printer className="w-4 h-4" />
-            <span>พิมพ์เวชระเบียน / ใบสั่งยา</span>
-          </Button>
-
+          {/* แก้ไขข้อมูลการรักษา */}
           <Button asChild variant="terracotta" size="sm" className="gap-1.5 shadow-xs font-semibold">
             <Link href={`/doctor/treatments/${treatment.recordTreatmentId}/edit`}>
               <Edit className="w-4 h-4" />
-              <span>แก้ไขข้อมูลการรักษา</span>
+              <span>แก้ไขข้อมูล</span>
             </Link>
           </Button>
         </div>
@@ -490,9 +569,35 @@ export function TreatmentDetailClient({
                   วันที่ออกใบเสร็จ: {formatDateThaiFull(receipt.receiptDate)} · วิธีชำระเงิน: {receipt.paymentMethod || "เงินสด (CASH)"}
                 </span>
               </div>
-              <Badge variant="success" className="font-bold self-start sm:self-auto">
-                {receipt.paymentStatus === "PAID" ? "✓ ชำระเงินเรียบร้อยแล้ว (PAID)" : receipt.paymentStatus}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="success" className="font-bold self-start sm:self-auto">
+                  {receipt.paymentStatus === "PAID" ? "✓ ชำระเงินเรียบร้อยแล้ว (PAID)" : receipt.paymentStatus}
+                </Badge>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs text-clinic-primary border-clinic-primary/40 hover:bg-clinic-primary hover:text-white"
+                  title="พิมพ์ใบสั่งการรักษาและค่าใช้จ่าย (A4)"
+                >
+                  <a
+                    href={`/print/treatment-order/${treatment.recordTreatmentId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>พิมพ์ใบสั่งการรักษา / ใบเสร็จ (A4)</span>
+                  </a>
+                </Button>
+                <DownloadDocxButton
+                  recordTreatmentId={treatment.recordTreatmentId}
+                  docType="treatment-order"
+                  label="โหลด Word"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs text-clinic-ink hover:text-clinic-primary"
+                />
+              </div>
             </div>
 
             {/* Itemized Breakdown Table */}

@@ -1,14 +1,9 @@
 package com.clinic.clinicmanagementsystem.controller;
 
-import com.clinic.clinicmanagementsystem.dto.RecordTreatmentMedicineResponseDTO;
 import com.clinic.clinicmanagementsystem.dto.RecordTreatmentResponseDTO;
-import com.clinic.clinicmanagementsystem.dto.ReceiptResponseDTO;
-import com.clinic.clinicmanagementsystem.exception.ResourceNotFoundException;
 import com.clinic.clinicmanagementsystem.security.CurrentUser;
-import com.clinic.clinicmanagementsystem.service.ReceiptService;
-import com.clinic.clinicmanagementsystem.service.RecordTreatmentMedicineService;
+import com.clinic.clinicmanagementsystem.service.DocumentExportService;
 import com.clinic.clinicmanagementsystem.service.RecordTreatmentService;
-import com.clinic.clinicmanagementsystem.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,51 +13,32 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @RestController
 @RequiredArgsConstructor
 public class ReceiptPrintController {
 
-    private final ReceiptService receiptService;
     private final RecordTreatmentService recordTreatmentService;
-    private final RecordTreatmentMedicineService recordTreatmentMedicineService;
-    private final ReportService reportService;
+    private final DocumentExportService documentExportService;
     private final CurrentUser currentUser;
 
-    /** Print Receipt (SRS 3.1.25) — driven by recordTreatmentId, matching the rest of the Receipt API. */
+    private static final String DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    /**
+     * Export Treatment Order & Billing as Word (.docx) by recordTreatmentId.
+     * Legacy receipt print endpoint now delivers the official unified treatment order.
+     */
     @GetMapping("/api/receipts/record-treatment/{recordTreatmentId}/print")
     @PreAuthorize("hasAnyRole('DOCTOR', 'PATIENT')")
     public ResponseEntity<byte[]> printReceipt(@PathVariable int recordTreatmentId) {
         RecordTreatmentResponseDTO treatment = recordTreatmentService.getById(recordTreatmentId);
         currentUser.requireSelfOrDoctor(treatment.getPatientId());
 
-        ReceiptResponseDTO receipt = receiptService.getByRecordTreatmentId(recordTreatmentId);
-        List<RecordTreatmentMedicineResponseDTO> lines =
-                recordTreatmentMedicineService.getByRecordTreatmentId(recordTreatmentId);
-
-        if (lines.isEmpty()) {
-            throw new ResourceNotFoundException("No dispensed medicine found for this receipt");
-        }
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("receiptId", receipt.getReceiptId());
-        params.put("receiptDate", new SimpleDateFormat("dd/MM/yyyy HH:mm").format(receipt.getReceiptDate()));
-        params.put("paymentStatus", receipt.getPaymentStatus());
-        params.put("paymentMethod", receipt.getPaymentMethod());
-        params.put("totalPrice", receipt.getTotalPrice());
-        params.put("patientFullname", treatment.getPatientFullname());
-        params.put("doctorFullname", treatment.getDoctorFullname());
-
-        byte[] pdf = reportService.generatePdf("receipt", params, lines);
+        byte[] docx = documentExportService.exportTreatmentOrder(recordTreatmentId);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("inline", "receipt-" + receipt.getReceiptId() + ".pdf");
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "treatment-order-" + recordTreatmentId + ".docx");
 
-        return ResponseEntity.ok().headers(headers).body(pdf);
+        return ResponseEntity.ok().headers(headers).body(docx);
     }
-}
+}

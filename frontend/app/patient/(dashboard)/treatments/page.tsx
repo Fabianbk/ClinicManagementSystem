@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Printer,
 } from "lucide-react";
 import { formatDoctorDisplayName } from "@/lib/utils";
 
@@ -235,15 +236,15 @@ export default async function PatientTreatmentsPage() {
                             )}
                           </div>
 
-                          {/* Link to Receipt Document (PDF) */}
+                          {/* Link to Receipt / Treatment Order Document */}
                           <a
-                            href={`/api/receipts/record-treatment/${treatment.recordTreatmentId}/print`}
+                            href={`/print/treatment-order/${treatment.recordTreatmentId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-white hover:bg-clinic-primary hover:text-white text-clinic-primary border border-clinic-primary/30 text-xs font-semibold shadow-2xs transition-all w-fit"
                           >
-                            <FileDown className="w-3.5 h-3.5" />
-                            <span>ดูใบเสร็จรับเงิน (PDF)</span>
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>ดูใบเสร็จ / ใบสั่งการรักษา (A4)</span>
                           </a>
                         </div>
 

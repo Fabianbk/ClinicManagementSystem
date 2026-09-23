@@ -1,8 +1,9 @@
 "use client";
 
 import { DownloadDocxButton } from "./DownloadDocxButton";
-import { FileText, Globe, CreditCard, ClipboardList, FileCheck } from "lucide-react";
+import { FileText, Globe, CreditCard, FileCheck, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface PatientDocumentSectionProps {
   patientId: number;
@@ -15,44 +16,37 @@ export function PatientDocumentSection({
 }: PatientDocumentSectionProps) {
   const docCards = [
     {
+      type: "opd-card" as const,
+      title: "บัตรเวชระเบียน (OPD Card)",
+      printUrl: `/print/opd-card/${patientId}`,
+      templateFile: "opd_card.docx",
+      icon: CreditCard,
+      description:
+        "ตารางข้อมูลเวชระเบียน 2x2 กะทัดรัด รวม HN, เลข ปชช., กรุ๊ปเลือด, สิทธิการรักษา และโรคประจำตัว เหมาะสำหรับพิมพ์ติดหน้าแฟ้มประวัติ",
+      badgeText: "บัตรหน้าแฟ้ม",
+      badgeVariant: "terracotta" as const,
+    },
+    {
       type: "intake-th" as const,
       title: "แบบกรอกประวัติผู้ป่วย (ไทย)",
+      printUrl: `/print/intake-th/${patientId}`,
       templateFile: "patient_intake_th.docx",
       icon: FileText,
       description:
-        "แบบฟอร์มขึ้นทะเบียนประวัติผู้ป่วยภาษาไทย พร้อมช่องกรอกเลขบัตรประชาชน 13 หลักแยกช่อง และที่อยู่ละเอียด",
+        "แบบฟอร์มขึ้นทะเบียนประวัติผู้ป่วยภาษาไทย พร้อมช่องกรอกเลขบัตรประชาชน 13 หลักแยกช่อง และข้อมูลที่อยู่และการติดต่อฉุกเฉิน",
       badgeText: "แบบฟอร์มไทย",
       badgeVariant: "secondary" as const,
     },
     {
       type: "intake-en" as const,
       title: "Patient’s Personal Data (EN)",
+      printUrl: `/print/intake-en/${patientId}`,
       templateFile: "patient_intake_en.docx",
       icon: Globe,
       description:
         "แบบฟอร์มประวัติภาษาอังกฤษสากลสำหรับชาวต่างชาติ ระบุเลข Passport, กรุ๊ปเลือด, ผู้ติดต่อฉุกเฉิน และประวัติแพ้ยา",
       badgeText: "English Form",
       badgeVariant: "accent" as const,
-    },
-    {
-      type: "opd-card" as const,
-      title: "บัตรเวชระเบียน (OPD Card)",
-      templateFile: "opd_card.docx",
-      icon: CreditCard,
-      description:
-        "ตารางข้อมูลเวชระเบียน 2x2 กะทัดรัด รวม HN, เลข ปชช., กรุ๊ปเลือด, สิทธิการรักษา และโรคประจำตัว เหมาะสำหรับพิมพ์ติดหน้าแฟ้ม",
-      badgeText: "บัตรหน้าแฟ้ม",
-      badgeVariant: "terracotta" as const,
-    },
-    {
-      type: "intake-form" as const,
-      title: "เวชระเบียนฉบับเต็ม (5 หน้า)",
-      templateFile: "client_intake_form.docx",
-      icon: ClipboardList,
-      description:
-        "เอกสารเวชระเบียนการแพทย์แผนไทยฉบับเต็ม 5 หน้า ครอบคลุมธาตุสมุฏฐาน ตรวจร่างกาย วินิจฉัย และแผนการรักษา",
-      badgeText: "ฉบับสมบูรณ์ 5 หน้า",
-      badgeVariant: "outline" as const,
     },
   ];
 
@@ -62,15 +56,15 @@ export function PatientDocumentSection({
         <div>
           <h2 className="text-base font-semibold text-clinic-ink flex items-center gap-2">
             <FileCheck className="w-5 h-5 text-clinic-primary" />
-            <span>เอกสารและแบบฟอร์มเวชระเบียน Word (.docx)</span>
+            <span>เอกสารและแบบฟอร์มประจำตัวผู้ป่วย (Patient Documents &amp; Forms)</span>
           </h2>
           <p className="text-xs text-clinic-ink-muted mt-0.5">
-            ส่งออกเอกสาร Word พร้อมเติมข้อมูลของ {patientName} ลงในเทมเพลตให้อัตโนมัติ สามารถนำไปแก้ไขหรือพิมพ์ต่อได้ทันที
+            สั่งพิมพ์แบบ A4 มาตรฐาน หรือดาวน์โหลดไฟล์ Word (.docx) พร้อมเติมข้อมูลของ {patientName} ให้อัตโนมัติ
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         {docCards.map((doc) => {
           const Icon = doc.icon;
           return (
@@ -92,23 +86,36 @@ export function PatientDocumentSection({
                     {doc.badgeText}
                   </Badge>
                 </div>
-                <p className="text-xs text-clinic-ink-soft leading-relaxed line-clamp-2">
+                <p className="text-xs text-clinic-ink-soft leading-relaxed">
                   {doc.description}
                 </p>
                 <div className="text-[11px] font-mono text-clinic-ink-muted flex items-center gap-1">
-                  <span>ไฟล์เทมเพลต:</span>
+                  <span>เทมเพลต:</span>
                   <code className="text-clinic-primary bg-clinic-bg px-1 rounded">{doc.templateFile}</code>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-clinic-line/40 flex items-center justify-end">
+              <div className="pt-2 border-t border-clinic-line/40 flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  asChild
+                  variant="default"
+                  size="sm"
+                  className="text-xs font-medium gap-1 bg-clinic-primary hover:bg-clinic-primary-deep text-white shadow-2xs"
+                  title={`พิมพ์ ${doc.title} ขนาด A4`}
+                >
+                  <a href={doc.printUrl} target="_blank" rel="noopener noreferrer">
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>พิมพ์ A4</span>
+                  </a>
+                </Button>
+
                 <DownloadDocxButton
                   patientId={patientId}
                   docType={doc.type}
-                  label={`โหลด ${doc.title}`}
+                  label="โหลด Word"
                   variant="outline"
                   size="sm"
-                  className="w-full sm:w-auto text-xs font-medium text-clinic-primary hover:bg-clinic-primary hover:text-white"
+                  className="text-xs font-medium text-clinic-ink hover:text-clinic-primary border-clinic-line"
                 />
               </div>
             </div>

@@ -48,6 +48,51 @@ public class DocumentExportController {
     }
 
     /**
+     * Export Continued Visit Intake Form (.docx) by recordTreatmentId.
+     */
+    @GetMapping("/intake-form/treatment/{recordTreatmentId}/continued")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<byte[]> exportIntakeFormContinuedByTreatment(@PathVariable int recordTreatmentId) {
+        byte[] docx = documentExportService.exportClientIntakeContinued(recordTreatmentId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "continued-intake-" + recordTreatmentId + ".docx");
+
+        return ResponseEntity.ok().headers(headers).body(docx);
+    }
+
+    /**
+     * Export Blank Thai Patient Intake Form (.docx).
+     */
+    @GetMapping("/blank/intake-th")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'STAFF', 'ADMIN')")
+    public ResponseEntity<byte[]> exportBlankPatientIntakeTh() {
+        byte[] docx = documentExportService.exportBlankPatientIntakeTh();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "blank-patient-intake-th.docx");
+
+        return ResponseEntity.ok().headers(headers).body(docx);
+    }
+
+    /**
+     * Export Blank English Patient Intake Form (.docx).
+     */
+    @GetMapping("/blank/intake-en")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'STAFF', 'ADMIN')")
+    public ResponseEntity<byte[]> exportBlankPatientIntakeEn() {
+        byte[] docx = documentExportService.exportBlankPatientIntakeEn();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOCX_MEDIA_TYPE));
+        headers.setContentDispositionFormData("attachment", "blank-patient-intake-en.docx");
+
+        return ResponseEntity.ok().headers(headers).body(docx);
+    }
+
+    /**
      * Export Treatment Order / Prescription (Page 5) (.docx) by recordTreatmentId.
      */
     @GetMapping("/treatment-order/{recordTreatmentId}")

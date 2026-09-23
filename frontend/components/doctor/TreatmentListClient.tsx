@@ -6,8 +6,6 @@ import type { RecordTreatmentResponseDTO, PageResponse } from "@/lib/types";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DownloadDocxButton } from "@/components/doctor/DownloadDocxButton";
-import { MedicalCertificateDialog } from "@/components/doctor/MedicalCertificateDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -277,24 +275,6 @@ export function TreatmentListClient({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <DownloadDocxButton
-                        recordTreatmentId={t.recordTreatmentId}
-                        label="Word"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-clinic-primary gap-1"
-                      />
-                      <MedicalCertificateDialog
-                        recordTreatmentId={t.recordTreatmentId}
-                        patientName={t.patientFullname || `ผู้ป่วย #${t.patientId}`}
-                        patientId={t.patientId}
-                        diagnosis={t.ttmDiagnosis || t.modernDiagnosis || undefined}
-                        doctorName={t.doctorFullname || undefined}
-                        label="ใบรับรองแพทย์"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-clinic-primary gap-1"
-                      />
                       <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs text-clinic-primary gap-1">
                         <Link href={`/doctor/treatments/${t.recordTreatmentId}`}>
                           <Eye className="w-3.5 h-3.5" />

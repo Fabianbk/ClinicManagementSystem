@@ -45,6 +45,7 @@ import {
   Plus,
   Trash2,
   Loader2,
+  Printer,
 } from "lucide-react";
 
 export default function NewPatientPage() {
@@ -381,6 +382,23 @@ export default function NewPatientPage() {
                 <span>🌍 ต่างชาติ (Foreigner)</span>
               </button>
             </div>
+
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-clinic-primary border-clinic-line"
+              title="พิมพ์แบบฟอร์มเปล่าขนาด A4 สำหรับให้ผู้ป่วยกรอก"
+            >
+              <a
+                href={idType === "THAI_ID" ? "/print/blank/intake-th" : "/print/blank/intake-en"}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>พิมพ์แบบฟอร์มเปล่า</span>
+              </a>
+            </Button>
 
             <Button asChild variant="outline" size="sm">
               <Link href="/doctor/patients">

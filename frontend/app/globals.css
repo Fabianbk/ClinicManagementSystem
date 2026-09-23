@@ -96,14 +96,25 @@ h1, h2, h3, h4, h5, h6 {
   background: #B8AE9D;
 }
 
-/* Print Stylesheet for medical records / prescription */
+/* Print Stylesheet for medical records / prescription / forms */
+@page {
+  size: A4 portrait;
+  margin: 10mm 12mm 10mm 12mm;
+}
+
 @media print {
-  body {
+  html, body {
     background: #ffffff !important;
     color: #000000 !important;
-    font-size: 12pt !important;
+    font-size: 11pt !important;
+    line-height: 1.35 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  .print\:hidden {
+  .print\:hidden, .no-print {
     display: none !important;
   }
   .print\:shadow-none {
@@ -115,4 +126,39 @@ h1, h2, h3, h4, h5, h6 {
   .print\:p-0 {
     padding: 0 !important;
   }
+  .print-page {
+    page-break-after: always;
+    break-after: page;
+    box-sizing: border-box;
+  }
+  .print-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .a4-sheet {
+    width: 100% !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+/* Screen Preview container for A4 sheet */
+.a4-sheet {
+  background: #ffffff;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 24px auto;
+  padding: 14mm 16mm 14mm 16mm;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  font-family: var(--font-body), sans-serif;
+  color: #111827;
+  border: 1px solid #e5e7eb;
 }

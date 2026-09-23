@@ -16,8 +16,8 @@ import {
   ChevronDown,
   FileText,
   CreditCard,
-  ClipboardList,
   Globe,
+  Printer,
 } from "lucide-react";
 import type { PatientDocType } from "./DownloadDocxButton";
 
@@ -32,44 +32,10 @@ interface PatientDocumentDropdownProps {
   className?: string;
 }
 
-interface DocOption {
-  type: PatientDocType;
-  title: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const DOC_OPTIONS: DocOption[] = [
-  {
-    type: "intake-th",
-    title: "แบบกรอกประวัติ (ภาษาไทย)",
-    subtitle: "แบบฟอร์มขึ้นทะเบียน 13 หลักแยกช่อง",
-    icon: FileText,
-  },
-  {
-    type: "intake-en",
-    title: "Personal Data (ภาษาอังกฤษ)",
-    subtitle: "Patient Intake Form for foreigners",
-    icon: Globe,
-  },
-  {
-    type: "opd-card",
-    title: "บัตรเวชระเบียน (OPD Card)",
-    subtitle: "ตารางสรุป 2x2 สำหรับติดหน้าแฟ้ม",
-    icon: CreditCard,
-  },
-  {
-    type: "intake-form",
-    title: "เวชระเบียนฉบับเต็ม (5 หน้า)",
-    subtitle: "ประวัติสุขภาพ ธาตุสมุฏฐาน และการรักษา",
-    icon: ClipboardList,
-  },
-];
-
 export function PatientDocumentDropdown({
   patientId,
   patientName,
-  label = "ดาวน์โหลด Word",
+  label = "เอกสาร / พิมพ์ A4",
   showLabel = true,
   align = "end",
   variant = "outline",
@@ -82,10 +48,7 @@ export function PatientDocumentDropdown({
     try {
       setLoadingDoc(docType);
 
-      const endpoint =
-        docType === "intake-form"
-          ? `/api/documents/intake-form/patient/${patientId}`
-          : `/api/documents/patient/${patientId}/${docType}`;
+      const endpoint = `/api/documents/patient/${patientId}/${docType}`;
 
       const res = await fetch(endpoint);
 
@@ -131,12 +94,12 @@ export function PatientDocumentDropdown({
           size={size}
           disabled={isLoading}
           className={className}
-          title="ดาวน์โหลดเอกสาร Word (.docx) รูปแบบต่างๆ"
+          title="พิมพ์เอกสารหรือดาวน์โหลด Word (.docx)"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 mr-1.5 animate-spin text-clinic-primary shrink-0" />
           ) : (
-            <FileDown className="w-4 h-4 mr-1.5 text-clinic-primary shrink-0" />
+            <Printer className="w-4 h-4 mr-1.5 text-clinic-primary shrink-0" />
           )}
           {showLabel && <span>{isLoading ? "กำลังสร้าง..." : label}</span>}
           <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-70 shrink-0" />
@@ -145,7 +108,7 @@ export function PatientDocumentDropdown({
 
       <DropdownMenuContent align={align} className="w-72">
         <DropdownMenuLabel className="font-medium text-clinic-ink">
-          ดาวน์โหลดเอกสาร Word (.docx)
+          เอกสารเวชระเบียนประจำตัว
           {patientName && (
             <span className="block text-[11px] font-normal text-clinic-ink-muted truncate">
               {patientName}
@@ -154,37 +117,91 @@ export function PatientDocumentDropdown({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {DOC_OPTIONS.map((opt, index) => {
-          const Icon = opt.icon;
-          const isCurrentLoading = loadingDoc === opt.type;
-
-          return (
-            <div key={opt.type}>
-              {index === 3 && <DropdownMenuSeparator />}
-              <DropdownMenuItem
-                onClick={() => handleDownload(opt.type)}
-                disabled={isLoading}
-                className="py-2.5 px-3 flex items-start gap-2.5 cursor-pointer hover:bg-clinic-bg focus:bg-clinic-bg"
-              >
-                <div className="p-1.5 rounded-control bg-clinic-primary-soft text-clinic-primary shrink-0 mt-0.5">
-                  {isCurrentLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Icon className="w-4 h-4" />
-                  )}
-                </div>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-xs font-medium text-clinic-ink leading-tight">
-                    {opt.title}
-                  </span>
-                  <span className="text-[10px] text-clinic-ink-muted leading-tight mt-0.5">
-                    {opt.subtitle}
-                  </span>
-                </div>
-              </DropdownMenuItem>
+        {/* Section 1: Print A4 */}
+        <div className="px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+          สั่งพิมพ์ / บันทึก PDF (A4)
+        </div>
+        <DropdownMenuItem asChild>
+          <a
+            href={`/print/opd-card/${patientId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 py-2 cursor-pointer"
+          >
+            <div className="p-1.5 rounded-control bg-clinic-primary-soft text-clinic-primary shrink-0">
+              <CreditCard className="w-4 h-4" />
             </div>
-          );
-        })}
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-clinic-ink">บัตรเวชระเบียน (OPD Card)</span>
+              <span className="text-[10px] text-clinic-ink-muted">ตาราง 2x2 ติดหน้าแฟ้ม</span>
+            </div>
+          </a>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <a
+            href={`/print/intake-th/${patientId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 py-2 cursor-pointer"
+          >
+            <div className="p-1.5 rounded-control bg-clinic-primary-soft text-clinic-primary shrink-0">
+              <FileText className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-clinic-ink">แบบกรอกประวัติ (ไทย)</span>
+              <span className="text-[10px] text-clinic-ink-muted">แบบฟอร์มขึ้นทะเบียน 13 หลัก</span>
+            </div>
+          </a>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <a
+            href={`/print/intake-en/${patientId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 py-2 cursor-pointer"
+          >
+            <div className="p-1.5 rounded-control bg-clinic-primary-soft text-clinic-primary shrink-0">
+              <Globe className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-clinic-ink">Personal Data (English)</span>
+              <span className="text-[10px] text-clinic-ink-muted">Foreigner Intake Form</span>
+            </div>
+          </a>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        {/* Section 2: Download Word */}
+        <div className="px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+          ดาวน์โหลด Word (.docx)
+        </div>
+        <DropdownMenuItem
+          onClick={() => handleDownload("opd-card")}
+          disabled={isLoading}
+          className="flex items-center gap-2.5 cursor-pointer py-1.5"
+        >
+          <FileDown className="w-4 h-4 text-clinic-primary shrink-0" />
+          <span className="text-xs">OPD Card (.docx)</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleDownload("intake-th")}
+          disabled={isLoading}
+          className="flex items-center gap-2.5 cursor-pointer py-1.5"
+        >
+          <FileDown className="w-4 h-4 text-clinic-primary shrink-0" />
+          <span className="text-xs">แบบกรอกประวัติไทย (.docx)</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleDownload("intake-en")}
+          disabled={isLoading}
+          className="flex items-center gap-2.5 cursor-pointer py-1.5"
+        >
+          <FileDown className="w-4 h-4 text-clinic-primary shrink-0" />
+          <span className="text-xs">Personal Data EN (.docx)</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

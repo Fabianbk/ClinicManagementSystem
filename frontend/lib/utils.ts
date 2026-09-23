@@ -94,3 +94,61 @@ export function formatDoctorDisplayName(fullname?: string | null, fallbackUserna
   return `พท.ว. ${name}`;
 }
 
+/**
+ * Converts a numeric baht amount to Thai baht text (e.g. 1500 -> "หนึ่งพันห้าร้อยบาทถ้วน")
+ */
+export function thaiBahtText(amount: number): string {
+  if (isNaN(amount) || amount === 0) return "ศูนย์บาทถ้วน";
+  const numbers = ["ศูนย์", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า"];
+  const units = ["", "สิบ", "ร้อย", "พัน", "หมื่น", "แสน", "ล้าน"];
+
+  function convertGroup(intStr: string): string {
+    let s = "";
+    const len = intStr.length;
+    for (let i = 0; i < len; i++) {
+      const digit = parseInt(intStr[i], 10);
+      const pos = len - i - 1;
+      if (digit !== 0) {
+        if (pos % 6 === 1 && digit === 1) {
+          s += "สิบ";
+        } else if (pos % 6 === 1 && digit === 2) {
+          s += "ยี่สิบ";
+        } else if (pos % 6 === 0 && digit === 1 && len > 1 && i === len - 1) {
+          s += "เอ็ด";
+        } else {
+          s += numbers[digit] + units[pos % 6];
+        }
+      }
+    }
+    return s;
+  }
+
+  const rounded = Math.round(amount * 100) / 100;
+  const parts = rounded.toFixed(2).split(".");
+  const intPart = parseInt(parts[0], 10);
+  const satangPart = parseInt(parts[1], 10);
+
+  let result = "";
+  if (intPart === 0) {
+    result = "ศูนย์บาท";
+  } else {
+    // Break into groups of 6 digits (for ล้าน)
+    const intStr = intPart.toString();
+    const len = intStr.length;
+    if (len > 6) {
+      const high = intStr.slice(0, len - 6);
+      const low = intStr.slice(len - 6);
+      result = convertGroup(high) + "ล้าน" + convertGroup(low) + "บาท";
+    } else {
+      result = convertGroup(intStr) + "บาท";
+    }
+  }
+
+  if (satangPart === 0) {
+    result += "ถ้วน";
+  } else {
+    result += convertGroup(satangPart.toString()) + "สตางค์";
+  }
+  return result;
+}
+

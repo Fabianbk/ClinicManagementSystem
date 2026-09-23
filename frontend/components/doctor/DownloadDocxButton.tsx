@@ -4,12 +4,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown, Loader2 } from "lucide-react";
 
-export type PatientDocType = "intake-th" | "intake-en" | "opd-card" | "intake-form";
+export type PatientDocType =
+  | "intake-th"
+  | "intake-en"
+  | "opd-card"
+  | "intake-form"
+  | "treatment-order"
+  | "continued";
 
 export interface DownloadDocxButtonProps {
   patientId?: number;
   recordTreatmentId?: number;
   docType?: PatientDocType;
+  customEndpoint?: string;
   label?: string;
   variant?: "default" | "terracotta" | "accent" | "secondary" | "outline" | "ghost" | "danger" | "link";
   size?: "default" | "sm" | "lg" | "icon";
@@ -22,6 +29,7 @@ export function DownloadDocxButton({
   patientId,
   recordTreatmentId,
   docType,
+  customEndpoint,
   label,
   variant = "outline",
   size = "sm",
@@ -37,6 +45,8 @@ export function DownloadDocxButton({
   else if (docType === "intake-en") defaultLabel = "แบบกรอกประวัติ (EN)";
   else if (docType === "opd-card") defaultLabel = "บัตรเวชระเบียน (OPD Card)";
   else if (docType === "intake-form") defaultLabel = "เวชระเบียนฉบับเต็ม";
+  else if (docType === "treatment-order") defaultLabel = "ใบสั่งการรักษา (Word)";
+  else if (docType === "continued") defaultLabel = "แบบบันทึกต่อเนื่อง (Word)";
 
   const buttonLabel = label ?? defaultLabel;
 
@@ -47,7 +57,16 @@ export function DownloadDocxButton({
       let endpoint = "";
       let fallbackFilename = "document.docx";
 
-      if (docType && patientId) {
+      if (customEndpoint) {
+        endpoint = customEndpoint;
+        fallbackFilename = "document.docx";
+      } else if (recordTreatmentId && docType === "treatment-order") {
+        endpoint = `/api/documents/treatment-order/${recordTreatmentId}`;
+        fallbackFilename = `treatment-order-${recordTreatmentId}.docx`;
+      } else if (recordTreatmentId && docType === "continued") {
+        endpoint = `/api/documents/intake-form/treatment/${recordTreatmentId}/continued`;
+        fallbackFilename = `continued-intake-${recordTreatmentId}.docx`;
+      } else if (docType && patientId) {
         endpoint = `/api/documents/patient/${patientId}/${docType}`;
         fallbackFilename = `${docType}-patient-${patientId}.docx`;
       } else if (recordTreatmentId) {
