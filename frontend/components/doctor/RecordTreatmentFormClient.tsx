@@ -237,7 +237,7 @@ export function RecordTreatmentFormClient({
       const app = availableAppointments.find((a) => a.appointmentId === selectedAppointmentId);
       if (app) return app.patientId;
     }
-    return patients.length > 0 ? patients[0].patientId : 0;
+    return 0;
   });
 
   // Patient previous history & auto mode detection
