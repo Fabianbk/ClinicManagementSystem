@@ -3,7 +3,7 @@ import { getSession } from "@/lib/session";
 import { LoginForm } from "@/components/auth/LoginForm";
 import Link from "next/link";
 import Image from "next/image";
-import { Stethoscope } from "lucide-react";
+import { Stethoscope, ArrowLeft, Home } from "lucide-react";
 
 export default async function DoctorLoginPage({
   searchParams,
@@ -16,7 +16,17 @@ export default async function DoctorLoginPage({
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-clinic-bg">
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-clinic-bg">
+      <div className="w-full max-w-md mb-3 flex items-center justify-between">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-clinic-ink-soft hover:text-clinic-primary transition-colors py-1.5 px-3 rounded-control hover:bg-white/80 border border-transparent hover:border-clinic-line shadow-xs group"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+          <span>กลับสู่หน้าหลัก</span>
+        </Link>
+      </div>
+
       <div className="flex flex-col sm:flex-row w-full max-w-md bg-white rounded-card border border-clinic-line overflow-hidden shadow-xl">
         <div
           className="bg-clinic-primary text-white flex items-center justify-center font-display font-bold text-xs tracking-widest sm:[writing-mode:vertical-rl] py-3 sm:py-0 sm:w-12 shrink-0 gap-2"
@@ -26,8 +36,12 @@ export default async function DoctorLoginPage({
           <span>แพทย์แผนไทย</span>
         </div>
         <div className="flex-1 p-6 sm:p-8 flex flex-col gap-1">
-          <div className="flex items-center gap-2.5 mb-2">
-            <div className="relative w-9 h-9 rounded-full overflow-hidden border border-clinic-primary/20 shadow-xs shrink-0 bg-white">
+          <Link
+            href="/"
+            title="กลับสู่หน้าหลัก"
+            className="flex items-center gap-2.5 mb-2 group w-fit hover:opacity-90 transition-opacity"
+          >
+            <div className="relative w-9 h-9 rounded-full overflow-hidden border border-clinic-primary/20 shadow-xs shrink-0 bg-white group-hover:border-clinic-primary/40 transition-colors">
               <Image
                 src="/logo.png"
                 alt="โลโก้คลินิกพิมพ์วิมาน"
@@ -37,14 +51,14 @@ export default async function DoctorLoginPage({
               />
             </div>
             <div>
-              <p className="text-[11px] font-bold tracking-wider text-clinic-primary uppercase leading-none">
+              <p className="text-[11px] font-bold tracking-wider text-clinic-primary uppercase leading-none group-hover:underline">
                 พิมพ์วิมานคลินิก
               </p>
               <p className="text-[10px] text-clinic-ink-soft leading-tight">
                 การแพทย์แผนไทย
               </p>
             </div>
-          </div>
+          </Link>
           <h1 className="text-2xl font-display font-bold text-clinic-primary-deep mt-1">
             เข้าสู่ระบบสำหรับแพทย์
           </h1>
@@ -59,12 +73,23 @@ export default async function DoctorLoginPage({
             nextPath={searchParams.next}
           />
 
-          <p className="mt-5 text-xs text-clinic-ink-soft text-center">
-            สำหรับผู้รับบริการทั่วไป?{" "}
-            <Link href="/patient/login" className="font-semibold text-clinic-terracotta-deep hover:underline">
-              เข้าสู่ระบบผู้ป่วยที่นี่
-            </Link>
-          </p>
+          <div className="mt-5 pt-4 border-t border-clinic-line/60 flex flex-col gap-2.5 text-center text-xs text-clinic-ink-soft">
+            <p>
+              สำหรับผู้รับบริการทั่วไป?{" "}
+              <Link href="/patient/login" className="font-semibold text-clinic-terracotta-deep hover:underline">
+                เข้าสู่ระบบผู้ป่วยที่นี่
+              </Link>
+            </p>
+            <p>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-1.5 font-medium text-clinic-ink-soft hover:text-clinic-primary transition-colors hover:underline"
+              >
+                <Home className="w-3.5 h-3.5" />
+                <span>กลับสู่หน้าหลักคลินิก</span>
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </main>
